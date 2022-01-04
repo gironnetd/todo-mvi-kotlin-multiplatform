@@ -1,0 +1,40 @@
+CREATE TABLE IF NOT EXISTS Task (
+    id TEXT PRIMARY KEY  ,
+    title TEXT ,
+    description TEXT ,
+    completed INTEGER AS Boolean NOT NULL DEFAULT 0
+);
+
+selectAll:
+SELECT *
+FROM Task;
+
+select:
+SELECT *
+FROM Task
+WHERE id = :id;
+
+insert:
+INSERT OR REPLACE INTO Task (id, title, description, completed)
+VALUES (? , ?, ?, ?);
+
+activateTask:
+UPDATE Task
+SET completed = 0
+WHERE id = :id;
+
+completeTask:
+UPDATE Task
+SET completed = 1
+WHERE id = :id;
+
+delete:
+DELETE FROM Task
+WHERE id = :id;
+
+clearCompletedTasks:
+DELETE FROM Task
+WHERE completed = 1;
+
+clear:
+DELETE FROM Task;

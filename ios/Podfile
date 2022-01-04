@@ -1,0 +1,9 @@
+target 'ios' do
+  use_frameworks!
+  platform :ios, '14.1'
+  pod 'MaterialComponents', :git => 'https://github.com/material-components/material-components-ios', :branch => 'stable'
+  pod 'RxSwift', '~> 6.0'
+  pod 'RxCocoa', '~> 6.0'
+  pod 'RxGesture', '~> 4.0.2'
+  pod 'shared', :path => '../shared'
+end
