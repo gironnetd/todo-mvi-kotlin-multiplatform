@@ -18,6 +18,11 @@
 #import "MDCNumericValueLabel.h"
 #import "MDCDiscreteDotView.h"
 
+API_DEPRECATED_BEGIN("🤖👀 Use go/material-ios-branding UISlider instead. "
+                     "See go/material-ios-slider/gm2-migration for more details. "
+                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
+                     ios(12, 12))
+
 @interface MDCThumbTrack (Private)
 
 @property(nonatomic, nonnull, readonly) MDCNumericValueLabel *numericValueLabel;
@@ -28,3 +33,5 @@
 @property(nonatomic, nonnull, readonly) MDCDiscreteDotView *discreteDotView;
 
 @end
+
+API_DEPRECATED_END

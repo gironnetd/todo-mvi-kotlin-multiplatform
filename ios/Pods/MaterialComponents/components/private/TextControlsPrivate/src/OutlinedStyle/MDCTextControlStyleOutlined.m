@@ -14,9 +14,14 @@
 
 #import "MDCTextControlStyleOutlined.h"
 
-#import "MDCTextControl.h"
-#import "MDCTextControlVerticalPositioningReferenceOutlined.h"
+#import "MDCAvailability.h"
 #include "MaterialAvailability.h"
+#import "MDCTextControlLabelBehavior.h"
+#import "MDCTextControlState.h"
+#import "MDCTextControlVerticalPositioningReferenceOutlined.h"
+#import "MDCTextControl.h"
+#import "MDCTextControlHorizontalPositioningReference.h"
+#import "MDCTextControlLabelSupport.h"
 #import "UIBezierPath+MDCTextControlStyle.h"
 
 static const CGFloat kDefaultOutlinedContainerStyleCornerRadius = (CGFloat)4.0;
@@ -54,12 +59,7 @@ static const CGFloat kFilledFloatingLabelScaleFactor = (CGFloat)0.75;
 
 - (void)setUpOutlineColors {
   self.outlineColors = [NSMutableDictionary new];
-  UIColor *outlineColor = [UIColor blackColor];
-#if MDC_AVAILABLE_SDK_IOS(13_0)
-  if (@available(iOS 13.0, *)) {
-    outlineColor = [UIColor labelColor];
-  }
-#endif  // MDC_AVAILABLE_SDK_IOS(13_0)
+  UIColor *outlineColor = [UIColor labelColor];
   self.outlineColors[@(MDCTextControlStateNormal)] = outlineColor;
   self.outlineColors[@(MDCTextControlStateEditing)] = outlineColor;
   self.outlineColors[@(MDCTextControlStateDisabled)] =
@@ -94,17 +94,28 @@ static const CGFloat kFilledFloatingLabelScaleFactor = (CGFloat)0.75;
 
 - (void)applyStyleToTextControl:(UIView<MDCTextControl> *)textControl
               animationDuration:(NSTimeInterval)animationDuration {
-  CGRect labelFrame = textControl.labelFrame;
-  BOOL isLabelFloating = textControl.labelPosition == MDCTextControlLabelPositionFloating;
-  CGFloat containerHeight = CGRectGetMaxY(textControl.containerFrame);
+  CGRect normalLabelFrame = textControl.normalLabelFrame;
+  CGRect floatingLabelFrame = textControl.floatingLabelFrame;
+  CGFloat containerHeight = CGRectGetHeight(textControl.containerFrame);
   CGFloat lineWidth = (CGFloat)self.outlineLineWidths[@(textControl.textControlState)].doubleValue;
-  [self applyStyleTo:textControl
-            labelFrame:labelFrame
-       containerHeight:containerHeight
-       isLabelFloating:isLabelFloating
-      outlineLineWidth:lineWidth];
-  self.outlinedSublayer.strokeColor =
-      ((UIColor *)self.outlineColors[@(textControl.textControlState)]).CGColor;
+  UIBezierPath *outlinePath =
+      [MDCTextControlStyleOutlined outlinePathWithViewBounds:textControl.bounds
+                                            normalLabelFrame:normalLabelFrame
+                                          floatingLabelFrame:floatingLabelFrame
+                                             containerHeight:containerHeight
+                                                   lineWidth:lineWidth
+                                                cornerRadius:self.outlineCornerRadius
+                                               labelBehavior:textControl.labelBehavior
+                                               labelPosition:textControl.labelPosition];
+  CGColorRef strokeColor = (self.outlineColors[@(textControl.textControlState)]).CGColor;
+  if (!CGColorEqualToColor(self.outlinedSublayer.strokeColor, strokeColor)) {
+    animationDuration = 0;
+    self.outlinedSublayer.strokeColor = strokeColor;
+  }
+  [self applyOutlineTo:textControl
+            outlinePath:outlinePath
+       outlineLineWidth:lineWidth
+      animationDuration:animationDuration];
 }
 
 - (UIFont *)floatingFontWithNormalFont:(UIFont *)font {
@@ -141,47 +152,76 @@ static const CGFloat kFilledFloatingLabelScaleFactor = (CGFloat)0.75;
 
 #pragma mark Internal Styling Methods
 
-- (void)applyStyleTo:(UIView *)view
-          labelFrame:(CGRect)labelFrame
-     containerHeight:(CGFloat)containerHeight
-     isLabelFloating:(BOOL)isLabelFloating
-    outlineLineWidth:(CGFloat)outlineLineWidth {
-  UIBezierPath *path =
-      [MDCTextControlStyleOutlined outlinePathWithViewBounds:view.bounds
-                                                  labelFrame:labelFrame
-                                             containerHeight:containerHeight
-                                                   lineWidth:outlineLineWidth
-                                                cornerRadius:self.outlineCornerRadius
-                                             isLabelFloating:isLabelFloating];
-
-  [CATransaction begin];
-  [CATransaction setDisableActions:YES];
-  self.outlinedSublayer.path = path.CGPath;
-  self.outlinedSublayer.lineWidth = outlineLineWidth;
-  [CATransaction commit];
-
+- (void)applyOutlineTo:(UIView *)view
+           outlinePath:(UIBezierPath *)outlinePath
+      outlineLineWidth:(CGFloat)outlineLineWidth
+     animationDuration:(NSTimeInterval)animationDuration {
   if (self.outlinedSublayer.superlayer != view.layer) {
     [view.layer insertSublayer:self.outlinedSublayer atIndex:0];
   }
+
+  if (animationDuration <= 0) {
+    [self.outlinedSublayer removeAllAnimations];
+    self.outlinedSublayer.path = outlinePath.CGPath;
+    self.outlinedSublayer.lineWidth = outlineLineWidth;
+    return;
+  }
+
+  CABasicAnimation *existingAnimation =
+      [self.outlinedSublayer animationForKey:self.class.outlineAnimationKey];
+  BOOL needsAnimation = NO;
+  if (existingAnimation) {
+    if (!CGPathEqualToPath(self.outlinedSublayer.path, outlinePath.CGPath)) {
+      [self.outlinedSublayer removeAnimationForKey:self.class.outlineAnimationKey];
+      needsAnimation = YES;
+    }
+  } else {
+    needsAnimation = YES;
+  }
+
+  if (needsAnimation) {
+    [CATransaction begin];
+    [CATransaction setAnimationDuration:animationDuration];
+    self.outlinedSublayer.path = outlinePath.CGPath;
+    CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"path"];
+    animation.timingFunction =
+        [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+    animation.repeatCount = 0;
+    animation.removedOnCompletion = YES;
+    animation.fillMode = kCAFillModeForwards;
+    [self.outlinedSublayer addAnimation:animation forKey:self.class.outlineAnimationKey];
+    [CATransaction commit];
+  }
+}
+
++ (NSString *)outlineAnimationKey {
+  return @"outlineAnimationKey";
 }
 
 + (UIBezierPath *)outlinePathWithViewBounds:(CGRect)viewBounds
-                                 labelFrame:(CGRect)labelFrame
+                           normalLabelFrame:(CGRect)normalLabelFrame
+                         floatingLabelFrame:(CGRect)floatingLabelFrame
                             containerHeight:(CGFloat)containerHeight
                                   lineWidth:(CGFloat)lineWidth
                                cornerRadius:(CGFloat)radius
-                            isLabelFloating:(BOOL)isLabelFloating {
+                              labelBehavior:(MDCTextControlLabelBehavior)labelBehavior
+                              labelPosition:(MDCTextControlLabelPosition)labelPosition {
   UIBezierPath *path = [[UIBezierPath alloc] init];
   CGFloat textFieldWidth = CGRectGetWidth(viewBounds);
-  CGFloat sublayerMinY = 0;
+  CGFloat halfOfFloatingLabelHeight = CGRectGetHeight(floatingLabelFrame) * 0.5f;
+  CGFloat sublayerMinY = halfOfFloatingLabelHeight;
   CGFloat sublayerMaxY = containerHeight;
+  if (labelBehavior == MDCTextControlLabelBehaviorDisappears ||
+      labelPosition == MDCTextControlLabelPositionNone) {
+    sublayerMinY = 0.0f;
+  }
 
   CGPoint startingPoint = CGPointMake(radius, sublayerMinY);
   CGPoint topRightCornerPoint1 = CGPointMake(textFieldWidth - radius, sublayerMinY);
   [path moveToPoint:startingPoint];
-  if (isLabelFloating) {
-    CGFloat leftLineBreak = CGRectGetMinX(labelFrame) - kFloatingLabelOutlineSidePadding;
-    CGFloat rightLineBreak = CGRectGetMaxX(labelFrame) + kFloatingLabelOutlineSidePadding;
+  if (labelPosition == MDCTextControlLabelPositionFloating) {
+    CGFloat leftLineBreak = CGRectGetMinX(floatingLabelFrame) - kFloatingLabelOutlineSidePadding;
+    CGFloat rightLineBreak = CGRectGetMaxX(floatingLabelFrame) + kFloatingLabelOutlineSidePadding;
     [path addLineToPoint:CGPointMake(leftLineBreak, sublayerMinY)];
     [path moveToPoint:CGPointMake(rightLineBreak, sublayerMinY)];
     [path addLineToPoint:CGPointMake(rightLineBreak, sublayerMinY)];

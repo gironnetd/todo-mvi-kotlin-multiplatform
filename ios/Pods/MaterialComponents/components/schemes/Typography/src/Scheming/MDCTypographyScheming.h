@@ -14,6 +14,10 @@
 
 #import <UIKit/UIKit.h>
 
+API_DEPRECATED_BEGIN("🤖👀 Use Typescale tokens instead (go/material-ios-tokens#typescale-tokens). "
+                     "This has go/material-ios-migrations#scriptable-potential 🤖👀",
+                     ios(12, 12))
+
 /**
  A simple typography scheme that provides semantic fonts. There are no optional
  properties, all fonts must be provided, supporting more reliable typography theming.
@@ -95,3 +99,5 @@
 @property(nonatomic, assign, readonly) BOOL useCurrentContentSizeCategoryWhenApplied;
 
 @end
+
+API_DEPRECATED_END

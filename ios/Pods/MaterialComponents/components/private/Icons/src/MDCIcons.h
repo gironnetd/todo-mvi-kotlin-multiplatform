@@ -14,6 +14,10 @@
 
 #import <Foundation/Foundation.h>
 
+API_DEPRECATED_BEGIN("🤖👀 For image resources, follow go/material-ios-icons. "
+                     "This has go/material-ios-migrations#scriptable-potential 🤖👀",
+                     ios(12, 12))
+
 /**
  The MDCIcons class is designed to be extended by adding individual icon extensions to a project.
 
@@ -27,3 +31,5 @@
 - (instancetype)init NS_UNAVAILABLE;
 
 @end
+
+API_DEPRECATED_END

@@ -18,24 +18,10 @@
 #import <MDFTextAccessibility/MDFTextAccessibility.h>
 
 static id<MDCTypographyFontLoading> gFontLoader = nil;
-const CGFloat MDCTypographyStandardOpacity = (CGFloat)0.87;
-const CGFloat MDCTypographySecondaryOpacity = (CGFloat)0.54;
 
 @implementation MDCTypography
 
 #pragma mark - Font loader access
-
-+ (void)setFontLoader:(id<MDCTypographyFontLoading>)fontLoader {
-  if (gFontLoader && fontLoader != gFontLoader) {
-    [[NSNotificationCenter defaultCenter] removeObserver:gFontLoader];
-  }
-  gFontLoader = fontLoader;
-  NSAssert(gFontLoader,
-           @"Font loader can't be null. The font loader will be reset to the default font loader.");
-  if (!gFontLoader) {
-    gFontLoader = [self defaultFontLoader];
-  }
-}
 
 + (id<MDCTypographyFontLoading>)fontLoader {
   static dispatch_once_t onceToken;
@@ -53,32 +39,16 @@ const CGFloat MDCTypographySecondaryOpacity = (CGFloat)0.54;
   return [[self fontLoader] lightFontOfSize:112];
 }
 
-+ (CGFloat)display4FontOpacity {
-  return MDCTypographySecondaryOpacity;
-}
-
 + (UIFont *)display3Font {
   return [[self fontLoader] regularFontOfSize:56];
-}
-
-+ (CGFloat)display3FontOpacity {
-  return MDCTypographySecondaryOpacity;
 }
 
 + (UIFont *)display2Font {
   return [[self fontLoader] regularFontOfSize:45];
 }
 
-+ (CGFloat)display2FontOpacity {
-  return MDCTypographySecondaryOpacity;
-}
-
 + (UIFont *)display1Font {
   return [[self fontLoader] regularFontOfSize:34];
-}
-
-+ (CGFloat)display1FontOpacity {
-  return MDCTypographySecondaryOpacity;
 }
 
 #pragma mark - Common UI fonts.
@@ -87,56 +57,28 @@ const CGFloat MDCTypographySecondaryOpacity = (CGFloat)0.54;
   return [[self fontLoader] regularFontOfSize:24];
 }
 
-+ (CGFloat)headlineFontOpacity {
-  return MDCTypographyStandardOpacity;
-}
-
 + (UIFont *)titleFont {
   return [[self fontLoader] mediumFontOfSize:20];
-}
-
-+ (CGFloat)titleFontOpacity {
-  return MDCTypographyStandardOpacity;
 }
 
 + (UIFont *)subheadFont {
   return [[self fontLoader] regularFontOfSize:16];
 }
 
-+ (CGFloat)subheadFontOpacity {
-  return MDCTypographyStandardOpacity;
-}
-
 + (UIFont *)body2Font {
   return [[self fontLoader] mediumFontOfSize:14];
-}
-
-+ (CGFloat)body2FontOpacity {
-  return MDCTypographyStandardOpacity;
 }
 
 + (UIFont *)body1Font {
   return [[self fontLoader] regularFontOfSize:14];
 }
 
-+ (CGFloat)body1FontOpacity {
-  return MDCTypographyStandardOpacity;
-}
-
 + (UIFont *)captionFont {
   return [[self fontLoader] regularFontOfSize:12];
 }
 
-+ (CGFloat)captionFontOpacity {
-  return MDCTypographySecondaryOpacity;
-}
-
 + (UIFont *)buttonFont {
   return [[self fontLoader] mediumFontOfSize:14];
-}
-
-+ (CGFloat)buttonFontOpacity {
-  return MDCTypographyStandardOpacity;
 }
 
 + (BOOL)isLargeForContrastRatios:(nonnull UIFont *)font {
@@ -147,31 +89,6 @@ const CGFloat MDCTypographySecondaryOpacity = (CGFloat)0.54;
   }
 
   return [MDFTextAccessibility isLargeForContrastRatios:font];
-}
-
-+ (UIFont *)italicFontFromFont:(UIFont *)font {
-  SEL selector = @selector(italicFontFromFont:);
-  if ([self.fontLoader respondsToSelector:selector]) {
-    return [self.fontLoader italicFontFromFont:font];
-  }
-  UIFontDescriptor *fontDescriptor =
-      [font.fontDescriptor fontDescriptorWithSymbolicTraits:UIFontDescriptorTraitItalic];
-  UIFont *fontFromDescriptor = [UIFont fontWithDescriptor:fontDescriptor size:0];
-  return fontFromDescriptor ? fontFromDescriptor : [UIFont italicSystemFontOfSize:font.pointSize];
-}
-
-+ (UIFont *)boldFontFromFont:(UIFont *)font {
-  SEL selector = @selector(boldFontFromFont:);
-  if ([self.fontLoader respondsToSelector:selector]) {
-    return [self.fontLoader boldFontFromFont:font];
-  }
-  UIFontDescriptorSymbolicTraits traits = UIFontDescriptorTraitBold;
-  if (font.mdc_slant != 0) {
-    traits = traits | UIFontDescriptorTraitItalic;
-  }
-  UIFontDescriptor *fontDescriptor = [font.fontDescriptor fontDescriptorWithSymbolicTraits:traits];
-  UIFont *fontFromDescriptor = [UIFont fontWithDescriptor:fontDescriptor size:0];
-  return fontFromDescriptor ? fontFromDescriptor : [UIFont boldSystemFontOfSize:font.pointSize];
 }
 
 #pragma mark - Private
@@ -198,15 +115,21 @@ const CGFloat MDCTypographySecondaryOpacity = (CGFloat)0.54;
   self = [super init];
   if (self) {
     _fontCache = [[NSCache alloc] init];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(didChangeContentSizeCategory)
-                                                 name:UIContentSizeCategoryDidChangeNotification
-                                               object:nil];
+    [[NSNotificationCenter defaultCenter]
+        addObserver:self
+           selector:@selector(accessibilityFontAttributesDidChange)
+               name:UIContentSizeCategoryDidChangeNotification
+             object:nil];
+    [[NSNotificationCenter defaultCenter]
+        addObserver:self
+           selector:@selector(accessibilityFontAttributesDidChange)
+               name:UIAccessibilityBoldTextStatusDidChangeNotification
+             object:nil];
   }
   return self;
 }
 
-- (void)didChangeContentSizeCategory {
+- (void)accessibilityFontAttributesDidChange {
   [_fontCache removeAllObjects];
 }
 

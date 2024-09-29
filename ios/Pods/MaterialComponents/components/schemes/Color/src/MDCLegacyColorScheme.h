@@ -16,6 +16,11 @@
 
 #pragma mark - Soon to be deprecated
 
+API_DEPRECATED_BEGIN("🤖👀 Use go/material-ios-branding APIs instead. "
+                     "See go/material-ios-tokens guidance for more details. "
+                     "This has go/material-ios-migrations#scriptable-potential 🤖👀",
+                     ios(12, 12))
+
 /**
  A color scheme comprised of set of primary and secondary colors. Material design guidelines
  recommend using primary and secondary colors with light and dark color variants.
@@ -109,3 +114,5 @@
                               secondaryColor:(nonnull UIColor *)secondaryColor;
 
 @end
+
+API_DEPRECATED_END

@@ -122,7 +122,7 @@ static NSString *const kMaterialActionSheetBundle = @"MaterialActionSheet.bundle
 
 @synthesize mdc_overrideBaseElevation = _mdc_overrideBaseElevation;
 @synthesize mdc_elevationDidChangeBlock = _mdc_elevationDidChangeBlock;
-@synthesize mdc_adjustsFontForContentSizeCategory = _mdc_adjustsFontForContentSizeCategory;
+@synthesize adjustsFontForContentSizeCategory = _adjustsFontForContentSizeCategory;
 
 + (instancetype)actionSheetControllerWithTitle:(NSString *)title message:(NSString *)message {
   return [[MDCActionSheetController alloc] initWithTitle:title message:message];
@@ -142,6 +142,7 @@ static NSString *const kMaterialActionSheetBundle = @"MaterialActionSheet.bundle
     _actions = [[NSMutableArray alloc] init];
     _transitionController = [[MDCBottomSheetTransitionController alloc] init];
     _transitionController.dismissOnBackgroundTap = YES;
+    _transitionController.delegate = self;
     /**
      "We must call super because we've made the setters on this class unavailable and overridden
      their implementations to throw assertions."
@@ -179,6 +180,12 @@ static NSString *const kMaterialActionSheetBundle = @"MaterialActionSheet.bundle
   return self;
 }
 
+- (void)didDismissBottomSheetTransitionController:(MDCBottomSheetTransitionController *)controller {
+  if ([self.delegate respondsToSelector:@selector(actionSheetControllerDidDismiss:)]) {
+    [self.delegate actionSheetControllerDidDismiss:self];
+  }
+}
+
 - (void)addAction:(MDCActionSheetAction *)action {
   [_actions addObject:action];
   if (self.alwaysAlignTitleLeadingEdges && action.image) {
@@ -214,19 +221,11 @@ static NSString *const kMaterialActionSheetBundle = @"MaterialActionSheet.bundle
   self.tableView.frame = self.view.bounds;
   self.tableView.cellLayoutMarginsFollowReadableWidth = NO;
   self.view.preservesSuperviewLayoutMargins = YES;
-  if (@available(iOS 11.0, *)) {
-    self.view.insetsLayoutMarginsFromSafeArea = NO;
-    self.tableView.insetsLayoutMarginsFromSafeArea = NO;
-  }
+  self.view.insetsLayoutMarginsFromSafeArea = NO;
+  self.tableView.insetsLayoutMarginsFromSafeArea = NO;
   [self.view addSubview:self.tableView];
   [self.view addSubview:self.header];
   [self.view addSubview:self.headerDividerView];
-
-  NSString *key =
-      kMaterialActionSheetStringTable[kStr_MaterialActionSheetPresentedAccessibilityAnnouncement];
-  NSString *announcement = NSLocalizedStringFromTableInBundle(
-      key, kMaterialActionSheetStringsTableName, [[self class] bundle], @"Alert");
-  UIAccessibilityPostNotification(UIAccessibilityScreenChangedNotification, announcement);
 }
 
 - (void)viewDidLayoutSubviews {
@@ -243,9 +242,7 @@ static NSString *const kMaterialActionSheetBundle = @"MaterialActionSheet.bundle
   self.headerDividerView.frame =
       CGRectMake(0, size.height, CGRectGetWidth(self.view.bounds), dividerHeight);
   UIEdgeInsets insets = UIEdgeInsetsMake(size.height + dividerHeight, 0, 0, 0);
-  if (@available(iOS 11.0, *)) {
-    insets.bottom = self.tableView.adjustedContentInset.bottom;
-  }
+  insets.bottom = self.tableView.adjustedContentInset.bottom;
   self.tableView.contentInset = insets;
   self.tableView.contentOffset = CGPointMake(0, -size.height);
 }
@@ -267,9 +264,7 @@ static NSString *const kMaterialActionSheetBundle = @"MaterialActionSheet.bundle
       (((CGFloat)amountOfCellsToShow - (CGFloat)0.5) * cellHeight) + headerHeight;
   // When updating the preferredSheetHeight the presentation controller takes into account the
   // safe area so we have to remove that.
-  if (@available(iOS 11.0, *)) {
-    preferredHeight = preferredHeight - self.tableView.adjustedContentInset.bottom;
-  }
+  preferredHeight = preferredHeight - self.tableView.adjustedContentInset.bottom;
   return ceil(preferredHeight);
 }
 
@@ -294,6 +289,12 @@ static NSString *const kMaterialActionSheetBundle = @"MaterialActionSheet.bundle
   self.mdc_bottomSheetPresentationController.dismissOnBackgroundTap =
       self.transitionController.dismissOnBackgroundTap;
   [self.view layoutIfNeeded];
+
+  NSString *key =
+      kMaterialActionSheetStringTable[kStr_MaterialActionSheetPresentedAccessibilityAnnouncement];
+  NSString *announcement = NSLocalizedStringFromTableInBundle(
+      key, kMaterialActionSheetStringsTableName, [[self class] bundle], @"Alert");
+  UIAccessibilityPostNotification(UIAccessibilityScreenChangedNotification, announcement);
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
@@ -390,9 +391,9 @@ static NSString *const kMaterialActionSheetBundle = @"MaterialActionSheet.bundle
       [tableView dequeueReusableCellWithIdentifier:kReuseIdentifier forIndexPath:indexPath];
   MDCActionSheetAction *action = _actions[indexPath.row];
   cell.action = action;
-  cell.mdc_adjustsFontForContentSizeCategory = self.mdc_adjustsFontForContentSizeCategory;
   cell.backgroundColor = self.backgroundColor;
   cell.actionFont = self.actionFont;
+  cell.actionLabel.adjustsFontForContentSizeCategory = self.adjustsFontForContentSizeCategory;
   cell.accessibilityIdentifier = action.accessibilityIdentifier;
   cell.rippleColor = self.rippleColor;
   cell.tintColor = action.tintColor ?: self.actionTintColor;
@@ -511,31 +512,14 @@ static NSString *const kMaterialActionSheetBundle = @"MaterialActionSheet.bundle
 
 #pragma mark - Dynamic Type
 
-- (void)mdc_setAdjustsFontForContentSizeCategory:(BOOL)adjusts {
-  _mdc_adjustsFontForContentSizeCategory = adjusts;
-  self.header.mdc_adjustsFontForContentSizeCategory = adjusts;
-  [self updateFontsForDynamicType];
-  if (_mdc_adjustsFontForContentSizeCategory) {
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(updateFontsForDynamicType)
-                                                 name:UIContentSizeCategoryDidChangeNotification
-                                               object:nil];
-  } else {
-    [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                    name:UIContentSizeCategoryDidChangeNotification
-                                                  object:nil];
-  }
-  [self.view setNeedsLayout];
+- (void)setAdjustsFontForContentSizeCategory:(BOOL)adjustsFontForContentSizeCategory {
+  _adjustsFontForContentSizeCategory = adjustsFontForContentSizeCategory;
+  self.header.adjustsFontForContentSizeCategory = adjustsFontForContentSizeCategory;
 }
 
 - (void)updateTableFonts {
   UIFont *finalActionsFont =
       _actionFont ?: [UIFont mdc_standardFontForMaterialTextStyle:MDCFontTextStyleSubheadline];
-  if (self.mdc_adjustsFontForContentSizeCategory) {
-    finalActionsFont = [finalActionsFont
-        mdc_fontSizedForMaterialTextStyle:MDCFontTextStyleSubheadline
-                     scaledForDynamicType:self.mdc_adjustsFontForContentSizeCategory];
-  }
   _actionFont = finalActionsFont;
   [self updateTable];
 }

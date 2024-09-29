@@ -16,6 +16,10 @@
 
 #import "MDCShapeGenerating.h"
 
+API_DEPRECATED_BEGIN("🤖👀 Use layer.cornerRadius to achieve rounded corners. "
+                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
+                     ios(12, 12))
+
 @class MDCCornerTreatment;
 @class MDCEdgeTreatment;
 
@@ -62,3 +66,5 @@
 - (void)setEdges:(MDCEdgeTreatment *)edgeShape;
 
 @end
+
+API_DEPRECATED_END

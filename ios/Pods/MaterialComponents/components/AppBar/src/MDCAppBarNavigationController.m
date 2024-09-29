@@ -16,10 +16,19 @@
 
 #import "MDCAppBarNavigationControllerToBeDeprecatedDelegate.h"
 #import "MDCAppBarViewController.h"
-#import "MaterialFlexibleHeader.h"
-#import "MaterialHeaderStackView.h"
+#import "MDCFlexibleHeaderView+ShiftBehavior.h"
+#import "MDCFlexibleHeaderView.h"
+#import "MDCFlexibleHeaderViewController.h"
+#import "MDCHeaderStackView.h"
 
 #import <objc/runtime.h>
+
+#if defined(TARGET_OS_VISION) && TARGET_OS_VISION
+// For code review, use the review queue listed in go/material-visionos-review.
+#define IS_VISIONOS 1
+#else
+#define IS_VISIONOS 0
+#endif
 
 // Light-weight book-keeping associated with any pushed view controller.
 @interface MDCAppBarNavigationControllerInfo : NSObject
@@ -109,10 +118,10 @@
 
   [self injectAppBarIntoViewController:viewController];
 
+#if !IS_VISIONOS
   [self setNeedsStatusBarAppearanceUpdate];
-  if (@available(iOS 11.0, *)) {
-    [self setNeedsUpdateOfHomeIndicatorAutoHidden];
-  }
+#endif
+  [self setNeedsUpdateOfHomeIndicatorAutoHidden];
 }
 
 - (void)setViewControllers:(NSArray<UIViewController *> *)viewControllers animated:(BOOL)animated {
@@ -122,10 +131,10 @@
     [self injectAppBarIntoViewController:viewController];
   }
 
+#if !IS_VISIONOS
   [self setNeedsStatusBarAppearanceUpdate];
-  if (@available(iOS 11.0, *)) {
-    [self setNeedsUpdateOfHomeIndicatorAutoHidden];
-  }
+#endif
+  [self setNeedsUpdateOfHomeIndicatorAutoHidden];
 }
 
 - (void)setNavigationBarHidden:(BOOL)navigationBarHidden {
@@ -239,10 +248,8 @@
   info.trackingScrollView = trackingScrollView;
   [self setInfo:info forViewController:viewController];
 
-  if (@available(iOS 11.0, *)) {
-    appBar.appBarViewController.headerView
-        .disableContentInsetAdjustmentWhenContentInsetAdjustmentBehaviorIsNever = YES;
-  }
+  appBar.appBarViewController.headerView
+      .disableContentInsetAdjustmentWhenContentInsetAdjustmentBehaviorIsNever = YES;
 
   // Ensures that the view controller's top layout guide / additional safe area insets are adjusted
   // to take into consideration the flexible header's height.

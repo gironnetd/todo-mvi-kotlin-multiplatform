@@ -15,6 +15,10 @@
 #import <QuartzCore/QuartzCore.h>
 #import <UIKit/UIKit.h>
 
+API_DEPRECATED_BEGIN("🤖👀 Use layer.cornerRadius to achieve rounded corners. "
+                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
+                     ios(12, 12))
+
 @protocol MDCShapeGenerating;
 
 /*
@@ -32,7 +36,8 @@
  overriding the layerClass and subclassing MDCShadowLayer, which are both behaviors we want to no
  longer support due to their complexity and constraints.
  */
-__attribute__((objc_subclassing_restricted)) @interface MDCShapeMediator : NSObject
+__attribute__((objc_subclassing_restricted))
+@interface MDCShapeMediator : NSObject
 
 - (nonnull instancetype)init NS_UNAVAILABLE;
 
@@ -114,3 +119,5 @@ __attribute__((objc_subclassing_restricted)) @interface MDCShapeMediator : NSObj
 @property(nonatomic, strong, nonnull) CAShapeLayer *colorLayer;
 
 @end
+
+API_DEPRECATED_END

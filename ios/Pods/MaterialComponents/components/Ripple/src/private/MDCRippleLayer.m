@@ -14,7 +14,8 @@
 
 #import "MDCRippleLayer.h"
 
-#import "MaterialAnimationTiming.h"
+#import <CoreGraphics/CoreGraphics.h>
+
 #import "MDCRippleLayerDelegate.h"
 
 static const CGFloat kExpandRippleBeyondSurface = 10;
@@ -83,7 +84,7 @@ static CGFloat GetFinalRippleRadius(CGRect rect) {
     scaleAnim.fromValue = @(startingScale);
     scaleAnim.toValue = @1;
     scaleAnim.timingFunction =
-        [CAMediaTimingFunction mdc_functionWithType:MDCAnimationTimingFunctionStandard];
+        [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
 
     UIBezierPath *centerPath = [UIBezierPath bezierPath];
     CGPoint startPoint = point;
@@ -98,7 +99,7 @@ static CGFloat GetFinalRippleRadius(CGRect rect) {
     positionAnim.keyTimes = @[ @0, @1 ];
     positionAnim.values = @[ @0, @1 ];
     positionAnim.timingFunction =
-        [CAMediaTimingFunction mdc_functionWithType:MDCAnimationTimingFunctionStandard];
+        [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
 
     CABasicAnimation *fadeInAnim = [[CABasicAnimation alloc] init];
     fadeInAnim.keyPath = kRippleLayerOpacityString;

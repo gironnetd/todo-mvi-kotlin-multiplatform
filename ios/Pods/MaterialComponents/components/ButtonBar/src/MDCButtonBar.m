@@ -14,8 +14,6 @@
 
 #import "MDCButtonBar.h"
 
-#import <MDFInternationalization/MDFInternationalization.h>
-
 #import "MaterialAvailability.h"
 #import "MDCButtonBarDelegate.h"
 #import "MDCAppBarButtonBarBuilder.h"
@@ -95,7 +93,7 @@ static NSString *const kEnabledSelector = @"enabled";
   CGFloat totalWidth = 0;
 
   CGFloat edge;
-  switch (self.mdf_effectiveUserInterfaceLayoutDirection) {
+  switch (self.effectiveUserInterfaceLayoutDirection) {
     case UIUserInterfaceLayoutDirectionLeftToRight:
       edge = 0;
       break;
@@ -126,7 +124,7 @@ static NSString *const kEnabledSelector = @"enabled";
       }
     }
 
-    switch (self.mdf_effectiveUserInterfaceLayoutDirection) {
+    switch (self.effectiveUserInterfaceLayoutDirection) {
       case UIUserInterfaceLayoutDirectionLeftToRight:
         break;
       case UIUserInterfaceLayoutDirectionRightToLeft:
@@ -142,7 +140,7 @@ static NSString *const kEnabledSelector = @"enabled";
         }
       }
     }
-    switch (self.mdf_effectiveUserInterfaceLayoutDirection) {
+    switch (self.effectiveUserInterfaceLayoutDirection) {
       case UIUserInterfaceLayoutDirectionLeftToRight:
         edge += width;
         break;
@@ -558,17 +556,6 @@ static NSString *const kEnabledSelector = @"enabled";
 - (UIColor *)buttonsTitleColorForState:(UIControlState)state {
   return [_defaultBuilder titleColorForState:state];
 }
-
-// UISemanticContentAttribute was added in iOS SDK 9.0 but is available on devices running earlier
-// version of iOS. We ignore the partial-availability warning that gets thrown on our use of this
-// symbol.
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpartial-availability"
-- (void)mdf_setSemanticContentAttribute:(UISemanticContentAttribute)semanticContentAttribute {
-  [super mdf_setSemanticContentAttribute:semanticContentAttribute];
-  [self reloadButtonViews];
-}
-#pragma clang diagnostic pop
 
 - (void)setButtonTitleBaseline:(CGFloat)buttonTitleBaseline {
   _buttonTitleBaseline = buttonTitleBaseline;

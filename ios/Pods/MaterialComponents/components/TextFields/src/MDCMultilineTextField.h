@@ -25,14 +25,18 @@
 @protocol MDCMultilineTextInputDelegate;
 @protocol MDCMultilineTextInputLayoutDelegate;
 
+API_DEPRECATED_BEGIN(
+    "🕘 Schedule time to migrate. "
+    "Use branded UITextField or UITextView instead: go/material-ios-text-fields/gm2-migration. "
+    "This is go/material-ios-migrations#not-scriptable 🕘",
+    ios(12, 12))
+
 /**
   Material Design themed mutiline text field (multiline text input).
   https://www.google.com/design/spec/components/text-fields.html#text-fields-multi-line-text-field
  */
-__deprecated_msg(
-    "MDCTextField and its associated classes are deprecated. Please use TextControls instead.")
-    @interface MDCMultilineTextField
-    : UIView<MDCTextInput, MDCMultilineTextInput, MDCElevatable, MDCElevationOverriding>
+@interface MDCMultilineTextField
+    : UIView <MDCTextInput, MDCMultilineTextInput, MDCElevatable, MDCElevationOverriding>
 
 /** A mirror of the same property that already exists on UITextField, UITextView, and UILabel. */
 @property(nonatomic, assign) BOOL adjustsFontForContentSizeCategory;
@@ -95,3 +99,32 @@ __deprecated_msg(
     ;
 
 @end
+
+@interface MDCMultilineTextField (UIAccessibility)
+
+/**
+The default value of isAccessibilityElement for MDCMultilneTextField is false. When
+isAccessibilityElement is false, the entire view is treated as a container. VoiceOver traverses
+each accessibility element within MDCMultilineTextField and reads the accessibilityLabel of each
+element. Since MDCMutlilineTextField acts merely as a container, setting accessibilityLabel on
+MDCMultilineTextField has no effect.
+
+If isAccessibilityElement is set to true, the entire MDCMultilineTextField is treated as one
+accessibility element, as opposed to a container. The accessibilityLabel for MDCMultilineTextField
+will be a computed property. The value returned will be a concatenation of accessibilityLabel of the
+elements contained within the MDCMultilineTextField. If accessibilityLabel for MDCMultilineTextField
+is set, the assigned value is used in place of placeholder label's accessibilityLabel when
+concatenating.
+
+*/
+
+@property(nonatomic) BOOL isAccessibilityElement;
+
+/**
+ See comments for isAccessibilityElement
+ */
+@property(nullable, nonatomic, copy) NSString *accessibilityLabel;
+
+@end
+
+API_DEPRECATED_END

@@ -22,6 +22,13 @@
 #import "MaterialMath.h"
 #import "MaterialTypography.h"
 
+#if defined(TARGET_OS_VISION) && TARGET_OS_VISION
+// For code review, use the review queue listed in go/material-visionos-review.
+#define IS_VISIONOS 1
+#else
+#define IS_VISIONOS 0
+#endif
+
 static const NSUInteger kTitleFontSize = 20;
 static const CGFloat kNavigationBarDefaultHeight = 56;
 static const CGFloat kNavigationBarMinHeight = 24;
@@ -250,11 +257,9 @@ static NSArray<NSString *> *MDCNavigationBarNavigationItemKVOPaths(void) {
   // For pre iOS 11 devices, it's safe to assume that the Safe Area insets' left and right
   // values are zero. DO NOT use this to get the top or bottom Safe Area insets.
   UIEdgeInsets RTLFriendlySafeAreaInsets = UIEdgeInsetsZero;
-  if (@available(iOS 11.0, *)) {
-    RTLFriendlySafeAreaInsets = MDFInsetsMakeWithLayoutDirection(
-        self.safeAreaInsets.top, self.safeAreaInsets.left, self.safeAreaInsets.bottom,
-        self.safeAreaInsets.right, self.mdf_effectiveUserInterfaceLayoutDirection);
-  }
+  RTLFriendlySafeAreaInsets = MDFInsetsMakeWithLayoutDirection(
+      self.safeAreaInsets.top, self.safeAreaInsets.left, self.safeAreaInsets.bottom,
+      self.safeAreaInsets.right, self.effectiveUserInterfaceLayoutDirection);
 
   CGSize leadingButtonBarSize = [_leadingButtonBar sizeThatFits:self.bounds.size];
   CGRect leadingButtonBarFrame =
@@ -266,7 +271,7 @@ static NSArray<NSString *> *MDCNavigationBarNavigationItemKVOPaths(void) {
   CGRect trailingButtonBarFrame =
       CGRectMake(xOrigin, CGRectGetMinY(self.bounds), trailingButtonBarSize.width,
                  trailingButtonBarSize.height);
-  if (self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+  if (self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
     leadingButtonBarFrame =
         MDFRectFlippedHorizontally(leadingButtonBarFrame, CGRectGetWidth(self.bounds));
     trailingButtonBarFrame =
@@ -279,10 +284,8 @@ static NSArray<NSString *> *MDCNavigationBarNavigationItemKVOPaths(void) {
   CGRect textFrame = UIEdgeInsetsInsetRect(self.bounds, self.titleInsets);
   textFrame.origin.x += _leadingButtonBar.frame.size.width;
   textFrame.size.width -= _leadingButtonBar.frame.size.width + _trailingButtonBar.frame.size.width;
-  if (@available(iOS 11.0, *)) {
-    textFrame.origin.x += self.safeAreaInsets.left;
-    textFrame.size.width -= self.safeAreaInsets.left + self.safeAreaInsets.right;
-  }
+  textFrame.origin.x += self.safeAreaInsets.left;
+  textFrame.size.width -= self.safeAreaInsets.left + self.safeAreaInsets.right;
 
   // Layout TitleLabel
   NSMutableParagraphStyle *paraStyle = [[NSMutableParagraphStyle alloc] init];
@@ -299,7 +302,7 @@ static NSArray<NSString *> *MDCNavigationBarNavigationItemKVOPaths(void) {
   titleSize.width = ceil(titleSize.width);
   titleSize.height = ceil(titleSize.height);
   CGRect titleFrame = CGRectMake(textFrame.origin.x, 0, titleSize.width, titleSize.height);
-  if (self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+  if (self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
     titleFrame = MDFRectFlippedHorizontally(titleFrame, CGRectGetWidth(self.bounds));
   }
   UIControlContentVerticalAlignment titleVerticalAlignment = UIControlContentVerticalAlignmentTop;
@@ -307,10 +310,14 @@ static NSArray<NSString *> *MDCNavigationBarNavigationItemKVOPaths(void) {
                                             withinBounds:textFrame
                                                alignment:titleVerticalAlignment];
   alignedFrame = [self mdc_frameAlignedHorizontally:alignedFrame alignment:self.titleAlignment];
+#if !IS_VISIONOS
   _titleLabel.frame = MDCRectAlignToScale(alignedFrame, self.window.screen.scale);
-
+#else
+  UITraitCollection *current = [UITraitCollection currentTraitCollection];
+  _titleLabel.frame = MDCRectAlignToScale(alignedFrame, current ? [current displayScale] : 1.0);
+#endif
   // Layout TitleView
-  if (self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+  if (self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
     textFrame = MDFRectFlippedHorizontally(textFrame, CGRectGetWidth(self.bounds));
   }
 
@@ -320,14 +327,16 @@ static NSArray<NSString *> *MDCNavigationBarNavigationItemKVOPaths(void) {
       // Do nothing. The default textFrame calculation will fill the available space.
       break;
 
-    case MDCNavigationBarTitleViewLayoutBehaviorCenter: {
+    case MDCNavigationBarTitleViewLayoutBehaviorCenter:  // Intentional fall through.
+    case MDCNavigationBarTitleViewLayoutBehaviorCenterFit: {
       CGFloat availableWidth = UIEdgeInsetsInsetRect(self.bounds, self.titleInsets).size.width;
       availableWidth -=
           MAX(_leadingButtonBar.frame.size.width, _trailingButtonBar.frame.size.width) * 2;
-      if (@available(iOS 11.0, *)) {
-        availableWidth -= self.safeAreaInsets.left + self.safeAreaInsets.right;
-      }
+      availableWidth -= self.safeAreaInsets.left + self.safeAreaInsets.right;
       titleViewFrame.size.width = availableWidth;
+      if (self.titleViewLayoutBehavior == MDCNavigationBarTitleViewLayoutBehaviorCenterFit) {
+        titleViewFrame.size.width = MIN(self.titleView.intrinsicContentSize.width, availableWidth);
+      }
       titleViewFrame = [self mdc_frameAlignedHorizontally:titleViewFrame
                                                 alignment:MDCNavigationBarTitleAlignmentCenter];
       break;
@@ -524,8 +533,8 @@ static NSArray<NSString *> *MDCNavigationBarNavigationItemKVOPaths(void) {
   switch (alignment) {
     // Center align title
     case MDCNavigationBarTitleAlignmentCenter: {
-      BOOL isRTL = [self mdf_effectiveUserInterfaceLayoutDirection] ==
-                   UIUserInterfaceLayoutDirectionRightToLeft;
+      BOOL isRTL =
+          [self effectiveUserInterfaceLayoutDirection] == UIUserInterfaceLayoutDirectionRightToLeft;
 
       MDCButtonBar *leftButtonBar = self.leadingButtonBar;
       MDCButtonBar *rightButtonBar = self.trailingButtonBar;

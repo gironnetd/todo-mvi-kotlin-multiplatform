@@ -15,8 +15,8 @@
 #import "MDCActionSheetItemTableViewCell.h"
 #import "MDCActionSheetAction.h"
 
-#import <MaterialComponents/MaterialRipple.h>
-#import <MaterialComponents/MaterialTypography.h>
+#import "MaterialRipple.h"  // ComponentImport
+#import "MaterialTypography.h"  // ComponentImport
 
 static const CGFloat kLabelAlpha = (CGFloat)0.87;
 static const CGFloat kImageTopPadding = 16;
@@ -26,7 +26,7 @@ static const CGFloat kActionItemTitleVerticalPadding = 18;
 /** The height of the divider. */
 static const CGFloat kDividerHeight = 1;
 
-static inline UIColor *RippleColor() {
+static inline UIColor *RippleColor(void) {
   return [[UIColor alloc] initWithWhite:0 alpha:(CGFloat)0.14];
 }
 
@@ -53,8 +53,6 @@ static inline UIColor *RippleColor() {
   NSLayoutConstraint *_contentContainerTrailingConstraint;
 }
 
-@synthesize mdc_adjustsFontForContentSizeCategory = _mdc_adjustsFontForContentSizeCategory;
-
 - (instancetype)initWithStyle:(UITableViewCellStyle)style
               reuseIdentifier:(NSString *)reuseIdentifier {
   self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
@@ -65,7 +63,6 @@ static inline UIColor *RippleColor() {
 }
 
 - (void)commonMDCActionSheetItemViewInit {
-  self.translatesAutoresizingMaskIntoConstraints = NO;
   self.selectionStyle = UITableViewCellSelectionStyleNone;
   self.accessibilityTraits = UIAccessibilityTraitButton;
   _contentContainerView = [[UIView alloc] initWithFrame:self.bounds];
@@ -78,10 +75,10 @@ static inline UIColor *RippleColor() {
       constraintEqualToAnchor:_contentContainerView.leadingAnchor];
   _contentContainerLeadingConstraint.active = YES;
   _contentContainerBottomConstraint =
-      [_contentContainerView.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor];
+      [self.contentView.bottomAnchor constraintEqualToAnchor:_contentContainerView.bottomAnchor];
   _contentContainerBottomConstraint.active = YES;
-  _contentContainerTrailingConstraint = [_contentContainerView.trailingAnchor
-      constraintEqualToAnchor:self.contentView.layoutMarginsGuide.trailingAnchor];
+  _contentContainerTrailingConstraint = [self.contentView.layoutMarginsGuide.trailingAnchor
+      constraintEqualToAnchor:_contentContainerView.trailingAnchor];
   _contentContainerTrailingConstraint.active = YES;
 
   _divider = [[UIView alloc] init];
@@ -105,7 +102,6 @@ static inline UIColor *RippleColor() {
   [_contentContainerView addSubview:_actionLabel];
   _actionLabel.numberOfLines = 0;
   _actionLabel.translatesAutoresizingMaskIntoConstraints = NO;
-  [_actionLabel sizeToFit];
   _actionLabel.font = [UIFont mdc_preferredFontForMaterialTextStyle:MDCFontTextStyleSubheadline];
   _actionLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
   _actionLabel.textColor = [UIColor.blackColor colorWithAlphaComponent:kLabelAlpha];
@@ -116,16 +112,14 @@ static inline UIColor *RippleColor() {
   [_actionLabel.topAnchor constraintEqualToAnchor:_contentContainerView.topAnchor
                                          constant:kActionItemTitleVerticalPadding]
       .active = YES;
-  NSLayoutConstraint *labelBottomConstraint =
-      [_actionLabel.bottomAnchor constraintEqualToAnchor:_contentContainerView.bottomAnchor
-                                                constant:-kActionItemTitleVerticalPadding];
-  labelBottomConstraint.priority = UILayoutPriorityDefaultHigh;
-  labelBottomConstraint.active = YES;
+  [_actionLabel.bottomAnchor constraintEqualToAnchor:_contentContainerView.bottomAnchor
+                                            constant:-kActionItemTitleVerticalPadding]
+      .active = YES;
   _titleLeadingConstraint =
       [_actionLabel.leadingAnchor constraintEqualToAnchor:_contentContainerView.leadingAnchor
                                                  constant:leadingConstant];
   _titleLeadingConstraint.active = YES;
-  [_contentContainerView.trailingAnchor constraintEqualToAnchor:_actionLabel.trailingAnchor]
+  [_actionLabel.trailingAnchor constraintEqualToAnchor:_contentContainerView.trailingAnchor]
       .active = YES;
 
   _rippleColor = RippleColor();
@@ -217,19 +211,8 @@ static inline UIColor *RippleColor() {
 - (void)updateTitleFont {
   UIFont *titleFont =
       _actionFont ?: [UIFont mdc_standardFontForMaterialTextStyle:MDCFontTextStyleSubheadline];
-  if (self.mdc_adjustsFontForContentSizeCategory) {
-    self.actionLabel.font =
-        [titleFont mdc_fontSizedForMaterialTextStyle:MDCFontTextStyleSubheadline
-                                scaledForDynamicType:self.mdc_adjustsFontForContentSizeCategory];
-  } else {
-    self.actionLabel.font = titleFont;
-  }
+  self.actionLabel.font = titleFont;
   [self setNeedsLayout];
-}
-
-- (void)mdc_setAdjustsFontForContentSizeCategory:(BOOL)adjusts {
-  _mdc_adjustsFontForContentSizeCategory = adjusts;
-  [self updateTitleFont];
 }
 
 - (void)setActionTextColor:(UIColor *)actionTextColor {

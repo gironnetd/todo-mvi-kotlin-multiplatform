@@ -12,10 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import <MaterialComponents/MaterialInk.h>
+#import "MDCMinimumOS.h"  // IWYU pragma: keep
+
 #import <UIKit/UIKit.h>
 #import "MDCActionSheetController.h"
+#import "MaterialInk.h"  // ComponentImport
 #import "MaterialInk.h"
+
+API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
+                     "Follow go/material-ios-menus to use UIMenu instead."
+                     "Use UIAlertController in action sheet style for destructive confirmations. "
+                     "This is go/material-ios-migrations#not-scriptable 🕘",
+                     ios(12, 12))
 
 @interface MDCActionSheetItemTableViewCell : UITableViewCell
 /**
@@ -23,9 +31,6 @@
   If you need to change any of the three you must pass a new action in.
 */
 @property(nonatomic, nonnull) MDCActionSheetAction *action;
-
-@property(nonatomic, setter=mdc_setAdjustsFontForContentSizeCategory:)
-    BOOL mdc_adjustsFontForContentSizeCategory;
 
 @property(nonatomic, nonnull, strong) UIFont *actionFont;
 
@@ -72,3 +77,5 @@
 @property(nonatomic, strong, nonnull) UILabel *actionLabel;
 
 @end
+
+API_DEPRECATED_END

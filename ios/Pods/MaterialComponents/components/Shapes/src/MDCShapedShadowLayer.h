@@ -16,6 +16,11 @@
 
 #import "MaterialShadowLayer.h"
 
+API_DEPRECATED_BEGIN("🤖👀 Use branded UIKit shadows instead. "
+                     "See go/material-ios-elevation/gm2-migration for more details. "
+                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
+                     ios(12, 12))
+
 @protocol MDCShapeGenerating;
 
 /*
@@ -79,3 +84,5 @@
 @property(nonatomic, strong, nonnull) CAShapeLayer *colorLayer;
 
 @end
+
+API_DEPRECATED_END

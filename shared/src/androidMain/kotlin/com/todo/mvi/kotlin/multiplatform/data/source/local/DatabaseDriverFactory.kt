@@ -1,8 +1,10 @@
 package com.todo.mvi.kotlin.multiplatform.data.source.local
 
 import android.content.Context
-import com.squareup.sqldelight.android.AndroidSqliteDriver
-import com.squareup.sqldelight.db.SqlDriver
+import app.cash.sqldelight.db.SqlDriver
+import app.cash.sqldelight.driver.android.AndroidSqliteDriver
+//import com.squareup.sqldelight.android.AndroidSqliteDriver
+//import com.squareup.sqldelight.db.SqlDriver
 import com.todo.mvi.kotlin.multiplatform.TasksDatabase
 
 actual class DatabaseDriverFactory(val context: Context) {

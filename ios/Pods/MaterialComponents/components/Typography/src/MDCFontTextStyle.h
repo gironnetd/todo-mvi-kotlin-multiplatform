@@ -23,6 +23,11 @@
  + [UIFont mdc_preferredFontForMaterialTextStyle:]
  + [UIFontDescriptor mdc_preferredFontDescriptorForMaterialTextStyle:]
  */
+API_DEPRECATED("🤖👀 Use Typescale tokens instead. "
+               "See go/material-ios-dynamic-type#custom-fonts and "
+               "go/material-ios-tokens#typescale-tokens for more info. "
+               "This has go/material-ios-migrations#scriptable-potential 🤖👀",
+               ios(11, 12))
 typedef NS_ENUM(NSInteger, MDCFontTextStyle) {
   MDCFontTextStyleBody1,
   MDCFontTextStyleBody2,
@@ -31,8 +36,5 @@ typedef NS_ENUM(NSInteger, MDCFontTextStyle) {
   MDCFontTextStyleSubheadline,
   MDCFontTextStyleTitle,
   MDCFontTextStyleDisplay1,
-  MDCFontTextStyleDisplay2,
-  MDCFontTextStyleDisplay3,
-  MDCFontTextStyleDisplay4,
   MDCFontTextStyleButton,
 };

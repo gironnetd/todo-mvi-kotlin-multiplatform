@@ -14,6 +14,11 @@
 
 #import <UIKit/UIKit.h>
 
+API_DEPRECATED_BEGIN("🤖👀 Use go/material-ios-branding UISlider instead. "
+                     "See go/material-ios-slider/gm2-migration for more details. "
+                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
+                     ios(12, 12))
+
 // Credit to the Beacon Tools iOS team for the idea for this implementations
 @interface MDCDiscreteDotView : UIView
 
@@ -35,3 +40,5 @@
 @property(nonatomic, assign) CGRect activeDotsSegment;
 
 @end
+
+API_DEPRECATED_END

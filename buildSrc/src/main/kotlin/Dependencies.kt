@@ -67,10 +67,10 @@ class Dependencies {
 
         object Squareup {
             object SQLDelight {
-                const val gradlePlugin = "com.squareup.sqldelight:gradle-plugin:${Versions.Com.Squareup.SQLDelight.VERSION}"
-                const val androidDriver = "com.squareup.sqldelight:android-driver:${Versions.Com.Squareup.SQLDelight.VERSION}"
-                const val sqliteDriver = "com.squareup.sqldelight:sqlite-driver:${Versions.Com.Squareup.SQLDelight.VERSION}"
-                const val nativeDriver = "com.squareup.sqldelight:native-driver:${Versions.Com.Squareup.SQLDelight.VERSION}"
+                const val gradlePlugin = "app.cash.sqldelight:gradle-plugin:${Versions.Com.Squareup.SQLDelight.VERSION}"
+                const val androidDriver = "app.cash.sqldelight:android-driver:${Versions.Com.Squareup.SQLDelight.VERSION}"
+                const val sqliteDriver = "app.cash.sqldelight:sqlite-driver:${Versions.Com.Squareup.SQLDelight.VERSION}"
+                const val nativeDriver = "app.cash.sqldelight:native-driver:${Versions.Com.Squareup.SQLDelight.VERSION}"
             }
         }
     }

@@ -16,6 +16,12 @@
 
 #import "MaterialTextControls+Enums.h"
 
+API_DEPRECATED_BEGIN(
+    "🕘 Schedule time to migrate. "
+    "Use branded UITextField or UITextView instead: go/material-ios-text-fields/gm2-migration. "
+    "This is go/material-ios-migrations#not-scriptable 🕘",
+    ios(12, 12))
+
 @protocol MDCBaseTextFieldDelegate;
 
 /**
@@ -100,8 +106,7 @@
  @param state The MDCTextControlState.
  */
 - (void)setNormalLabelColor:(nonnull UIColor *)normalLabelColor
-                   forState:(MDCTextControlState)state
-    NS_SWIFT_NAME(setNormalLabelColor(_:for:));
+                   forState:(MDCTextControlState)state NS_SWIFT_NAME(setNormalLabelColor(_:for:));
 
 /**
  Returns the normal label color for a given state.
@@ -181,7 +186,7 @@
 
 /**
  This property allows the user to override the default height of the container. The container is the
- region above the the assistive labels within the text field. If there is no assistive label text,
+ region above the assistive labels within the text field. If there is no assistive label text,
  the container's frame will be equal to the frame of the text field itself.
 
  If this property is set to a value that's smaller than the
@@ -213,14 +218,46 @@
  */
 @property(nonatomic, assign) CGFloat verticalDensity;
 
+/**
+ The duration for any animations the text field performs.
+ */
+@property(nonatomic, assign) NSTimeInterval animationDuration;
+
 @end
 
 @interface MDCBaseTextField (UIAccessibility)
 
 /**
- If @c accessibilityLabel is not set, this value will be a concatenation of any @c label text, @c
- leadingAssistiveLabel text, and @c trailingAssistiveLabel text.
+Apple's documentation for this property states that it is NO by default, unless the object is a
+UIKit control, in which case it is YES by default. UITextField is a subclass of UIControl, but its
+default value for this property (on devices specifically, not simulators) appears to be NO.
+MDCBaseTextField does not change UITextField's default value for this property. This means that on
+MDCBaseTextField this property is by default NO as well. It also means that the text field behaves
+more like an accessibility container, where every accessible thing within it is an accessibility
+element.
+
+Setting this property explicitly to YES on MDCBaseTextField results in the entire MDCBaseTextField
+being treated as one accessibility element, as opposed to a container. When this happens,
+@c accessibilityLabel will be treated as a computed property if it has not been explicitly set. The
+value returned will be a concatenation of the elements contained within the text field. If @c
+isAccessibilityElement has been set to YES, and @c accessibilityLabel has also been set, then the
+assigned value of @c accessibilityLabel will be used for the entire text field. Explicitly setting
+this property to NO (as opposed to leaving it as NO to begin with) causes VoiceOver to completely
+ignore the text field, so that is not recommended.
+ */
+@property(nonatomic) BOOL isAccessibilityElement;
+
+/**
+ If you set @c accessibilityLabel, but not @c isAccessibilityElement, then UITextField will
+ forward the @c accessibilityLabel value you set to an internal system text field element. This will
+ be read out as just one of several accessibility elements within the text field. If you explicitly
+ set @c isAccessibilityElement to YES, then set @c accessibilityLabel, the value you set here will
+ be used as the entire text field's accessibility label. If you explicitly set @c
+ isAccessibilityElement to YES, but not @c accessibilityLabel, then @c accessibilityLabel will
+ return a computed value that is a concatenation of the elements contained within the text field.
  */
 @property(nullable, nonatomic, copy) NSString *accessibilityLabel;
 
 @end
+
+API_DEPRECATED_END

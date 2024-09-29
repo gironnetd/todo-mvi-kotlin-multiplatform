@@ -15,6 +15,8 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 // These notifications mirror their UIKeyboard* counterparts. They are posted after the keyboard
 // watcher has updated its own internal state, so listeners are safe to query the keyboard watcher
 // for its values.
@@ -49,14 +51,6 @@ OBJC_EXTERN NSString *const MDCKeyboardWatcherKeyboardWillChangeFrameNotificatio
  */
 @property(nonatomic, readonly) CGFloat visibleKeyboardHeight;
 
-#pragma mark deprecated
-
-/**
- The distance from the top of the keyboard to the bottom of the screen.
-
- Zero if the keyboard is not currently showing or is not docked.
- */
-@property(nonatomic, readonly)
-    CGFloat keyboardOffset __deprecated_msg("Use visibleKeyboardHeight instead of keyboardOffset");
-
 @end
+
+NS_ASSUME_NONNULL_END

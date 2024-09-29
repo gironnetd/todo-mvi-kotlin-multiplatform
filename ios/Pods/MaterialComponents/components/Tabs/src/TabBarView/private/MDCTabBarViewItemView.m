@@ -16,9 +16,13 @@
 
 #import <CoreGraphics/CoreGraphics.h>
 
-#import "MaterialRipple.h"
+#import "MDCBadgeAppearance.h"
+#import "MDCBadgeView.h"
+#import "MDCRippleTouchController.h"
 #import "MDCTabBarViewItemViewDelegate.h"
-#import "MaterialMath.h"
+#import "MDCMath.h"
+
+NS_ASSUME_NONNULL_BEGIN
 
 /** The minimum height of any item view with only a title or image (not both). */
 static const CGFloat kMinHeightTitleOrImageOnly = 48;
@@ -29,16 +33,28 @@ static const CGFloat kMinHeightTitleAndImage = 72;
 /** The vertical padding between the image view and the title label. */
 static const CGFloat kImageTitlePadding = 3;
 
+/** The horizontal padding between the image view or title label and badge. */
+static const CGFloat kBadgeXOffset = 4;
+
+/** The amount the badge overlaps with the image view when an image is present. */
+static const CGFloat kBadgeXInset = 12;
+
 @interface MDCTabBarViewItemView ()
 
 /** Indicates the selection status of this item view. */
 @property(nonatomic, assign, getter=isSelected) BOOL selected;
 
+- (CGPoint)badgeCenterFromFrame:(CGRect)frame isRTL:(BOOL)isRTL;
+
 @end
 
-@implementation MDCTabBarViewItemView
+@implementation MDCTabBarViewItemView {
+  MDCBadgeView *_Nonnull _badge;
+}
 
 @synthesize selectedImage = _selectedImage;
+@synthesize badgeText = _badgeText;
+@synthesize badgeAppearance = _badgeAppearance;
 
 #pragma mark - Init
 
@@ -53,7 +69,7 @@ static const CGFloat kImageTitlePadding = 3;
   return self;
 }
 
-- (instancetype)initWithCoder:(NSCoder *)aDecoder {
+- (nullable instancetype)initWithCoder:(NSCoder *)aDecoder {
   self = [super initWithCoder:aDecoder];
   if (self) {
     self.isAccessibilityElement = YES;
@@ -82,6 +98,47 @@ static const CGFloat kImageTitlePadding = 3;
     _titleLabel.isAccessibilityElement = NO;
     [self addSubview:_titleLabel];
   }
+
+  if (!_badgeAppearance) {
+    // We store a local copy of the badge appearance so that we can consistently override with the
+    // UITabBarItem badgeColor property.
+    _badgeAppearance = [[MDCBadgeAppearance alloc] init];
+  }
+
+  if (!_badge) {
+    _badge = [[MDCBadgeView alloc] initWithFrame:CGRectZero];
+    _badge.isAccessibilityElement = NO;
+    [self addSubview:_badge];
+    _badge.hidden = YES;
+  }
+
+  _iconSize = CGSizeZero;
+}
+
+- (CGPoint)badgeCenterFromFrame:(CGRect)frame isRTL:(BOOL)isRTL {
+  CGSize badgeSize = [_badge sizeThatFits:CGSizeMake(CGFLOAT_MAX, CGFLOAT_MAX)];
+
+  CGFloat halfBadgeHeight = badgeSize.height / 2;
+  CGFloat halfBadgeWidth = badgeSize.width / 2;
+
+  CGFloat badgeCenterY = (CGRectGetMinY(frame) - 4) + halfBadgeHeight;
+  badgeCenterY -= _badge.appearance.borderWidth / 2;
+
+  CGFloat xCenter = isRTL ? (CGRectGetMinX(frame) - kBadgeXOffset) + halfBadgeWidth
+                          : (CGRectGetMaxX(frame) + kBadgeXOffset) - halfBadgeWidth;
+  xCenter -= _badge.appearance.borderWidth / 2;
+
+  return CGPointMake(xCenter, badgeCenterY);
+}
+
+- (CGPoint)centerForOnlyTitleFromFrame:(CGRect)frame isRTL:(BOOL)isRTL {
+  CGSize badgeSize = [_badge sizeThatFits:CGSizeMake(CGFLOAT_MAX, CGFLOAT_MAX)];
+
+  CGFloat halfBadgeWidth = badgeSize.width / 2;
+  CGFloat centerY = CGRectGetMidY(frame);
+  CGFloat centerX = isRTL ? CGRectGetMinX(frame) - halfBadgeWidth - kBadgeXOffset
+                          : CGRectGetMaxX(frame) + halfBadgeWidth + kBadgeXOffset;
+  return CGPointMake(centerX, centerY);
 }
 
 #pragma mark - UIView
@@ -93,11 +150,23 @@ static const CGFloat kImageTitlePadding = 3;
     return;
   }
 
-  if (self.titleLabel.text.length && !self.iconImageView.image) {
-    self.titleLabel.frame = [self titleLabelFrameForTitleOnlyLayout];
+  [_badge sizeToFit];
+
+  BOOL isRTL =
+      self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft;
+
+  BOOL hasTitle = self.titleLabel.text.length > 0 ? YES : NO;
+  BOOL hasIcon = self.iconImageView.image != nil ? YES : NO;
+
+  if (hasTitle && !hasIcon) {
+    CGRect titleLabelFrame = [self titleLabelFrameForTitleOnlyLayout];
+    self.titleLabel.frame = titleLabelFrame;
+    _badge.center = [self centerForOnlyTitleFromFrame:titleLabelFrame isRTL:isRTL];
     return;
-  } else if (!self.titleLabel.text.length && self.iconImageView.image) {
-    self.iconImageView.frame = [self iconImageViewFrameForImageOnlyLayout];
+  } else if (!hasTitle && hasIcon) {
+    CGRect iconImageFrame = [self iconImageViewFrameForImageOnlyLayout];
+    self.iconImageView.frame = iconImageFrame;
+    _badge.center = [self badgeCenterFromFrame:iconImageFrame isRTL:isRTL];
     return;
   } else {
     CGRect titleLabelFrame = CGRectZero;
@@ -105,6 +174,7 @@ static const CGFloat kImageTitlePadding = 3;
     [self layoutTitleLabelFrame:&titleLabelFrame iconImageViewFrame:&iconImageViewFrame];
     self.titleLabel.frame = titleLabelFrame;
     self.iconImageView.frame = iconImageViewFrame;
+    _badge.center = [self badgeCenterFromFrame:iconImageViewFrame isRTL:isRTL];
   }
 }
 
@@ -132,7 +202,9 @@ static const CGFloat kImageTitlePadding = 3;
       self.bounds, [self contentInsetsForItemViewStyle:MDCTabBarViewItemViewStyleImageOnly]);
 
   CGSize contentSize = CGSizeMake(CGRectGetWidth(contentFrame), CGRectGetHeight(contentFrame));
-  CGSize imageIntrinsicContentSize = self.iconImageView.intrinsicContentSize;
+  CGSize imageIntrinsicContentSize = CGSizeEqualToSize(self.iconSize, CGSizeZero)
+                                         ? self.iconImageView.intrinsicContentSize
+                                         : self.iconSize;
   CGSize imageFinalSize = CGSizeMake(MIN(contentSize.width, imageIntrinsicContentSize.width),
                                      MIN(contentSize.height, imageIntrinsicContentSize.height));
   CGRect imageViewFrame = CGRectMake(CGRectGetMidX(contentFrame) - (imageFinalSize.width / 2),
@@ -152,7 +224,9 @@ static const CGFloat kImageTitlePadding = 3;
       contentSize.width, contentSize.height - (kImageTitlePadding + labelSingleLineSize.height));
 
   // Position the image, limiting it so that at least 1 line of text remains.
-  CGSize imageIntrinsicContentSize = self.iconImageView.intrinsicContentSize;
+  CGSize imageIntrinsicContentSize = CGSizeEqualToSize(self.iconSize, CGSizeZero)
+                                         ? self.iconImageView.intrinsicContentSize
+                                         : self.iconSize;
   CGSize imageFinalSize =
       CGSizeMake(MIN(imageIntrinsicContentSize.width, availableIconSize.width),
                  MIN(imageIntrinsicContentSize.height, availableIconSize.height));
@@ -199,8 +273,16 @@ static const CGFloat kImageTitlePadding = 3;
 - (CGSize)sizeThatFitsTextOnly:(CGSize)size {
   CGSize maxSize = CGSizeMake(CGFLOAT_MAX, CGFLOAT_MAX);
   CGSize labelSize = [self.titleLabel sizeThatFits:maxSize];
+
   UIEdgeInsets contentInsets =
       [self contentInsetsForItemViewStyle:MDCTabBarViewItemViewStyleTextOnly];
+  if (self.badgeText != nil) {
+    CGSize badgeSize = [_badge sizeThatFits:maxSize];
+    return CGSizeMake(MAX([self minWidth], badgeSize.width + kBadgeXOffset + labelSize.width +
+                                               contentInsets.left + contentInsets.right),
+                      MAX(kMinHeightTitleOrImageOnly,
+                          labelSize.height + contentInsets.top + contentInsets.bottom));
+  }
   return CGSizeMake(
       MAX([self minWidth], labelSize.width + contentInsets.left + contentInsets.right),
       MAX(kMinHeightTitleOrImageOnly, labelSize.height + contentInsets.top + contentInsets.bottom));
@@ -210,6 +292,14 @@ static const CGFloat kImageTitlePadding = 3;
   CGSize imageIntrinsicContentSize = self.iconImageView.intrinsicContentSize;
   UIEdgeInsets contentInsets =
       [self contentInsetsForItemViewStyle:MDCTabBarViewItemViewStyleImageOnly];
+  if (self.badgeText != nil) {
+    CGSize badgeSize = [_badge sizeThatFits:size];
+    return CGSizeMake(
+        MAX([self minWidth], badgeSize.width - kBadgeXInset + imageIntrinsicContentSize.width +
+                                 contentInsets.left + contentInsets.right),
+        MAX(kMinHeightTitleOrImageOnly,
+            imageIntrinsicContentSize.height + contentInsets.top + contentInsets.bottom));
+  }
   return CGSizeMake(MAX([self minWidth],
                         imageIntrinsicContentSize.width + contentInsets.left + contentInsets.right),
                     MAX(kMinHeightTitleOrImageOnly, imageIntrinsicContentSize.height +
@@ -222,6 +312,15 @@ static const CGFloat kImageTitlePadding = 3;
   CGSize imageFitSize = self.iconImageView.intrinsicContentSize;
   UIEdgeInsets contentInsets =
       [self contentInsetsForItemViewStyle:MDCTabBarViewItemViewStyleTextAndImage];
+  if (self.badgeText != nil) {
+    CGSize badgeSize = [_badge sizeThatFits:maxSize];
+    CGFloat badgeIconWidth = imageFitSize.width + badgeSize.width - kBadgeXInset;
+    return CGSizeMake(
+        MAX([self minWidth],
+            contentInsets.left + MAX(badgeIconWidth, labelFitSize.width) + contentInsets.right),
+        MAX(kMinHeightTitleAndImage, contentInsets.top + imageFitSize.height + kImageTitlePadding +
+                                         labelFitSize.height + contentInsets.bottom));
+  }
   return CGSizeMake(
       MAX([self minWidth],
           contentInsets.left + MAX(imageFitSize.width, labelFitSize.width) + contentInsets.right),
@@ -231,19 +330,29 @@ static const CGFloat kImageTitlePadding = 3;
 
 #pragma mark - MDCTabBarViewItemView properties
 
-- (void)setImage:(UIImage *)image {
+- (void)setDisableRippleBehavior:(BOOL)disableRippleBehavior {
+  _disableRippleBehavior = disableRippleBehavior;
+
+  if (_disableRippleBehavior) {
+    _rippleTouchController = nil;
+  } else {
+    _rippleTouchController = [[MDCRippleTouchController alloc] initWithView:self];
+  }
+}
+
+- (void)setImage:(nullable UIImage *)image {
   _image = image;
   self.iconImageView.image = self.selected ? self.selectedImage : self.image;
   [self setNeedsLayout];
 }
 
-- (void)setSelectedImage:(UIImage *)selectedImage {
+- (void)setSelectedImage:(nullable UIImage *)selectedImage {
   _selectedImage = selectedImage;
   self.iconImageView.image = self.selected ? self.selectedImage : self.image;
   [self setNeedsLayout];
 }
 
-- (UIImage *)selectedImage {
+- (nullable UIImage *)selectedImage {
   return _selectedImage ?: self.image;
 }
 
@@ -262,9 +371,61 @@ static const CGFloat kImageTitlePadding = 3;
   return UIEdgeInsetsZero;
 }
 
+#pragma mark - Displaying a value in the badge
+
+- (void)setBadgeText:(nullable NSString *)badgeText {
+  _badgeText = badgeText;
+  _badge.text = self.badgeText;
+  if (badgeText == nil) {
+    _badge.hidden = YES;
+  } else {
+    _badge.hidden = NO;
+  }
+
+  [self setNeedsLayout];
+}
+
+- (nullable NSString *)badgeText {
+  return _badgeText;
+}
+
+#pragma mark - Configuring the badge's visual appearance
+
+- (void)commitBadgeAppearance {
+  MDCBadgeAppearance *appearance = [_badgeAppearance copy];
+  if (_badgeColor) {
+    appearance.backgroundColor = _badgeColor;
+  }
+  _badge.appearance = appearance;
+}
+
+- (void)setBadgeAppearance:(MDCBadgeAppearance *)badgeAppearance {
+  _badgeAppearance = [badgeAppearance copy];
+
+  [self commitBadgeAppearance];
+}
+
+- (void)setBadgeColor:(nullable UIColor *)badgeColor {
+  if (badgeColor == nil) {
+    // The new MDCBadgeAppearance API treats nil as equivalent to tintColor now, in alignment with
+    // UIKit, so to maintain backward-compatibility with expected behavior, we force-cast nil to a
+    // clearColor instance.
+    badgeColor = [UIColor clearColor];
+  }
+  _badgeColor = badgeColor;
+
+  [self commitBadgeAppearance];
+}
+
+- (void)setIconSize:(CGSize)iconSize {
+  _iconSize = iconSize;
+
+  [self setNeedsLayout];
+}
+
 #pragma mark - UIAccessibility
 
-- (NSString *)accessibilityLabel {
+- (nullable NSString *)accessibilityLabel {
   return [super accessibilityLabel] ?: self.titleLabel.text;
 }
 
@@ -330,7 +491,7 @@ static const CGFloat kImageTitlePadding = 3;
   return YES;
 }
 
-- (NSString *)largeContentTitle {
+- (nullable NSString *)largeContentTitle {
   if (_largeContentTitle) {
     return _largeContentTitle;
   }
@@ -343,7 +504,7 @@ static const CGFloat kImageTitlePadding = 3;
   return title;
 }
 
-- (UIImage *)largeContentImage {
+- (nullable UIImage *)largeContentImage {
   if (_largeContentImage) {
     return _largeContentImage;
   }
@@ -356,3 +517,5 @@ static const CGFloat kImageTitlePadding = 3;
 }
 
 @end
+
+NS_ASSUME_NONNULL_END

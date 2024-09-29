@@ -14,7 +14,7 @@
 
 #import "MDCPageControl.h"
 
-#import <MDFInternationalization/MDFInternationalization.h>
+#import <CoreGraphics/CoreGraphics.h>
 
 #import "private/MDCPageControlIndicator.h"
 #import "private/MDCPageControlTrackLayer.h"
@@ -22,6 +22,8 @@
 #import "private/MaterialPageControlStrings_table.h"
 
 #include <tgmath.h>
+
+NS_ASSUME_NONNULL_BEGIN
 
 // The Bundle for string resources.
 static NSString *const kMaterialPageControlBundle = @"MaterialPageControl.bundle";
@@ -74,7 +76,7 @@ static inline CGFloat normalizeValue(CGFloat value, CGFloat minRange, CGFloat ma
   return self;
 }
 
-- (instancetype)initWithCoder:(NSCoder *)aDecoder {
+- (nullable instancetype)initWithCoder:(NSCoder *)aDecoder {
   self = [super initWithCoder:aDecoder];
   if (self) {
     [self commonMDCPageControlInit];
@@ -125,7 +127,7 @@ static inline CGFloat normalizeValue(CGFloat value, CGFloat minRange, CGFloat ma
   _trackLayer.trackColor = _pageIndicatorTintColor;
 }
 
-- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
+- (void)traitCollectionDidChange:(nullable UITraitCollection *)previousTraitCollection {
   [super traitCollectionDidChange:previousTraitCollection];
 
   if (self.traitCollectionDidChangeBlock) {
@@ -235,12 +237,12 @@ static inline CGFloat normalizeValue(CGFloat value, CGFloat minRange, CGFloat ma
 
 #pragma mark - Colors
 
-- (void)setPageIndicatorTintColor:(UIColor *)pageIndicatorTintColor {
+- (void)setPageIndicatorTintColor:(nullable UIColor *)pageIndicatorTintColor {
   _pageIndicatorTintColor = pageIndicatorTintColor;
   [self setNeedsLayout];
 }
 
-- (void)setCurrentPageIndicatorTintColor:(UIColor *)currentPageIndicatorTintColor {
+- (void)setCurrentPageIndicatorTintColor:(nullable UIColor *)currentPageIndicatorTintColor {
   _currentPageIndicatorTintColor = currentPageIndicatorTintColor;
   [self setNeedsLayout];
 }
@@ -252,7 +254,7 @@ static inline CGFloat normalizeValue(CGFloat value, CGFloat minRange, CGFloat ma
       lround(scrollView.contentOffset.x / scrollView.frame.size.width);
   NSInteger scrolledPageNumberLTR = MAX(0, MIN(_numberOfPages - 1, unboundedPageNumberLTR));
   if ([self isRTL]) {
-    return self.numberOfPages - 1 - scrolledPageNumberLTR;
+    return MAX(0, self.numberOfPages - 1 - scrolledPageNumberLTR);
   }
   return scrolledPageNumberLTR;
 }
@@ -441,7 +443,7 @@ static inline CGFloat normalizeValue(CGFloat value, CGFloat minRange, CGFloat ma
   return YES;
 }
 
-- (NSString *)accessibilityLabel {
+- (nullable NSString *)accessibilityLabel {
   return [[self class] pageControlAccessibilityLabelWithPage:_currentPage + 1
                                                      ofPages:_numberOfPages];
 }
@@ -476,8 +478,7 @@ static inline CGFloat normalizeValue(CGFloat value, CGFloat minRange, CGFloat ma
 
 - (BOOL)isRTL {
   return self.respectsUserInterfaceLayoutDirection &&
-         (self.mdf_effectiveUserInterfaceLayoutDirection ==
-          UIUserInterfaceLayoutDirectionRightToLeft);
+         (self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft);
 }
 
 - (void)setRespectsUserInterfaceLayoutDirection:(BOOL)respectsUserInterfaceLayoutDirection {
@@ -515,9 +516,7 @@ static inline CGFloat normalizeValue(CGFloat value, CGFloat minRange, CGFloat ma
                                                                                   radius:radius];
     indicator.opacity = kPageControlIndicatorDefaultOpacity;
     [_containerView.layer addSublayer:indicator];
-    NSInteger pageNumber = i;
     if ([self isRTL]) {
-      pageNumber = _numberOfPages - 1 - i;
       [_indicators insertObject:indicator atIndex:0];
       [_indicatorPositions insertObject:[NSValue valueWithCGPoint:indicator.position] atIndex:0];
     } else {
@@ -543,8 +542,11 @@ static inline CGFloat normalizeValue(CGFloat value, CGFloat minRange, CGFloat ma
 }
 
 - (void)positionAnimatedIndicatorAtCurrentPage {
-  CGPoint point = [_indicatorPositions[_currentPage] CGPointValue];
-  [_animatedIndicator updateIndicatorTransformX:point.x - kPageControlIndicatorRadius];
+  NSInteger castedCount = (NSInteger)_indicatorPositions.count;
+  if (_currentPage < castedCount) {
+    CGPoint point = [_indicatorPositions[_currentPage] CGPointValue];
+    [_animatedIndicator updateIndicatorTransformX:point.x - kPageControlIndicatorRadius];
+  }
 }
 
 #pragma mark - Strings
@@ -579,3 +581,5 @@ static inline CGFloat normalizeValue(CGFloat value, CGFloat minRange, CGFloat ma
 }
 
 @end
+
+NS_ASSUME_NONNULL_END

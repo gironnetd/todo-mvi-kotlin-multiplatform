@@ -17,6 +17,11 @@
 
 #import <Foundation/Foundation.h>
 
+API_DEPRECATED_BEGIN("🤖👀 Use branded M3CButton instead. "
+                     "See go/material-ios-buttons/gm2-migration for more details. "
+                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
+                     ios(12, 12))
+
 /**
  The Material Design color system's contained button themer for instances of MDCButton.
 
@@ -24,9 +29,7 @@
  `MDCButton`'s `-applyContainedThemeWithScheme:`
  Learn more at docs/theming.md#migration-guide-themers-to-theming-extensions
  */
-__deprecated_msg("Please use [MDCButton applyContainedThemeWithScheme:] instead. (Note: Color "
-                 "theming is no longer available as an independent API.)")
-    @interface MDCContainedButtonColorThemer : NSObject
+@interface MDCContainedButtonColorThemer : NSObject
 
 /**
  Applies a color scheme's properties to an MDCButton using the contained button style.
@@ -42,3 +45,5 @@ __deprecated_msg("Please use [MDCButton applyContainedThemeWithScheme:] instead.
                         toButton:(nonnull MDCButton *)button;
 
 @end
+
+API_DEPRECATED_END

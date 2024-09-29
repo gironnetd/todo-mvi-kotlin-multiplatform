@@ -14,6 +14,11 @@
 
 #import "MDCTabBarAlignment.h"
 
+API_DEPRECATED_BEGIN("🤖👀 Use branded MDCTabBarViews instead. "
+                     "See go/material-ios-tabs for more info. "
+                     "This has go/material-ios-migrations#scriptable-potential 🤖👀",
+                     ios(12, 12))
+
 /**
  Alignment options that are not fully supported in MDC-iOS. These should map exactly back to
  `MDCTabBarAlignment` for values that semantically match.
@@ -35,3 +40,5 @@ typedef NS_ENUM(NSInteger, MDCTabBarExtendedAlignment) {
    */
   MDCTabBarExtendedAlignmentBestEffortJustified,
 };
+
+API_DEPRECATED_END

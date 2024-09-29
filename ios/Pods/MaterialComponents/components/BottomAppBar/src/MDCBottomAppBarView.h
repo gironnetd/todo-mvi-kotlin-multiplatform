@@ -15,6 +15,9 @@
 #import <UIKit/UIKit.h>
 
 #import "MaterialButtons.h"
+#import "MDCMinimumOS.h"  // IWYU pragma: keep
+
+@class MDCFloatingButton;
 
 /** The elevation of the floating action button. */
 typedef NS_ENUM(NSInteger, MDCBottomAppBarFloatingButtonElevation) {
@@ -109,7 +112,8 @@ typedef NS_ENUM(NSInteger, MDCBottomAppBarFloatingButtonPosition) {
 
  @note This API only has a visual effect if @c enableRippleBehavior is set to @c YES.
  */
-@property(nonnull, nonatomic, copy) UIColor *rippleColor;
+@property(nonnull, nonatomic, copy) UIColor *rippleColor API_DEPRECATED(
+    "See go/material-ios-touch-response for guidance instead.", ios(12, 12));
 
 /**
  By setting this property to @c YES, the Ripple component will be used instead of Ink
@@ -121,7 +125,8 @@ typedef NS_ENUM(NSInteger, MDCBottomAppBarFloatingButtonPosition) {
 
  Defaults to NO.
  */
-@property(nonatomic, assign) BOOL enableRippleBehavior;
+@property(nonatomic, assign) BOOL enableRippleBehavior API_DEPRECATED(
+    "See go/material-ios-touch-response for guidance instead.", ios(12, 12));
 
 /**
  Sets the visibility of the floating action button.

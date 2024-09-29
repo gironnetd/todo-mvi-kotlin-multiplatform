@@ -13,7 +13,7 @@ open class SingletonHolderSingleArg<out T, in A>(creator: (A) -> T) {
   @Volatile
   private var instance: T? = null
 
-  @Synchronized
+  //@Synchronized
   fun getInstance(arg: A): T {
     val i = instance
     if (i != null) {

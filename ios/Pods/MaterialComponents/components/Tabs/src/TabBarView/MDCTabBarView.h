@@ -14,7 +14,9 @@
 
 #import <UIKit/UIKit.h>
 
-#import "MaterialAvailability.h"
+#import "MDCAvailability.h"
+
+NS_ASSUME_NONNULL_BEGIN
 
 @protocol MDCTabBarViewDelegate;
 @protocol MDCTabBarViewIndicatorTemplate;
@@ -62,6 +64,8 @@ typedef NS_ENUM(NSUInteger, MDCTabBarViewLayoutStyle) {
   MDCTabBarViewLayoutStyleNonFixedClusteredCentered = 6,
 };
 
+@class MDCBadgeAppearance;
+
 /**
  An implementation of Material Tabs (https://material.io/design/components/tabs.html).
  */
@@ -83,9 +87,28 @@ __attribute__((objc_subclassing_restricted)) @interface MDCTabBarView : UIScroll
 @property(nonnull, nonatomic, copy) UIColor *bottomDividerColor;
 
 /**
- The color for the Ripple effect for touch feedback.
+ If YES, all ripple behavior will be disabled.
+
+ Default value is NO.
  */
-@property(nonnull, nonatomic, copy) UIColor *rippleColor;
+@property(nonatomic) BOOL disableRippleBehavior;
+
+/**
+ The size of the icons within the tab bar.
+
+ This property is not respected unless a value other than @c CGSizeZero is used.
+
+ @note Defaults to CGSizeZero.
+ */
+@property(nonatomic, assign) CGSize itemIconSize;
+
+/**
+ The default appearance to be used for all item badges.
+
+ If a given UITabBarItem has set a non-nil badgeColor, then that value will be used for that item
+ view's badge instead of the backgroundColor associated with this appearance object.
+ */
+@property(nonatomic, copy, nonnull) MDCBadgeAppearance *itemBadgeAppearance;
 
 /** The tab bar view delegate. */
 @property(nullable, nonatomic, weak) id<MDCTabBarViewDelegate> tabBarDelegate;
@@ -253,6 +276,20 @@ __attribute__((objc_subclassing_restricted)) @interface MDCTabBarView : UIScroll
 - (CGRect)rectForItem:(nonnull UITabBarItem *)item
     inCoordinateSpace:(nonnull id<UICoordinateSpace>)coordinateSpace;
 
+/**
+ Scrolls the tab bar so that @c item is centered.
+
+ @param item The tab bar item to be centered.
+ @param animated Whether to animate the scroll.
+ */
+- (void)scrollToItem:(nonnull UITabBarItem *)item animated:(BOOL)animated;
+
+/**
+ The color for the Ripple effect for touch feedback.
+ */
+@property(nonnull, nonatomic, copy)
+    UIColor *rippleColor __deprecated_msg("Enable disableRippleBehavior instead.");
+
 @end
 
 #if MDC_AVAILABLE_SDK_IOS(13_0) && !TARGET_OS_TV
@@ -272,3 +309,5 @@ __attribute__((objc_subclassing_restricted)) @interface MDCTabBarView : UIScroll
     UILargeContentViewerInteractionDelegate>
 @end
 #endif  // MDC_AVAILABLE_SDK_IOS(13_0)
+
+NS_ASSUME_NONNULL_END

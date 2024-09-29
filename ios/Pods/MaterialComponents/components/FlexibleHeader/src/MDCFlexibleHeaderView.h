@@ -21,6 +21,10 @@
 #import "MDCFlexibleHeaderViewDelegate.h"
 #import "MaterialShadowElevations.h"
 
+API_DEPRECATED_BEGIN("Use a branded UINavigationController instead.", ios(12, API_TO_BE_DEPRECATED))
+
+FOUNDATION_EXPORT NSString *_Nonnull const MDCFlexibleHeaderViewAccessibilityIdentifier;
+
 typedef void (^MDCFlexibleHeaderChangeContentInsetsBlock)(void);
 typedef void (^MDCFlexibleHeaderShadowIntensityChangeBlock)(__kindof CALayer *_Nonnull shadowLayer,
                                                             CGFloat intensity);
@@ -53,6 +57,9 @@ typedef NS_ENUM(NSInteger, MDCFlexibleHeaderScrollPhase) {
 @protocol MDCFlexibleHeaderViewAnimationDelegate;
 @protocol MDCFlexibleHeaderViewDelegate;
 
+// TODO(b/238930139): Remove usage of this deprecated API.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 /**
  MDCFlexibleHeaderView tracks the content offset of a scroll view and adjusts its size and
  position according to a configurable set of behaviors.
@@ -64,6 +71,7 @@ typedef NS_ENUM(NSInteger, MDCFlexibleHeaderScrollPhase) {
  */
 IB_DESIGNABLE
 @interface MDCFlexibleHeaderView : UIView <MDCElevatable, MDCElevationOverriding>
+#pragma clang diagnostic pop
 
 #pragma mark Custom shadow
 
@@ -455,3 +463,5 @@ __deprecated_msg("Please register views directly to the flexible header.");
 
 @end
 // clang-format on
+
+API_DEPRECATED_END

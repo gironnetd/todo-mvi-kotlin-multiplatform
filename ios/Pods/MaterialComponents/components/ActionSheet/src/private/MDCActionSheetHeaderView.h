@@ -12,9 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#import "MDCMinimumOS.h"  // IWYU pragma: keep
+
 #import <UIKit/UIKit.h>
 
-@interface MDCActionSheetHeaderView : UIView
+API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
+                     "Follow go/material-ios-menus to use UIMenu instead."
+                     "Use UIAlertController in action sheet style for destructive confirmations. "
+                     "This is go/material-ios-migrations#not-scriptable 🕘",
+                     ios(12, 12))
+
+@interface MDCActionSheetHeaderView : UIView <UIContentSizeCategoryAdjusting>
 
 - (nonnull instancetype)initWithFrame:(CGRect)frame;
 
@@ -25,9 +33,6 @@
 
 @property(nonatomic, nullable, copy) NSString *message;
 
-@property(nonatomic, setter=mdc_setAdjustsFontForContentSizeCategory:)
-    BOOL mdc_adjustsFontForContentSizeCategory;
-
 @property(nonatomic, strong, nonnull) UIFont *titleFont;
 
 @property(nonatomic, strong, nonnull) UIFont *messageFont;
@@ -37,3 +42,5 @@
 @property(nonatomic, strong, nullable) UIColor *messageTextColor;
 
 @end
+
+API_DEPRECATED_END

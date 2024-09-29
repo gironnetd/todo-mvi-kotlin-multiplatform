@@ -18,18 +18,49 @@
 #import "MaterialElevation.h"
 #import "MaterialShadowElevations.h"
 
+@class MDCSnackbarManager;
+@class MDCSnackbarMessage;
+@class MDCSnackbarMessageAction;
+
+/**
+ Called by the Snackbar message view when the user interacts with the Snackbar view.
+
+ @c userInitiated indicates whether or not the handler is being called due to direct user
+ interaction. @c action, if non-nil, indicates that the user chose to execute a specific action.
+ */
+typedef void (^MDCSnackbarMessageDismissHandler)(BOOL userInitiated,
+                                                 MDCSnackbarMessageAction *_Nullable action);
+
+// TODO(b/238930139): Remove usage of this deprecated API.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 /**
  Class which provides the default implementation of a Snackbar.
  */
 @interface MDCSnackbarMessageView : UIView <MDCElevatable, MDCElevationOverriding>
+#pragma clang diagnostic pop
 
 /**
  The color for the background of the Snackbar message view.
 
  The default color is a dark gray color.
+
+ If you are using the GM3 branding API, customize the background color by setting this property
+ after calling the branding API.
  */
 @property(nonatomic, strong, nullable)
     UIColor *snackbarMessageViewBackgroundColor UI_APPEARANCE_SELECTOR;
+
+/**
+ The color for the background of the Snackbar message view when highlighted.
+
+ The default color is nil (no change on highlight).
+
+ If you are using the GM3 branding API, customize the highlight color by setting this property
+ after calling the branding API.
+ */
+@property(nonatomic, strong, nullable)
+    UIColor *snackbarMessageViewHighlightColor UI_APPEARANCE_SELECTOR;
 
 /**
  The color for the shadow color for the Snackbar message view.
@@ -43,28 +74,51 @@
  The color for the message text in the Snackbar message view.
 
  The default color is @c whiteColor.
+
+ If you are using the GM3 branding API, customize the message text color by setting this property
+ after calling the branding API.
  */
 @property(nonatomic, strong, nullable) UIColor *messageTextColor UI_APPEARANCE_SELECTOR;
 
 /**
  The font for the message text in the Snackbar message view.
+
+ If you are using the GM3 branding API, customize the message font by setting this property after
+ calling the branding API.
  */
 @property(nonatomic, strong, nullable) UIFont *messageFont UI_APPEARANCE_SELECTOR;
 
 /**
  The font for the button text in the Snackbar message view.
+
+ If you are using the GM3 branding API, customize the button font by setting this property after
+ calling the branding API.
  */
 @property(nonatomic, strong, nullable) UIFont *buttonFont UI_APPEARANCE_SELECTOR;
 
 /**
- The array of action buttons of the snackbar.
+ The action button for the snackbar, if `message.action` is set.
  */
-@property(nonatomic, strong, nullable) NSMutableArray<MDCButton *> *actionButtons;
+@property(nonatomic, strong, nullable) UIButton *actionButton;
 
 /**
  The elevation of the snackbar view.
+
+ If `MDCSnackbarManager.usesGM3Shapes` is true, this property defaults to
+ MDCShadowElevationNone.
+
+ If you are using the GM3 branding API, customize the elevation by configuring it after calling the
+ branding API. See go/material-ios-elevation for details on how to do so.
  */
 @property(nonatomic, assign) MDCShadowElevation elevation;
+
+/**
+ The corner radius of the snackbar view.
+
+ If you are using the GM3 branding API, customize the corner radius by setting this property after
+ calling the branding API.
+ */
+@property(nonatomic, assign) CGFloat cornerRadius;
 
 /**
  The @c accessibilityLabel to apply to the message of the Snackbar.
@@ -75,6 +129,32 @@
  The @c accessibilityHint to apply to the message of the Snackbar.
  */
 @property(nullable, nonatomic, copy) NSString *accessibilityHint;
+
+/**
+ The @c minimumLayoutHeight to use when laying out the Snackbar such that there
+ will be enough space to layout text at the current text size.
+ */
+@property(nonatomic, readonly) CGFloat minimumLayoutHeight;
+
+/**
+ Enable a hidden touch affordance (button) for users to dismiss under VoiceOver.
+
+ It allows users to dismiss the snackbar in an explicit way. When it is enabled,
+ tapping on the message label won't dismiss the snackbar.
+
+ Defaults to @c NO.
+ */
+@property(nonatomic, assign) BOOL enableDismissalAccessibilityAffordance;
+
+/**
+ Creates a Snackbar view to display @c message.
+
+ The view will call @c handler when the user has interacted with the Snackbar view in such a way
+ that it needs to be dismissed prior to its timer-based dismissal time.
+ */
+- (_Nonnull instancetype)initWithMessage:(MDCSnackbarMessage *_Nullable)message
+                          dismissHandler:(MDCSnackbarMessageDismissHandler _Nullable)handler
+                         snackbarManager:(MDCSnackbarManager *_Nonnull)manager;
 
 /**
  Returns the button title color for a particular control state.
@@ -90,42 +170,14 @@
 /**
  Sets the button title color for a particular control state.
 
+ If you are using the GM3 branding API, customize the button title color by
+ setting this value after calling the branding API.
+
  @param titleColor The title color.
  @param state The control state.
  */
 - (void)setButtonTitleColor:(nullable UIColor *)titleColor
                    forState:(UIControlState)state UI_APPEARANCE_SELECTOR;
-
-/**
- Indicates whether the Snackbar should automatically update its font when the device’s
- UIContentSizeCategory is changed.
-
- This property is modeled after the adjustsFontForContentSizeCategory property in the
- UIContentSizeCategoryAdjusting protocol added by Apple in iOS 10.0.
-
- If set to YES, this button will base its message font on MDCFontTextStyleBody2
- and its button font on MDCFontTextStyleButton.
-
- Default value is NO.
- */
-@property(nonatomic, readwrite, setter=mdc_setAdjustsFontForContentSizeCategory:)
-    BOOL mdc_adjustsFontForContentSizeCategory UI_APPEARANCE_SELECTOR;
-
-/**
- Affects the fallback behavior for when a scaled font is not provided.
-
- If enabled, the font size will adjust even if a scaled font has not been provided for
- a given UIFont property on this component.
-
- If disabled, the font size will only be adjusted if a scaled font has been provided.
- This behavior most closely matches UIKit's.
-
- Default value is YES.
- */
-@property(nonatomic, assign)
-    BOOL adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable __deprecated_msg(
-        "Use UIFontMetrics and UIContentSizeCategoryAdjusting on iOS 11+ or MDCFontScaler on "
-        "earlier versions");
 
 /**
  A block that is invoked when the MDCSnackbarMessageView receives a call to @c

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#import "MDCMinimumOS.h"  // IWYU pragma: keep
+
 #import <UIKit/UIKit.h>
 
 // TODO(b/151929968): Delete import of MDCAppBarNavigationControllerToBeDeprecatedDelegate.h when
@@ -25,9 +27,20 @@
 @class MDCFlexibleHeaderViewController;
 @protocol MDCAppBarNavigationControllerToBeDeprecatedDelegate;
 
+API_DEPRECATED_BEGIN(
+    "🕘 Schedule time to migrate. "
+    "Use branded UINavigationController instead: go/material-ios-top-app-bars/gm2-migration. "
+    "This is go/material-ios-migrations#not-scriptable 🕘",
+    ios(11, 12))
+
 /**
  Defines the events that an MDCAppBarNavigationController may send to a delegate.
  */
+API_DEPRECATED(
+    "🕘 Schedule time to migrate. "
+    "Use branded UINavigationController instead: go/material-ios-top-app-bars/gm2-migration. "
+    "This is go/material-ios-migrations#not-scriptable 🕘",
+    ios(11, 12))
 @protocol
     MDCAppBarNavigationControllerDelegate <UINavigationControllerDelegate,
                                            MDCAppBarNavigationControllerToBeDeprecatedDelegate>
@@ -97,8 +110,13 @@
  delegate yet. In this case, use the -appBarForViewController: API to retrieve the injected App Bar
  for your root view controller and execute your delegate logic on the returned result, if any.
  */
-__attribute__((objc_subclassing_restricted)) @interface MDCAppBarNavigationController
-    : UINavigationController
+API_DEPRECATED(
+    "🕘 Schedule time to migrate. "
+    "Use branded UINavigationController instead: go/material-ios-top-app-bars/gm2-migration. "
+    "This is go/material-ios-migrations#not-scriptable 🕘",
+    ios(11, 12))
+__attribute__((objc_subclassing_restricted))
+@interface MDCAppBarNavigationController : UINavigationController
 
 #pragma mark - Changing app bar visibility
 
@@ -186,6 +204,9 @@ __attribute__((objc_subclassing_restricted)) @interface MDCAppBarNavigationContr
  https://github.com/material-components/material-components-ios/blob/develop/components/AppBar/docs/migration-guide-appbar-appbarviewcontroller.md
  */
 - (nullable MDCAppBar *)appBarForViewController:(nonnull UIViewController *)viewController
-    __deprecated_msg("Use -appBarViewControllerForViewController: instead.");
+    __deprecated_msg(
+        "Use a branded UINavigationController instead. See go/material-ios-app-bars for guidance.");
 
 @end
+
+API_DEPRECATED_END

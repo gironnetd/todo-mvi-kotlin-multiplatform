@@ -12,10 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "MaterialColorScheme.h"
 #import "MaterialSlider.h"
+#import "MaterialColorScheme.h"
 
 #import <Foundation/Foundation.h>
+
+API_DEPRECATED_BEGIN("🤖👀 Use go/material-ios-branding UISlider instead. "
+                     "See go/material-ios-slider/gm2-migration for more details. "
+                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
+                     ios(12, 12))
 
 /**
  The Material Design color system's themer for instances of MDCSlider.
@@ -76,3 +81,5 @@
 + (nonnull MDCBasicColorScheme *)defaultSliderDarkColorScheme;
 
 @end
+
+API_DEPRECATED_END

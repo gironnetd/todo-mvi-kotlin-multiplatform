@@ -19,6 +19,12 @@
 // longer import delegates as transitive dependencies.
 #import "MDCLegacyInkLayerDelegate.h"
 
+API_DEPRECATED_BEGIN(
+    "🕘 Schedule time to migrate. "
+    "Use default system highlight behavior instead: go/material-ios-touch-response. "
+    "This is go/material-ios-migrations#not-scriptable 🕘",
+    ios(12, 12))
+
 @protocol MDCLegacyInkLayerDelegate;
 
 /**
@@ -110,3 +116,5 @@
 - (void)evaporateToPoint:(CGPoint)point completion:(void (^_Nullable)(void))completionBlock;
 
 @end
+
+API_DEPRECATED_END

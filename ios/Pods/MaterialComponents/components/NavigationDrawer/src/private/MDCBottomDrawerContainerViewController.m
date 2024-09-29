@@ -12,17 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "MDCBottomDrawerContainerViewController.h"
 
 #import "MDCBottomDrawerHeader.h"
 #import "MDCBottomDrawerState.h"
+#import "MDCShadowElevations.h"
+#import "MDCShadowLayer.h"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wprivate-header"
+#import "MDCBottomDrawerContainerViewController.h"
 #import "MDCBottomDrawerContainerViewControllerDelegate.h"
 #import "MDCBottomDrawerShadowedView.h"
-#import "MaterialShadowElevations.h"
-#import "MaterialShadowLayer.h"
-#import "MaterialApplication.h"
-#import "MaterialMath.h"
-#import "MaterialUIMetrics.h"
+#import "UIApplication+MDCAppExtensions.h"
+#import "MDCMath.h"
+#import "MDCLayoutMetrics.h"
+#pragma clang diagnostic pop
+
+NS_ASSUME_NONNULL_BEGIN
 
 static const CGFloat kVerticalShadowAnimationDistance = 10;
 // This value is the vertical offset that the drawer must be scrolled downward to cause it to be
@@ -73,7 +78,7 @@ NSString *const kMDCBottomDrawerScrollViewAccessibilityIdentifier =
 
 @implementation MDCBottomDrawerScrollView
 
-- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+- (nullable UIView *)hitTest:(CGPoint)point withEvent:(nullable UIEvent *)event {
   // Cause the responder chain to keep bubbling up and propagate touches from the scroll view thru
   // to the presenting VC to possibly be handled by the drawer delegate.
   UIView *view = [super hitTest:point withEvent:event];
@@ -177,7 +182,7 @@ NSString *const kMDCBottomDrawerScrollViewAccessibilityIdentifier =
 @property(nonatomic, readonly) UIScrollView *scrollView;
 
 // The top header bottom shadow layer.
-@property(nonatomic) MDCShadowLayer *headerShadowLayer;
+@property(nonatomic, nullable) MDCShadowLayer *headerShadowLayer;
 
 // The current bottom drawer state.
 @property(nonatomic) MDCBottomDrawerState drawerState;
@@ -203,9 +208,9 @@ NSString *const kMDCBottomDrawerScrollViewAccessibilityIdentifier =
   BOOL _shouldPresentAtFullscreen;
 }
 
-- (instancetype)initWithOriginalPresentingViewController:
-                    (UIViewController *)originalPresentingViewController
-                                      trackingScrollView:(UIScrollView *)trackingScrollView {
+- (instancetype)
+    initWithOriginalPresentingViewController:(UIViewController *)originalPresentingViewController
+                          trackingScrollView:(nullable UIScrollView *)trackingScrollView {
   self = [super initWithNibName:nil bundle:nil];
   if (self) {
     _originalPresentingViewController = originalPresentingViewController;
@@ -225,6 +230,7 @@ NSString *const kMDCBottomDrawerScrollViewAccessibilityIdentifier =
     _shadowedView = [[MDCBottomDrawerShadowedView alloc] init];
     _shouldAdjustOnContentSizeChange = NO;
     _shouldDisplayMobileLandscapeFullscreen = YES;
+    _swipeToDismissEnabled = YES;
   }
   return self;
 }
@@ -251,9 +257,7 @@ NSString *const kMDCBottomDrawerScrollViewAccessibilityIdentifier =
 }
 
 - (CGFloat)topSafeAreaInset {
-  if (@available(iOS 11.0, *)) {
-    return [UIApplication mdc_safeSharedApplication].keyWindow.safeAreaInsets.top;
-  }
+  return [UIApplication mdc_safeSharedApplication].keyWindow.safeAreaInsets.top;
   return MDCFixedStatusBarHeightOnPreiPhoneXDevices;
 }
 
@@ -275,10 +279,10 @@ NSString *const kMDCBottomDrawerScrollViewAccessibilityIdentifier =
 
 #pragma mark - KVO
 
-- (void)observeValueForKeyPath:(NSString *)keyPath
-                      ofObject:(id)object
-                        change:(NSDictionary *)change
-                       context:(void *)context {
+- (void)observeValueForKeyPath:(nullable NSString *)keyPath
+                      ofObject:(nullable id)object
+                        change:(nullable NSDictionary *)change
+                       context:(nullable void *)context {
   if ([object isKindOfClass:[UIScrollView class]]) {
     CGPoint contentOffset = [(NSValue *)[change objectForKey:NSKeyValueChangeNewKey] CGPointValue];
     CGPoint oldContentOffset =
@@ -382,6 +386,9 @@ NSString *const kMDCBottomDrawerScrollViewAccessibilityIdentifier =
 }
 
 - (BOOL)isAccessibilityMode {
+  if (self.disableFullScreenVoiceOver) {
+    return NO;
+  }
   return UIAccessibilityIsVoiceOverRunning() || UIAccessibilityIsSwitchControlRunning();
 }
 
@@ -498,7 +505,7 @@ NSString *const kMDCBottomDrawerScrollViewAccessibilityIdentifier =
   self.shadowedView.shadowLayer.elevation = elevation;
 }
 
-- (void)setDrawerShadowColor:(UIColor *)drawerShadowColor {
+- (void)setDrawerShadowColor:(nullable UIColor *)drawerShadowColor {
   _drawerShadowColor = drawerShadowColor;
   self.shadowedView.shadowLayer.shadowColor = drawerShadowColor.CGColor;
 }
@@ -527,17 +534,13 @@ NSString *const kMDCBottomDrawerScrollViewAccessibilityIdentifier =
   }
 }
 
-- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
+- (void)traitCollectionDidChange:(nullable UITraitCollection *)previousTraitCollection {
   [super traitCollectionDidChange:previousTraitCollection];
 
-#if defined(__IPHONE_13_0) && (__IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_13_0)
-  if (@available(iOS 13.0, *)) {
-    if ([self.traitCollection
-            hasDifferentColorAppearanceComparedToTraitCollection:previousTraitCollection]) {
-      [self updateScrimViewColor];
-    }
+  if ([self.traitCollection
+          hasDifferentColorAppearanceComparedToTraitCollection:previousTraitCollection]) {
+    [self updateScrimViewColor];
   }
-#endif
 }
 
 - (void)scrollViewDidEndScrollingAnimation:(UIScrollView *)scrollView {
@@ -607,10 +610,8 @@ NSString *const kMDCBottomDrawerScrollViewAccessibilityIdentifier =
   [self addScrollViewObserver];
 
   // Scroll view should not update its content insets implicitly.
-  if (@available(iOS 11.0, *)) {
-    self.scrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
-    self.scrollView.insetsLayoutMarginsFromSafeArea = NO;
-  }
+  self.scrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
+  self.scrollView.insetsLayoutMarginsFromSafeArea = NO;
 }
 
 - (void)setupLayout {
@@ -727,19 +728,15 @@ NSString *const kMDCBottomDrawerScrollViewAccessibilityIdentifier =
 }
 
 - (CGFloat)bottomSafeAreaInsetsToAdjustContainerHeight {
-  if (@available(iOS 11.0, *)) {
-    if (self.shouldIncludeSafeAreaInContentHeight) {
-      return self.view.safeAreaInsets.bottom;
-    }
+  if (self.shouldIncludeSafeAreaInContentHeight) {
+    return self.view.safeAreaInsets.bottom;
   }
   return 0;
 }
 
 - (CGFloat)bottomSafeAreaInsetsToAdjustInitialDrawerHeight {
-  if (@available(iOS 11.0, *)) {
-    if (self.shouldIncludeSafeAreaInInitialDrawerHeight) {
-      return self.view.safeAreaInsets.bottom;
-    }
+  if (self.shouldIncludeSafeAreaInInitialDrawerHeight) {
+    return self.view.safeAreaInsets.bottom;
   }
   return 0;
 }
@@ -989,7 +986,7 @@ NSString *const kMDCBottomDrawerScrollViewAccessibilityIdentifier =
   _addedContentHeight = NSNotFound;
 }
 
-- (void)setTrackingScrollView:(UIScrollView *)trackingScrollView {
+- (void)setTrackingScrollView:(nullable UIScrollView *)trackingScrollView {
   _trackingScrollView = trackingScrollView;
   _contentHeaderTopInset = NSNotFound;
   _contentHeightSurplus = NSNotFound;
@@ -1010,7 +1007,7 @@ NSString *const kMDCBottomDrawerScrollViewAccessibilityIdentifier =
   self.scrollViewBeganDraggingFromFullscreen = NO;
 
   if (!scrollViewBeganDraggingFromFullscreen &&
-      velocity.y < kDragVelocityThresholdForHidingDrawer) {
+      velocity.y < kDragVelocityThresholdForHidingDrawer && self.swipeToDismissEnabled) {
     [self hideDrawer];
     return;
   }
@@ -1030,7 +1027,8 @@ NSString *const kMDCBottomDrawerScrollViewAccessibilityIdentifier =
             ? (drawerContentHeight / kVerticalDistanceDismissalThresholdMultiplier)
             : kVerticalDistanceDismissalThreshold;
 
-    if (self.scrollView.contentOffset.y < -verticalDistanceDismissalThreshold) {
+    if (self.scrollView.contentOffset.y < -verticalDistanceDismissalThreshold &&
+        self.swipeToDismissEnabled) {
       [self hideDrawer];
     } else {
       targetContentOffset->y = 0;
@@ -1230,3 +1228,5 @@ NSString *const kMDCBottomDrawerScrollViewAccessibilityIdentifier =
 }
 
 @end
+
+NS_ASSUME_NONNULL_END

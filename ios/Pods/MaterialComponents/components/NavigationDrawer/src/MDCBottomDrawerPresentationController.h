@@ -42,6 +42,17 @@
 @property(nonatomic, strong, nullable) UIColor *scrimColor;
 
 /**
+ If @c YES, then the dimmed scrim view will act as an accessibility element for dismissing the
+ bottom drawer.
+ */
+@property(nonatomic, assign) BOOL isScrimAccessibilityElement;
+
+/**
+ The @c accessibilityLabel value of the dimmed scrim view.
+ */
+@property(nullable, nonatomic, copy) NSString *scrimAccessibilityLabel;
+
+/**
  Delegate to tell the presenter when the drawer will change state.
  */
 @property(nonatomic, weak, nullable) id<MDCBottomDrawerPresentationControllerDelegate> delegate;
@@ -134,6 +145,13 @@
 @property(nonatomic, assign) BOOL shouldUseStickyStatusBar;
 
 /**
+ This flag allows clients to have the drawer not go full screen when VoiceOver is enabled.
+
+ Defaults to NO.
+ */
+@property(nonatomic, assign) BOOL disableFullScreenVoiceOver;
+
+/**
  Determines the behavior of the drawer when the content size changes.
  If enabled, the drawer will automatically adjust the visible height as needed, otherwise the
  visible height will not be changed to reflect the updated content height.
@@ -183,6 +201,14 @@
 
 /** Whether the drawer allows the user to drag it or not. */
 @property(nonatomic) BOOL userDraggingEnabled;
+
+/**
+ * Whether the drawer allows the user to swipe down to dismiss it or not.
+ *
+ * Seting this to NO means that the drawer will just bounce back up when the user tries to
+ * swipe it down past its resistance point. Defaults to YES.
+ */
+@property(nonatomic) BOOL swipeToDismissEnabled;
 
 /**
  Sets the content offset Y of the drawer's content. If contentOffsetY is set to 0, the

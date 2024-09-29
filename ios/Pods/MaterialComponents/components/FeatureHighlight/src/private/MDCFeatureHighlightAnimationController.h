@@ -14,6 +14,11 @@
 
 #import <UIKit/UIKit.h>
 
+API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
+                     "Consider using a modal sheet to explain new features instead. "
+                     "This is go/material-ios-migrations#not-scriptable 🕘",
+                     ios(12, 12))
+
 typedef enum : NSUInteger {
   MDCFeatureHighlightDismissAccepted,
   MDCFeatureHighlightDismissRejected,
@@ -25,3 +30,5 @@ typedef enum : NSUInteger {
 @property(nonatomic, assign, getter=isPresenting) BOOL presenting;
 
 @end
+
+API_DEPRECATED_END

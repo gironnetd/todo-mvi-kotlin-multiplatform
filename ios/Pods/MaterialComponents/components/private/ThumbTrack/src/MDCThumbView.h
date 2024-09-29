@@ -16,6 +16,11 @@
 
 #import "MaterialShadowElevations.h"
 
+API_DEPRECATED_BEGIN("🤖👀 Use go/material-ios-branding UISlider instead. "
+                     "See go/material-ios-slider/gm2-migration for more details. "
+                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
+                     ios(12, 12))
+
 @interface MDCThumbView : UIView
 
 /**
@@ -51,3 +56,5 @@
 @property(nonnull, nonatomic, strong) UIColor *shadowColor;
 
 @end
+
+API_DEPRECATED_END

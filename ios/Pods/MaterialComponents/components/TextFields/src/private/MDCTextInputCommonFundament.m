@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#import <QuartzCore/QuartzCore.h>
+
 #import "MDCTextInputCommonFundament.h"
 
 #import "MDCButton.h"
@@ -25,7 +27,6 @@
 #import "MDCTextInputCommonFundament.h"
 #import "MDCTextInputUnderlineView.h"
 
-#import "MaterialAnimationTiming.h"
 #import "MaterialMath.h"
 #import "MaterialPalettes.h"
 #import "MaterialTypography.h"
@@ -36,26 +37,23 @@ static NSString *const MDCTextInputUnderlineKVOKeyLineHeight = @"lineHeight";
 const CGFloat MDCTextInputBorderRadius = 4;
 static const CGFloat MDCTextInputClearButtonImageSquareWidthHeight = 24;
 static const CGFloat MDCTextInputHintTextOpacity = (CGFloat)0.54;
+static const CGFloat MDCTextInputOpacity = (CGFloat)0.87;
 static const CGFloat MDCTextInputOverlayViewToEditingRectPadding = 2;
 const CGFloat MDCTextInputFullPadding = 16;
 const CGFloat MDCTextInputHalfPadding = 8;
 const CGFloat MDCTextInputClearButtonTouchTargetSize = 48;
 
-UIColor *_Nonnull MDCTextInputCursorColor() {
-  return [MDCPalette bluePalette].accent700;
-}
+UIColor *_Nonnull MDCTextInputCursorColor(void) { return [MDCPalette bluePalette].accent700; }
 
-static inline UIColor *MDCTextInputDefaultPlaceholderTextColor() {
+static inline UIColor *MDCTextInputDefaultPlaceholderTextColor(void) {
   return [UIColor colorWithWhite:0 alpha:MDCTextInputHintTextOpacity];
 }
 
-static inline UIColor *MDCTextInputTextColor() {
-  return [UIColor colorWithWhite:0 alpha:[MDCTypography body1FontOpacity]];
+static inline UIColor *MDCTextInputTextColor(void) {
+  return [UIColor colorWithWhite:0 alpha:MDCTextInputOpacity];
 }
 
-static inline UIColor *MDCTextInputUnderlineColor() {
-  return [UIColor lightGrayColor];
-}
+static inline UIColor *MDCTextInputUnderlineColor(void) { return [UIColor lightGrayColor]; }
 
 @implementation MDCTextInputClearButton
 
@@ -532,7 +530,6 @@ static inline UIColor *MDCTextInputUnderlineColor() {
     [self.textInput setNeedsUpdateConstraints];
   }
 
-  [self updateTextColor];
   [self updateClearButton];
 }
 

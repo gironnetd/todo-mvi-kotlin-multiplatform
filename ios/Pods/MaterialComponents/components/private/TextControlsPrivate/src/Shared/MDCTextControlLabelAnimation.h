@@ -16,6 +16,12 @@
 #import <UIKit/UIKit.h>
 #import "MDCTextControlLabelSupport.h"
 
+API_DEPRECATED_BEGIN(
+    "🕘 Schedule time to migrate. "
+    "Use branded UITextField or UITextView instead: go/material-ios-text-fields/gm2-migration. "
+    "This is go/material-ios-migrations#not-scriptable 🕘",
+    ios(12, 12))
+
 /**
  The logic to animate labels is extracted into its own class so that any MDCTextControl can
  make use of it.
@@ -40,3 +46,5 @@
            animationDuration:(NSTimeInterval)animationDuration
                   completion:(void (^__nullable)(BOOL))completion;
 @end
+
+API_DEPRECATED_END

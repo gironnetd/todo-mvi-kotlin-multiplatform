@@ -18,6 +18,11 @@
 
 #import <Foundation/Foundation.h>
 
+API_DEPRECATED_BEGIN("🤖👀 Use branded M3CButton instead. "
+                     "See go/material-ios-buttons/gm2-migration for more details. "
+                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
+                     ios(12, 12))
+
 /**
  MDCButtonScheming represents the design parameters for an MDCButton.
 
@@ -27,7 +32,7 @@
  @warning This API will eventually be deprecated. The replacement API is: `MDCContainerScheming`.
  Learn more at docs/theming.md#migration-guide-themers-to-theming-extensions
  */
-__deprecated_msg("Please use MDCContainerScheming") @protocol MDCButtonScheming
+@protocol MDCButtonScheming
 
 /**
  The color scheme to be applied to a button.
@@ -101,3 +106,5 @@ __deprecated_msg("Please use MDCContainerScheme") @interface MDCButtonScheme
 @property(readwrite, nonatomic) CGFloat minimumHeight;
 
 @end
+
+API_DEPRECATED_END

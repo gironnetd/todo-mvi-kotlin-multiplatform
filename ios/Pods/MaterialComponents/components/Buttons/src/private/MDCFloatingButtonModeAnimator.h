@@ -19,10 +19,16 @@
 
 @protocol MDCFloatingButtonModeAnimatorDelegate;
 
+API_DEPRECATED_BEGIN("🤖👀 Use branded M3CButton instead. "
+                     "See go/material-ios-buttons/gm2-migration for more details. "
+                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
+                     ios(12, 12))
+
 /**
  Animates an MDCFloatingButton's mode.
  */
-__attribute__((objc_subclassing_restricted)) @interface MDCFloatingButtonModeAnimator : NSObject
+__attribute__((objc_subclassing_restricted))
+@interface MDCFloatingButtonModeAnimator : NSObject
 
 - (nonnull instancetype)initWithTitleLabel:(nonnull UILabel *)titleLabel
                    titleLabelContainerView:(nonnull UIView *)titleLabelContainerView
@@ -47,3 +53,5 @@ __attribute__((objc_subclassing_restricted)) @interface MDCFloatingButtonModeAni
 - (nonnull instancetype)init NS_UNAVAILABLE;
 
 @end
+
+API_DEPRECATED_END

@@ -13,7 +13,7 @@ open class SingletonHolderDoubleArg<out T, in A, in B>(creator: (A, B) -> T) {
   @Volatile
   private var instance: T? = null
 
-  @Synchronized
+  //@Synchronized
   fun getInstance(arg1: A, arg2: B): T {
     val i = instance
     if (i != null) {

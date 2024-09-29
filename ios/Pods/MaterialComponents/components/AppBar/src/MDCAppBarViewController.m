@@ -19,14 +19,15 @@
 #import "private/MaterialAppBarStrings.h"
 #import "private/MaterialAppBarStrings_table.h"
 #import "MDCAppBarViewControllerAccessibilityPerformEscapeDelegate.h"
-#import "MaterialFlexibleHeader.h"
-#import "MaterialHeaderStackView.h"
-#import "MaterialNavigationBar.h"
-#import "MaterialShadowElevations.h"
-#import "MaterialShadowLayer.h"
+#import "MDCFlexibleHeaderView.h"
+#import "MDCFlexibleHeaderViewController.h"
+#import "MDCHeaderStackView.h"
+#import "MDCNavigationBar.h"
+#import "MDCShadowElevations.h"
+#import "MDCShadowLayer.h"
 #import "MaterialIcons+ic_arrow_back.h"
-#import "MaterialUIMetrics.h"
-#import <MDFInternationalization/MDFInternationalization.h>
+#import "MDCIcons.h"
+#import "MDCLayoutMetrics.h"
 
 static NSString *const kBarStackKey = @"barStack";
 
@@ -133,9 +134,9 @@ static NSString *const kMaterialAppBarBundle = @"MaterialAppBar.bundle";
   if (!backBarButtonItem) {
     UIImage *backButtonImage = [MDCIcons imageFor_ic_arrow_back];
     backButtonImage = [backButtonImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-    if (self.navigationBar.mdf_effectiveUserInterfaceLayoutDirection ==
+    if (self.navigationBar.effectiveUserInterfaceLayoutDirection ==
         UIUserInterfaceLayoutDirectionRightToLeft) {
-      backButtonImage = [backButtonImage mdf_imageWithHorizontallyFlippedOrientation];
+      backButtonImage = [backButtonImage imageWithHorizontallyFlippedOrientation];
     }
     backBarButtonItem = [[UIBarButtonItem alloc] initWithImage:backButtonImage
                                                          style:UIBarButtonItemStyleDone
@@ -252,11 +253,9 @@ static NSString *const kMaterialAppBarBundle = @"MaterialAppBar.bundle";
 - (void)viewWillLayoutSubviews {
   [super viewWillLayoutSubviews];
 
-  if (@available(iOS 11.0, *)) {
-    // We only update the top inset on iOS 11 because previously we were not adjusting the header
-    // height to make it smaller when the status bar is hidden.
-    _verticalConstraint.constant = [self verticalContraintLength];
-  }
+  // We only update the top inset on iOS 11 because previously we were not adjusting the header
+  // height to make it smaller when the status bar is hidden.
+  _verticalConstraint.constant = [self verticalContraintLength];
 
   if (self.shouldAdjustHeightBasedOnHeaderStackView) {
     [self adjustHeightBasedOnHeaderStackView];

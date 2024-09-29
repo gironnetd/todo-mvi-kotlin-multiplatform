@@ -1,14 +1,14 @@
 object Versions {
     object JetBrains {
         object Kotlin {
-            const val VERSION = "1.5.21"
+            const val VERSION = "1.8.20"
         }
     }
 
     object Android {
         object Tools {
             object Build {
-                const val VERSION = "4.2.2"
+                const val VERSION = "8.2.1"
             }
         }
     }
@@ -64,7 +64,7 @@ object Versions {
 
         object Squareup {
             object SQLDelight {
-                const val VERSION = "1.5.3"
+                const val VERSION = "2.0.0"
             }
         }
     }

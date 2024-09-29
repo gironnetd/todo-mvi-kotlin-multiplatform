@@ -14,10 +14,18 @@
 
 #import <UIKit/UIKit.h>
 
+API_DEPRECATED_BEGIN(
+    "🕘 Schedule time to migrate. "
+    "Use branded UITextField or UITextView instead: go/material-ios-text-fields/gm2-migration. "
+    "This is go/material-ios-migrations#not-scriptable 🕘",
+    ios(12, 12))
 
 static const CGFloat MDCTextInputClearButtonImageBuiltInPadding = 2;
 
 #pragma mark - Drawing
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
 
 static inline UIBezierPath *MDCPathForClearButtonImageFrame(CGRect frame) {
   // GENERATED CODE
@@ -188,3 +196,7 @@ static inline UIBezierPath *MDCPathForClearButtonLegacyImageFrame(CGRect frame) 
 
   return ic_clear_path;
 }
+
+#pragma clang diagnostic pop
+
+API_DEPRECATED_END

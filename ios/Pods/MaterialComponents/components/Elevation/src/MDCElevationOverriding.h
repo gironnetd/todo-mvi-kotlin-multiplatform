@@ -15,6 +15,12 @@
 #import <CoreGraphics/CoreGraphics.h>
 #import <Foundation/Foundation.h>
 
+API_DEPRECATED_BEGIN("🤖👀 Use colors with dynamic providers that handle elevation instead. "
+                     "See go/material-ios-color/gm2-migration and "
+                     "go/material-ios-shadow/gm2-migration for more info. "
+                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
+                     ios(12, 12))
+
 /**
  Provides APIs for @c UIViews to communicate their elevation throughout the view hierarchy.
  */
@@ -32,3 +38,5 @@
 @property(nonatomic, assign, readwrite) CGFloat mdc_overrideBaseElevation;
 
 @end
+
+API_DEPRECATED_END

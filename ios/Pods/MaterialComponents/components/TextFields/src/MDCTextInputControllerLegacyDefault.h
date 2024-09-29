@@ -14,6 +14,12 @@
 
 #import "MDCTextInputControllerBase.h"
 
+API_DEPRECATED_BEGIN(
+    "🕘 Schedule time to migrate. "
+    "Use branded UITextField or UITextView instead: go/material-ios-text-fields/gm2-migration. "
+    "This is go/material-ios-migrations#not-scriptable 🕘",
+    ios(12, 12))
+
 /**
  Material Design compliant text field from 2016. The logic for 'automagic' error states changes:
  underline color, underline text color.
@@ -61,8 +67,8 @@
  placeholder as distinct from `label text`. The placeholder-related properties of this class most
  closely align with the "label text" as described in the guidance.
 */
-__deprecated_msg(
-    "MDCTextField and its associated classes are deprecated. Please use TextControls instead.")
-    @interface MDCTextInputControllerLegacyDefault : MDCTextInputControllerBase
+@interface MDCTextInputControllerLegacyDefault : MDCTextInputControllerBase
 
 @end
+
+API_DEPRECATED_END

@@ -25,11 +25,11 @@ dependencies {
 }
 
 android {
-    compileSdkVersion(31)
+    compileSdk = 34
     defaultConfig {
         applicationId = "com.todo.mvi.kotlin.multiplatform.android"
-        minSdkVersion(21)
-        targetSdkVersion(31)
+        minSdk = 21
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
     }
@@ -37,5 +37,11 @@ android {
         getByName("release") {
             isMinifyEnabled = false
         }
+    }
+    namespace = "com.todo.mvi.kotlin.multiplatform.android"
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }

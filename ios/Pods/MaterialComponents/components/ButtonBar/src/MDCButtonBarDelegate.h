@@ -16,6 +16,12 @@
 
 @class MDCButtonBar;
 
+API_DEPRECATED_BEGIN(
+    "🕘 Schedule time to migrate. "
+    "Use branded UINavigationController instead: go/material-ios-top-app-bars/gm2-migration. "
+    "This is go/material-ios-migrations#not-scriptable 🕘",
+    ios(12, 12))
+
 /**
  The MDCButtonBarDelegate protocol defines the means by which MDCButtonBar can request that a
  view be created for a bar button item.
@@ -50,3 +56,5 @@
     __deprecated_msg("There will be no replacement for this API.");
 
 @end
+
+API_DEPRECATED_END

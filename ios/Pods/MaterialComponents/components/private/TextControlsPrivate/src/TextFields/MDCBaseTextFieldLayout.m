@@ -151,29 +151,21 @@
 
   CGFloat textRectMinX = 0;
   CGFloat textRectMaxX = 0;
-  CGFloat labelMinX = 0;
-  CGFloat floatingLabelMinX = 0;
 
   if (isRTL) {
     if (displaysClearButton) {
       CGFloat clearButtonMaxX = clearButtonMinX + clearButtonSideLength;
       textRectMinX = clearButtonMaxX + horizontalInterItemPadding;
-      labelMinX = textRectMinX;
-      floatingLabelMinX = clearButtonMinX;
     } else {
       textRectMinX = displaysLeftView ? leftViewMaxX + horizontalInterItemPadding : leftEdgePadding;
-      labelMinX = textRectMinX;
-      floatingLabelMinX = textRectMinX;
     }
     if (displaysRightView) {
       textRectMaxX = rightViewMinX - horizontalInterItemPadding;
     } else {
-      textRectMaxX = textFieldWidth - horizontalInterItemPadding;
+      textRectMaxX = textFieldWidth - rightEdgePadding;
     }
   } else {
     textRectMinX = displaysLeftView ? leftViewMaxX + horizontalInterItemPadding : leftEdgePadding;
-    labelMinX = textRectMinX;
-    floatingLabelMinX = labelMinX;
     if (displaysClearButton) {
       textRectMaxX = clearButtonMinX - horizontalInterItemPadding;
     } else {

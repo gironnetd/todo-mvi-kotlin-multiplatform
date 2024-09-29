@@ -15,6 +15,12 @@
 #import <CoreGraphics/CoreGraphics.h>
 #import <UIKit/UIKit.h>
 
+API_DEPRECATED_BEGIN("🤖👀 Use colors with dynamic providers that handle elevation instead. "
+                     "See go/material-ios-color/gm2-migration and "
+                     "go/material-ios-elevation/gm2-migration for more info. "
+                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
+                     ios(12, 12))
+
 /**
  Allows elevation changes to propagate down the view hierarchy and allows objects conforming to
  @c MDCElevatable to react to those changes accordingly.
@@ -51,3 +57,5 @@
 - (void)mdc_elevationDidChange;
 
 @end
+
+API_DEPRECATED_END

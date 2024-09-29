@@ -294,7 +294,7 @@ static const UIEdgeInsets internalLayoutInsets = (UIEdgeInsets){0, 16, 0, 24};
   CGPoint titleCenter;
   CGPoint imageCenter;
   BOOL isLTR =
-      self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionLeftToRight;
+      self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionLeftToRight;
   BOOL isLeadingIcon = self.imageLocation == MDCFloatingButtonImageLocationLeading;
 
   // If we are LTR with a leading image, the image goes on the left.
@@ -330,6 +330,16 @@ static const UIEdgeInsets internalLayoutInsets = (UIEdgeInsets){0, 16, 0, 24};
       (isLeadingIcon ? internalLayoutInsets : MDFInsetsFlippedHorizontally(internalLayoutInsets));
   return UIEdgeInsetsInsetRect(UIEdgeInsetsInsetRect(bounds, adjustedLayoutInsets),
                                self.contentEdgeInsets);
+}
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+  // Explicitly disable hit testing in VoiceOver mode when not the actively focused element to avoid
+  // intercepting touch events that should go to elements beneath the button. See b/303378197 for
+  // more.
+  if (UIAccessibilityIsVoiceOverRunning() && !self.accessibilityElementIsFocused) {
+    return nil;
+  }
+  return [super hitTest:point withEvent:event];
 }
 
 #pragma mark - Mode animator

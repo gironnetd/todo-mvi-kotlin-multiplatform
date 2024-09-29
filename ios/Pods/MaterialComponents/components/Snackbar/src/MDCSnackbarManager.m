@@ -14,18 +14,20 @@
 
 #import "MDCSnackbarManager.h"
 
-#import "MaterialButtons.h"
-#import "MaterialOverlayWindow.h"
-#import "MaterialShadowElevations.h"
+#import "MDCButton.h"
+#import "MDCOverlayWindow.h"
+#import "MDCShadowElevations.h"
 #import "MDCSnackbarManagerDelegate.h"
 #import "MDCSnackbarMessage.h"
 #import "MDCSnackbarMessageView.h"
-#import "MaterialApplication.h"
+#import "UIApplication+MDCAppExtensions.h"
 
 #import "private/MDCSnackbarManagerInternal.h"
 #import "private/MDCSnackbarMessageInternal.h"
 #import "private/MDCSnackbarMessageViewInternal.h"
 #import "private/MDCSnackbarOverlayView.h"
+
+NS_ASSUME_NONNULL_BEGIN
 
 /** Test whether any of the accessibility elements of a view is focused */
 static BOOL UIViewHasFocusedAccessibilityElement(UIView *view) {
@@ -89,7 +91,7 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
 /**
  The currently-showing Snackbar.
  */
-@property(nonatomic) MDCSnackbarMessageView *currentSnackbar;
+@property(nonatomic, nullable) MDCSnackbarMessageView *currentSnackbar;
 
 /**
  Whether or not we are currently showing a message.
@@ -101,7 +103,15 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
  */
 @property(nonatomic, weak) id<MDCSnackbarManagerDelegate> delegate;
 
-- (instancetype)initWithSnackbarManager:(__weak MDCSnackbarManager *)manager;
+/**
+ Creates a MDCSnackbarManagerInternal associated with a given scene.
+
+ @param manager The manager that MDCSnackbarManagerInternal wraps.
+ @param windowScene An optional WindowScene to show snackbars on. If this is omitted, we will make a
+ good-effort guess of which window to show a snackbar on (see "bestGuessWindow").
+ */
+- (instancetype)initWithSnackbarManager:(__weak MDCSnackbarManager *)manager
+                            windowScene:(nullable UIWindowScene *)windowScene;
 
 @end
 
@@ -121,14 +131,24 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
 
 @end
 
-@implementation MDCSnackbarManagerInternal
+@implementation MDCSnackbarManagerInternal {
+  UIWindowScene *_windowScene;
+}
 
-- (instancetype)initWithSnackbarManager:(MDCSnackbarManager *__weak)manager {
+- (instancetype)initWithSnackbarManager:(MDCSnackbarManager *__weak)manager
+                            windowScene:(nullable UIWindowScene *)windowScene {
   self = [super init];
   if (self) {
     _manager = manager;
+    _windowScene = windowScene;
     _pendingMessages = [[NSMutableArray alloc] init];
     _suspensionTokens = [NSMutableDictionary dictionary];
+
+    [[NSNotificationCenter defaultCenter]
+        addObserver:self
+           selector:@selector(updateAccessibilityElements)
+               name:UIAccessibilityVoiceOverStatusDidChangeNotification
+             object:nil];
   }
   return self;
 }
@@ -221,7 +241,6 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
         if (shouldDismiss) {
           shouldDismiss = NO;
 
-          // If the user
           [self hideSnackbarViewReally:snackbarView withAction:action userPrompted:userInitiated];
         }
       };
@@ -232,7 +251,7 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
                                     snackbarManager:self.manager];
   snackbarView.accessibilityViewIsModal =
       self.manager.shouldEnableAccessibilityViewIsModal && ![self isSnackbarTransient:snackbarView];
-  [self.delegate willPresentSnackbarWithMessageView:snackbarView];
+  [self.delegate snackbarManager:self.manager willPresentSnackbarWithMessageView:snackbarView];
   if (message.snackbarMessageWillPresentBlock) {
     message.snackbarMessageWillPresentBlock(message, snackbarView);
   }
@@ -245,14 +264,19 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
   // only if the user isn't running VoiceOver.
   [self.overlayView
       showSnackbarView:snackbarView
-              animated:YES
+              animated:self.manager.isMessageAnimationEnabled
             completion:^{
-              if (snackbarView.accessibilityViewIsModal || message.focusOnShow ||
-                  ![self isSnackbarTransient:snackbarView]) {
+              if ([self snackbarAllowsFocus:snackbarView]) {
                 UIAccessibilityPostNotification(self.manager.focusAccessibilityNotification,
                                                 snackbarView);
               } else {
-                snackbarView.accessibilityElementsHidden = YES;
+                // If VoiceOver is running (and the snackbar does not allow focus), hide
+                // accessibility elements. If VoiceOver is not running, hide elements based on what
+                // the snackbar manager's `accessibilityElementsHidden` property is set to. This
+                // check is performed to account for VoiceControl activation of the snackbar's
+                // dismiss action.
+                snackbarView.accessibilityElementsHidden =
+                    [self isVoiceOverRunning] || self.accessibilityElementsHidden;
                 UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification,
                                                 message.voiceNotificationText);
               }
@@ -273,8 +297,9 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
               }
             }];
 
-  if ([self.delegate respondsToSelector:@selector(isPresentingSnackbarWithMessageView:)]) {
-    [self.delegate isPresentingSnackbarWithMessageView:snackbarView];
+  if ([self.delegate respondsToSelector:@selector(snackbarManager:
+                                            isPresentingSnackbarWithMessageView:)]) {
+    [self.delegate snackbarManager:self.manager isPresentingSnackbarWithMessageView:snackbarView];
   }
 }
 
@@ -282,8 +307,11 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
   if (!_overlayView) {
     // Only initialize on the main thread.
     NSAssert([NSThread isMainThread], @"Method is not called on main thread.");
-
+#if !TARGET_OS_VISION
     _overlayView = [[MDCSnackbarOverlayView alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+#else
+    _overlayView = [[MDCSnackbarOverlayView alloc] initWithFrame:CGRectZero];
+#endif  // TODO: b/359236816 - fix visionOS-specific compatibility workarounds.
   }
   return _overlayView;
 }
@@ -306,12 +334,12 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
                                                                  completion:nil];
                      }];
 
-  if ([self.delegate respondsToSelector:@selector(snackbarWillDisappear)]) {
-    [self.delegate snackbarWillDisappear];
+  if ([self.delegate respondsToSelector:@selector(snackbarWillDisappear:)]) {
+    [self.delegate snackbarWillDisappear:self.manager];
   }
 
   [self.overlayView
-      dismissSnackbarViewAnimated:YES
+      dismissSnackbarViewAnimated:self.manager.isMessageAnimationEnabled
                        completion:^{
                          self.overlayView.hidden = YES;
                          [self deactivateOverlay:self.overlayView];
@@ -328,8 +356,8 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
 
                          self.currentSnackbar = nil;
 
-                         if ([self.delegate respondsToSelector:@selector(snackbarDidDisappear)]) {
-                           [self.delegate snackbarDidDisappear];
+                         if ([self.delegate respondsToSelector:@selector(snackbarDidDisappear:)]) {
+                           [self.delegate snackbarDidDisappear:self.manager];
                          }
 
                          // Now that the snackbarView is offscreen, we can allow more
@@ -341,6 +369,16 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
 
 #pragma mark - Helper methods
 
+- (void)updateAccessibilityElements {
+  self.currentSnackbar.accessibilityElementsHidden =
+      ![self snackbarAllowsFocus:self.currentSnackbar];
+}
+
+- (BOOL)snackbarAllowsFocus:(MDCSnackbarMessageView *)snackbarView {
+  return snackbarView.accessibilityViewIsModal || snackbarView.message.focusOnShow ||
+         ![self isSnackbarTransient:snackbarView];
+}
+
 - (BOOL)isVoiceOverRunning {
   if (UIAccessibilityIsVoiceOverRunning() || UIAccessibilityIsSwitchControlRunning() ||
       self.isVoiceOverRunningOverride) {
@@ -350,11 +388,15 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
 }
 
 - (BOOL)isSnackbarTransient:(MDCSnackbarMessageView *)snackbarView {
-  if ([self isVoiceOverRunning]) {
+  if (snackbarView.message.usesLegacyDismissalBehavior) {
+    if ([self isVoiceOverRunning]) {
+      return ![snackbarView shouldWaitForDismissalDuringVoiceover];
+    } else {
+      return YES;
+    }
+  } else {
     return ![snackbarView shouldWaitForDismissalDuringVoiceover];
   }
-
-  return YES;
 }
 
 #pragma mark - Overlay Activation
@@ -395,9 +437,16 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
 - (UIWindow *)bestGuessWindow {
   UIApplication *application = [UIApplication mdc_safeSharedApplication];
 
+  NSArray<UIWindow *> *windows;
+  if (_windowScene != nil) {
+    windows = _windowScene.windows;
+  } else {
+    windows = [UIApplication mdc_safeSharedApplication].windows;
+  }
+
   // Check all of the windows in existence for an overlay window, because that's what we prefer to
   // present in.
-  for (UIWindow *window in application.windows) {
+  for (UIWindow *window in windows) {
     if ([window isKindOfClass:[MDCOverlayWindow class]]) {
       return window;
     }
@@ -406,32 +455,44 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
   // Next see if the application's delegate declares a window. That's a good indicator of it being
   // the 'main' window for an application.
   if ([application.delegate respondsToSelector:@selector(window)]) {
-    id potentialWindow = application.delegate.window;
-    if (potentialWindow != nil) {
+    UIWindow *potentialWindow = application.delegate.window;
+    BOOL belongsToRightScene = (_windowScene == nil || potentialWindow.windowScene == _windowScene);
+    if (potentialWindow != nil && belongsToRightScene) {
       return potentialWindow;
     }
   }
 
-  // Check for the key window in the list of windows. This allows to find the correct window
+  // Check for the key window in the list of windows. This allows us to find the correct window
   // in apps with multi-window support.
-  for (UIWindow *window in [UIApplication mdc_safeSharedApplication].windows) {
+  for (UIWindow *window in windows) {
     if (window.isKeyWindow) {
       return window;
     }
   }
 
   // Default to the key window, since we couldn't find anything better.
+  if (@available(iOS 15, *)) {
+    if (_windowScene) {
+      return [_windowScene keyWindow];
+    }
+  }
+#if !TARGET_OS_VISION
   return [[UIApplication mdc_safeSharedApplication] keyWindow];
+#else
+  return nil;
+#endif  // TODO: b/359236816 - fix visionOS-specific compatibility workarounds.
 }
 
 - (void)deactivateOverlay:(UIView *)overlay {
+#if !TARGET_OS_VISION
   UIWindow *window = [[UIApplication mdc_safeSharedApplication] keyWindow];
   if ([window isKindOfClass:[MDCOverlayWindow class]]) {
     MDCOverlayWindow *overlayWindow = (MDCOverlayWindow *)window;
     [overlayWindow deactivateOverlay:overlay];
-  } else {
-    [overlay removeFromSuperview];
+    return;
   }
+#endif  // TODO: b/359236816 - fix visionOS-specific compatibility workarounds.
+  [overlay removeFromSuperview];
 }
 
 #pragma mark - Public API
@@ -560,10 +621,8 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
   UIFont *_messageFont;
   UIFont *_buttonFont;
   BOOL _uppercaseButtonTitle;
-  CGFloat _disabledButtonAlpha;
   UIColor *_buttonInkColor;
   NSMutableDictionary<NSNumber *, UIColor *> *_buttonTitleColors;
-  BOOL _mdc_adjustsFontForContentSizeCategory;
   BOOL _shouldApplyStyleChangesToVisibleSnackbars;
 }
 
@@ -578,30 +637,41 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
   return defaultManager;
 }
 
-- (instancetype)init {
+- (instancetype)initWithWindowScene:(nullable UIWindowScene *)windowScene {
   self = [super init];
   if (self) {
-    _internalManager = [[MDCSnackbarManagerInternal alloc] initWithSnackbarManager:self];
+    _internalManager = [[MDCSnackbarManagerInternal alloc] initWithSnackbarManager:self
+                                                                       windowScene:windowScene];
     _uppercaseButtonTitle = YES;
-    _disabledButtonAlpha = (CGFloat)0.12;
     _messageElevation = MDCShadowElevationSnackbar;
-    _adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable = YES;
     _mdc_overrideBaseElevation = -1;
     _focusAccessibilityNotification = UIAccessibilityLayoutChangedNotification;
+    _shouldShowMessageWhenVoiceOverIsRunning = YES;
+    _messageAnimationEnabled = YES;
+    _enableDismissalAccessibilityAffordance = NO;
+    _usesGM3Shapes = NO;
   }
   return self;
 }
 
-- (void)setDelegate:(id<MDCSnackbarManagerDelegate>)delegate {
+- (instancetype)init {
+  return [self initWithWindowScene:nil];
+}
+
+- (void)setDelegate:(nullable id<MDCSnackbarManagerDelegate>)delegate {
   self.internalManager.delegate = delegate;
 }
 
-- (id<MDCSnackbarManagerDelegate>)delegate {
+- (nullable id<MDCSnackbarManagerDelegate>)delegate {
   return self.internalManager.delegate;
 }
 
-- (void)showMessage:(MDCSnackbarMessage *)inputMessage {
+- (void)showMessage:(nullable MDCSnackbarMessage *)inputMessage {
   if (!inputMessage) {
+    return;
+  }
+
+  if (self.internalManager.isVoiceOverRunning && !self.shouldShowMessageWhenVoiceOverIsRunning) {
     return;
   }
 
@@ -614,7 +684,7 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
   });
 }
 
-- (void)setPresentationHostView:(UIView *)hostView {
+- (void)setPresentationHostView:(nullable UIView *)hostView {
   NSAssert([NSThread isMainThread], @"setPresentationHostView must be called on main thread.");
 
   self.internalManager.presentationHostView = hostView;
@@ -626,7 +696,7 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
   return (self.internalManager.showingMessage || self.internalManager.pendingMessages.count != 0);
 }
 
-- (void)dismissAndCallCompletionBlocksWithCategory:(NSString *)category {
+- (void)dismissAndCallCompletionBlocksWithCategory:(nullable NSString *)category {
   // Snag a copy now, we'll use that internally.
   NSString *categoryToDismiss = [category copy];
 
@@ -636,25 +706,66 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
   });
 }
 
+- (CGFloat)topMargin {
+  return self.internalManager.overlayView.topMargin;
+}
+
+- (void)setTopMargin:(CGFloat)topMargin {
+  NSAssert([NSThread isMainThread], @"setTopMargin must be called on main thread.");
+
+  self.internalManager.overlayView.topMargin = topMargin;
+}
+
+- (CGFloat)leadingMargin {
+  return self.internalManager.overlayView.leadingMargin;
+}
+
+- (void)setLeadingMargin:(CGFloat)leadingMargin {
+  NSAssert([NSThread isMainThread], @"leadingMargin must be called on main thread.");
+
+  self.internalManager.overlayView.leadingMargin = leadingMargin;
+}
+
+- (CGFloat)trailingMargin {
+  return self.internalManager.overlayView.trailingMargin;
+}
+
+- (void)setTrailingMargin:(CGFloat)trailingMargin {
+  NSAssert([NSThread isMainThread], @"trailingMargin must be called on main thread.");
+
+  self.internalManager.overlayView.trailingMargin = trailingMargin;
+}
+
 - (void)setBottomOffset:(CGFloat)offset {
   NSAssert([NSThread isMainThread], @"setBottomOffset must be called on main thread.");
 
   self.internalManager.overlayView.bottomOffset = offset;
 }
 
-- (void)setAlignment:(MDCSnackbarAlignment)alignment {
-  NSAssert([NSThread isMainThread], @"setAlignment must be called on main thread.");
+- (void)setHorizontalAlignment:(MDCSnackbarHorizontalAlignment)horizontalAlignment {
+  NSAssert([NSThread isMainThread], @"setHorizontalAlignment must be called on main thread.");
 
-  self.internalManager.overlayView.alignment = alignment;
+  self.internalManager.overlayView.horizontalAlignment = horizontalAlignment;
 }
 
-- (MDCSnackbarAlignment)alignment {
-  return self.internalManager.overlayView.alignment;
+- (MDCSnackbarHorizontalAlignment)horizontalAlignment {
+  return self.internalManager.overlayView.horizontalAlignment;
+}
+
+- (void)setVerticalAlignment:(MDCSnackbarVerticalAlignment)verticalAlignment {
+  NSAssert([NSThread isMainThread], @"setVerticalAlignment must be called on main thread.");
+
+  self.internalManager.overlayView.verticalAlignment = verticalAlignment;
+}
+
+- (MDCSnackbarVerticalAlignment)verticalAlignment {
+  return self.internalManager.overlayView.verticalAlignment;
 }
 
 #pragma mark - Suspension
 
-- (id<MDCSnackbarSuspensionToken>)suspendMessagesWithCategory:(NSString *)category {
+- (nullable id<MDCSnackbarSuspensionToken>)suspendMessagesWithCategory:
+    (nullable NSString *)category {
   MDCSnackbarManagerSuspensionToken *token =
       [[MDCSnackbarManagerSuspensionToken alloc] initWithManager:self];
   token.category = category;
@@ -668,7 +779,7 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
   return token;
 }
 
-- (id<MDCSnackbarSuspensionToken>)suspendAllMessages {
+- (nullable id<MDCSnackbarSuspensionToken>)suspendAllMessages {
   return [self suspendMessagesWithCategory:kAllMessagesCategory];
 }
 
@@ -679,7 +790,7 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
   });
 }
 
-- (void)resumeMessagesWithToken:(id<MDCSnackbarSuspensionToken>)inToken {
+- (void)resumeMessagesWithToken:(nullable id<MDCSnackbarSuspensionToken>)inToken {
   if (![inToken isKindOfClass:[MDCSnackbarManagerSuspensionToken class]]) {
     return;
   }
@@ -700,7 +811,8 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
   }
 }
 
-- (void)setSnackbarMessageViewBackgroundColor:(UIColor *)snackbarMessageViewBackgroundColor {
+- (void)setSnackbarMessageViewBackgroundColor:
+    (nullable UIColor *)snackbarMessageViewBackgroundColor {
   if (snackbarMessageViewBackgroundColor != _snackbarMessageViewBackgroundColor) {
     _snackbarMessageViewBackgroundColor = snackbarMessageViewBackgroundColor;
     [self runSnackbarUpdatesOnMainThread:^{
@@ -710,11 +822,11 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
   }
 }
 
-- (UIColor *)snackbarMessageViewBackgroundColor {
+- (nullable UIColor *)snackbarMessageViewBackgroundColor {
   return _snackbarMessageViewBackgroundColor;
 }
 
-- (void)setSnackbarMessageViewShadowColor:(UIColor *)snackbarMessageViewShadowColor {
+- (void)setSnackbarMessageViewShadowColor:(nullable UIColor *)snackbarMessageViewShadowColor {
   if (snackbarMessageViewShadowColor != _snackbarMessageViewShadowColor) {
     _snackbarMessageViewShadowColor = snackbarMessageViewShadowColor;
     [self runSnackbarUpdatesOnMainThread:^{
@@ -724,11 +836,11 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
   }
 }
 
-- (UIColor *)snackbarMessageViewShadowColor {
+- (nullable UIColor *)snackbarMessageViewShadowColor {
   return _snackbarMessageViewShadowColor;
 }
 
-- (void)setMessageTextColor:(UIColor *)messageTextColor {
+- (void)setMessageTextColor:(nullable UIColor *)messageTextColor {
   if (messageTextColor != _messageTextColor) {
     _messageTextColor = messageTextColor;
     [self runSnackbarUpdatesOnMainThread:^{
@@ -750,11 +862,11 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
   }
 }
 
-- (UIColor *)messageTextColor {
+- (nullable UIColor *)messageTextColor {
   return _messageTextColor;
 }
 
-- (void)setMessageFont:(UIFont *)messageFont {
+- (void)setMessageFont:(nullable UIFont *)messageFont {
   if (messageFont != _messageFont) {
     _messageFont = messageFont;
     [self runSnackbarUpdatesOnMainThread:^{
@@ -763,11 +875,11 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
   }
 }
 
-- (UIFont *)messageFont {
+- (nullable UIFont *)messageFont {
   return _messageFont;
 }
 
-- (void)setButtonFont:(UIFont *)buttonFont {
+- (void)setButtonFont:(nullable UIFont *)buttonFont {
   if (buttonFont != _buttonFont) {
     _buttonFont = buttonFont;
     [self runSnackbarUpdatesOnMainThread:^{
@@ -776,14 +888,16 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
   }
 }
 
-- (UIFont *)buttonFont {
+- (nullable UIFont *)buttonFont {
   return _buttonFont;
 }
 
 - (void)setUppercaseButtonTitle:(BOOL)uppercaseButtonTitle {
   _uppercaseButtonTitle = uppercaseButtonTitle;
   [self runSnackbarUpdatesOnMainThread:^{
-    for (MDCButton *button in self.internalManager.currentSnackbar.actionButtons) {
+    UIButton *currentButton = self.internalManager.currentSnackbar.actionButton;
+    if ([currentButton isKindOfClass:[MDCButton class]]) {
+      MDCButton *button = (MDCButton *)currentButton;
       button.uppercaseTitle = uppercaseButtonTitle;
     }
   }];
@@ -793,35 +907,23 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
   return _uppercaseButtonTitle;
 }
 
-- (void)setDisabledButtonAlpha:(CGFloat)disabledButtonAlpha {
-  _disabledButtonAlpha = disabledButtonAlpha;
-
-  [self runSnackbarUpdatesOnMainThread:^{
-    for (MDCButton *button in self.internalManager.currentSnackbar.actionButtons) {
-      button.disabledAlpha = disabledButtonAlpha;
-    }
-  }];
-}
-
-- (CGFloat)disabledButtonAlpha {
-  return _disabledButtonAlpha;
-}
-
-- (void)setButtonInkColor:(UIColor *)buttonInkColor {
+- (void)setButtonInkColor:(nullable UIColor *)buttonInkColor {
   _buttonInkColor = buttonInkColor;
 
   [self runSnackbarUpdatesOnMainThread:^{
-    for (MDCButton *button in self.internalManager.currentSnackbar.actionButtons) {
+    UIButton *currentButton = self.internalManager.currentSnackbar.actionButton;
+    if ([currentButton isKindOfClass:[MDCButton class]]) {
+      MDCButton *button = (MDCButton *)currentButton;
       button.inkColor = buttonInkColor;
     }
   }];
 }
 
-- (UIColor *)buttonInkColor {
+- (nullable UIColor *)buttonInkColor {
   return _buttonInkColor;
 }
 
-- (void)setButtonTitleColor:(UIColor *)titleColor forState:(UIControlState)state {
+- (void)setButtonTitleColor:(nullable UIColor *)titleColor forState:(UIControlState)state {
   if (_buttonTitleColors == nil) {
     _buttonTitleColors = [NSMutableDictionary dictionary];
   }
@@ -833,22 +935,8 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
   }
 }
 
-- (UIColor *)buttonTitleColorForState:(UIControlState)state {
+- (nullable UIColor *)buttonTitleColorForState:(UIControlState)state {
   return _buttonTitleColors[@(state)];
-}
-
-- (void)mdc_setAdjustsFontForContentSizeCategory:(BOOL)mdc_adjustsFontForContentSizeCategory {
-  if (mdc_adjustsFontForContentSizeCategory != _mdc_adjustsFontForContentSizeCategory) {
-    _mdc_adjustsFontForContentSizeCategory = mdc_adjustsFontForContentSizeCategory;
-    [self runSnackbarUpdatesOnMainThread:^{
-      [self.internalManager.currentSnackbar
-          mdc_setAdjustsFontForContentSizeCategory:mdc_adjustsFontForContentSizeCategory];
-    }];
-  }
-}
-
-- (BOOL)mdc_adjustsFontForContentSizeCategory {
-  return _mdc_adjustsFontForContentSizeCategory;
 }
 
 - (void)setShouldApplyStyleChangesToVisibleSnackbars:
@@ -870,15 +958,15 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
 }
 
 - (void)setTraitCollectionDidChangeBlockForMessageView:
-    (void (^)(MDCSnackbarMessageView *,
-              UITraitCollection *))traitCollectionDidChangeBlockForMessageView {
+    (nullable void (^)(MDCSnackbarMessageView *,
+                       UITraitCollection *_Nullable))traitCollectionDidChangeBlockForMessageView {
   _traitCollectionDidChangeBlockForMessageView = traitCollectionDidChangeBlockForMessageView;
   self.internalManager.currentSnackbar.traitCollectionDidChangeBlock =
       traitCollectionDidChangeBlockForMessageView;
 }
 
 - (void)setMdc_elevationDidChangeBlockForMessageView:
-    (void (^)(id<MDCElevatable> _Nonnull, CGFloat))mdc_elevationDidChangeBlockForMessageView {
+    (nullable void (^)(id<MDCElevatable>, CGFloat))mdc_elevationDidChangeBlockForMessageView {
   _mdc_elevationDidChangeBlockForMessageView = mdc_elevationDidChangeBlockForMessageView;
   self.internalManager.currentSnackbar.mdc_elevationDidChangeBlock =
       mdc_elevationDidChangeBlockForMessageView;
@@ -906,3 +994,5 @@ static NSString *const kAllMessagesCategory = @"$$___ALL_MESSAGES___$$";
 }
 
 @end
+
+NS_ASSUME_NONNULL_END

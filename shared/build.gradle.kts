@@ -4,15 +4,21 @@ plugins {
     kotlin("multiplatform")
     kotlin("native.cocoapods")
     id("com.android.library")
-    id("com.squareup.sqldelight")
+    id("app.cash.sqldelight")
+    //id("com.squareup.sqldelight")
 }
 
 version = "1.0"
 
 sqldelight {
-    database("TasksDatabase") {
-        packageName = "com.todo.mvi.kotlin.multiplatform"
+    databases {
+        create("TasksDatabase") {
+            packageName.set("com.todo.mvi.kotlin.multiplatform")
+        }
     }
+//    database("TasksDatabase") {
+//        packageName = "com.todo.mvi.kotlin.multiplatform"
+//    }
 }
 
 kotlin {
@@ -34,6 +40,7 @@ kotlin {
             baseName = "shared"
             export(Dependencies.Com.Badoo.Reaktive.iosSim)
             export(Dependencies.Com.Badoo.Reaktive.reaktive)
+            binaryOption("bundleId", "com.todo.mvi.kotlin.multiplatform.ios")
         }
         podfile = project.file("../ios/Podfile")
     }
@@ -58,14 +65,14 @@ kotlin {
                 implementation(Dependencies.Com.Squareup.SQLDelight.sqliteDriver)
             }
         }
-        val androidAndroidTestRelease by getting
-        val androidTest by getting {
-            dependsOn(androidAndroidTestRelease)
-            dependencies {
-                implementation(kotlin("test-junit"))
-                implementation("junit:junit:4.13.2")
-            }
-        }
+        //val androidAndroidTestRelease by getting
+//        val androidTest by getting {
+//            //dependsOn(androidAndroidTestRelease)
+//            dependencies {
+//                implementation(kotlin("test-junit"))
+//                implementation("junit:junit:4.13.2")
+//            }
+//        }
         val iosMain by getting {
             dependencies {
                 implementation(Dependencies.Com.Squareup.SQLDelight.nativeDriver)
@@ -76,10 +83,16 @@ kotlin {
 }
 
 android {
-    compileSdkVersion(31)
+    compileSdk = 34
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     defaultConfig {
-        minSdkVersion(21)
-        targetSdkVersion(31)
+        minSdk = 21
+        targetSdk = 34
+    }
+    namespace = "com.todo.mvi.kotlin.multiplatform"
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }

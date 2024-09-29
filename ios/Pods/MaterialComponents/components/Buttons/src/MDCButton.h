@@ -22,6 +22,11 @@
 #import "MaterialShadowElevations.h"
 #import "MaterialShapes.h"
 
+API_DEPRECATED_BEGIN("🤖👀 Use branded M3CButton instead. "
+                     "See go/material-ios-buttons/gm2-migration for more details. "
+                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
+                     ios(12, 12))
+
 /**
  A Material flat, raised or floating button.
 
@@ -169,32 +174,6 @@
  */
 @property(nonatomic, strong, nullable) UIColor *underlyingColorHint;
 
-/*
- Indicates whether the button should automatically update its font when the device’s
- UIContentSizeCategory is changed.
-
- This property is modeled after the adjustsFontForContentSizeCategory property in the
- UIContentSizeCategoryAdjusting protocol added by Apple in iOS 10.0.
-
- If set to YES, this button will base its text font on MDCFontTextStyleButton.
-
- Defaults value is NO.
- */
-@property(nonatomic, readwrite, setter=mdc_setAdjustsFontForContentSizeCategory:)
-    BOOL mdc_adjustsFontForContentSizeCategory UI_APPEARANCE_SELECTOR;
-
-/**
- Affects the fallback behavior for when a scaled font is not provided.
-
- If @c YES, the font size will adjust even if a scaled font has not been provided for
- a given @c UIFont property on this component.
-
- If @c NO, the font size will only be adjusted if a scaled font has been provided.
-
- Default value is @c YES.
- */
-@property(nonatomic, assign) BOOL adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable;
-
 /**
  The shape generator used to define the button's shape.
 
@@ -284,6 +263,8 @@
  If no image tint color has been set for a given state, the returned value will fall back to the
  value set for UIControlStateNormal.
 
+ setting @c tintColor will clear these values.
+
  @param state The state.
  @return The tint color.
  */
@@ -353,6 +334,18 @@
  */
 - (nullable UIColor *)shadowColorForState:(UIControlState)state;
 
+#pragma mark - Enabling multi-line layout
+
+/**
+ When enabled, makes use of constraints to enable the title label to wrap to multiple lines.
+
+ Note: this property does not currently support buttons with images. Enabling this property when an
+ image is present will result in undefined behavior.
+
+ Default value is NO.
+ */
+@property(nonatomic, assign) BOOL layoutTitleWithConstraints;
+
 #pragma mark - UIButton changes
 
 /**
@@ -412,7 +405,7 @@
 
  @note This API will eventually be deprecated and removed.
  */
-- (nullable UIFont *)titleFontForState:(UIControlState)state;
+- (nonnull UIFont *)titleFontForState:(UIControlState)state;
 
 /**
  If @c true, @c accessiblityTraits will always include @c UIAccessibilityTraitButton.
@@ -450,4 +443,25 @@
  */
 @property(nonatomic) UIEdgeInsets hitAreaInsets __deprecated_msg("Use centerVisibleArea instead.");
 
+/*
+ Indicates whether the button should automatically update its font when the device’s
+ UIContentSizeCategory is changed.
+
+ This property is modeled after the adjustsFontForContentSizeCategory property in the
+ UIContentSizeCategoryAdjusting protocol added by Apple in iOS 10.0.
+
+ If set to YES, this button will base its text font on MDCFontTextStyleButton.
+
+ Defaults value is NO.
+
+ This property will be deprecated and deleted. Instead, please use
+ titleLabel.adjustsFontForContentSizeCategory and make sure the title font is a
+ scalable font.
+ */
+@property(nonatomic, readwrite, setter=mdc_setAdjustsFontForContentSizeCategory:)
+    BOOL mdc_adjustsFontForContentSizeCategory UI_APPEARANCE_SELECTOR __deprecated_msg(
+        "Use titleLabel.adjustsFontForContentSizeCategory");
+
 @end
+
+API_DEPRECATED_END

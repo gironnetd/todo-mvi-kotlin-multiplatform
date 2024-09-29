@@ -14,7 +14,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface MDCAlertControllerView : UIView
+@interface MDCAlertControllerView : UIView <UIContentSizeCategoryAdjusting>
 
 @property(nonatomic, strong, nullable) UIFont *titleFont UI_APPEARANCE_SELECTOR;
 @property(nonatomic, strong, nullable) UIColor *titleColor UI_APPEARANCE_SELECTOR;
@@ -26,18 +26,6 @@
 @property(nonatomic, strong, nullable) UIColor *messageColor UI_APPEARANCE_SELECTOR;
 
 @property(nonatomic, assign) CGFloat cornerRadius;
-
-/*
- Indicates whether the view's contents should automatically update their font when the device’s
- @c UIContentSizeCategory changes.
-
- This property is modeled after @c adjustsFontForContentSizeCategory property in
- @c UIContentSizeCategoryAdjusting protocol added by Apple in iOS 10.
-
- Defaults to @c NO.
- */
-@property(nonatomic, readwrite, setter=mdc_setAdjustsFontForContentSizeCategory:)
-    BOOL mdc_adjustsFontForContentSizeCategory UI_APPEARANCE_SELECTOR;
 
 #pragma mark - Adjustable Insets
 
@@ -67,6 +55,16 @@
 @property(nonatomic, assign) UIEdgeInsets contentInsets;
 
 /**
+ The edge insets around the content view (which includes the message, and the accessory view if it
+ is set) against the dialog edges or its neighbor elements, the title and the actions.
+
+ In GM3, the bottom content inset is not needed due to the top action inset provding 24 spacing.
+
+ Default value is UIEdgeInsets(top: 24, leading: 24, bottom: 0, trailing: 24).
+ */
+@property(nonatomic, assign) UIEdgeInsets M3CDialogContentInsets;
+
+/**
  The edge insets around the actions against the dialog edges and its neighbor, which could be any of
  the other elements: the message, accessory view, title, title icon or title icon view.
 
@@ -77,6 +75,18 @@
  Default value is UIEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8).
  */
 @property(nonatomic, assign) UIEdgeInsets actionsInsets;
+
+/**
+ The edge insets around the actions against the dialog edges and its neighbor,
+ which could be any of the other elements: the message, accessory view, title,
+ title icon or title icon view.
+
+ Since GM3 buttons meet minimum touch area requirements by default, the insets
+ are set directly to Figma spec.
+
+ Default value is UIEdgeInsets(top: 24, leading: 24, bottom: 24, trailing: 24).
+ */
+@property(nonatomic, assign) UIEdgeInsets M3CButtonActionsInsets;
 
 /**
  The horizontal space between the action buttons when the buttons are horizontally aligned, and if
@@ -97,6 +107,16 @@
  Default value is 12.
  */
 @property(nonatomic, assign) CGFloat actionsVerticalMargin;
+
+/**
+ The GM3 vertical space between the action buttons when the buttons are
+ vertically aligned, and if more than one button is presented.
+
+ All GM3 buttons meet minimum touch area by default.
+
+ Default value is 8.
+ */
+@property(nonatomic, assign) CGFloat M3CButtonActionsVerticalMargin;
 
 /**
  The vertical inset between the accessory view and the message, if both are present.
@@ -122,9 +142,18 @@ Default value is 0 (meaning, the accessory view's horizontal insets are determin
 */
 @property(nonatomic, assign) CGFloat accessoryViewHorizontalInset;
 
+/** The horizontal alignment of @c title. */
+@property(nonatomic, assign) NSTextAlignment titleAlignment;
+
 @end
 
-@interface MDCAlertControllerView (ToBeDeprecated)
+@interface MDCAlertControllerView (Deprecated)
+
+@property(nonatomic, strong, nullable) UIColor *buttonColor UI_APPEARANCE_SELECTOR __deprecated_msg(
+    "Use MDCAlertController's buttonForAction API");
+@property(nonatomic, strong, nullable)
+    UIColor *buttonInkColor UI_APPEARANCE_SELECTOR __deprecated_msg(
+        "Use MDCAlertController's buttonForAction API");
 
 /**
  By setting this property to @c YES, the Ripple component will be used instead of Ink to display
@@ -136,15 +165,7 @@ Default value is 0 (meaning, the accessory view's horizontal insets are determin
 
  Defaults to @c NO.
  */
-@property(nonatomic, assign) BOOL enableRippleBehavior;
+@property(nonatomic, assign) BOOL enableRippleBehavior __deprecated_msg(
+    "See go/material-ios-touch-response, Ripple should not be used.");
 
-@end
-
-@interface MDCAlertControllerView (Deprecated)
-
-@property(nonatomic, strong, nullable) UIColor *buttonColor UI_APPEARANCE_SELECTOR __deprecated_msg(
-    "Use MDCAlertController's buttonForAction API");
-@property(nonatomic, strong, nullable)
-    UIColor *buttonInkColor UI_APPEARANCE_SELECTOR __deprecated_msg(
-        "Use MDCAlertController's buttonForAction API");
 @end

@@ -14,6 +14,11 @@
 
 #import <UIKit/UIKit.h>
 
+API_DEPRECATED_BEGIN("🤖👀 Use go/material-ios-branding UISlider instead. "
+                     "See go/material-ios-slider/gm2-migration for more details. "
+                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
+                     ios(12, 12))
+
 @class MDCSlider;
 
 @protocol MDCSliderDelegate <NSObject>
@@ -55,3 +60,5 @@
 - (nonnull NSString *)slider:(nonnull MDCSlider *)slider accessibilityLabelForValue:(CGFloat)value;
 
 @end
+
+API_DEPRECATED_END

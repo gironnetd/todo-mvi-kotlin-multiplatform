@@ -14,6 +14,11 @@
 
 #import <UIKit/UIKit.h>
 
+API_DEPRECATED_BEGIN("🤖👀 Use go/material-ios-branding APIs instead. "
+                     "See go/material-ios-tokens guidance for more details. "
+                     "This has go/material-ios-migrations#scriptable-potential 🤖👀",
+                     ios(12, 12))
+
 /** Tint color name. */
 typedef NSString *MDCPaletteTint NS_EXTENSIBLE_STRING_ENUM;
 
@@ -214,3 +219,5 @@ CG_EXTERN const MDCPaletteAccent _Nonnull MDCPaletteAccent700Name;
 @property(nonatomic, nullable, readonly) UIColor *accent700;
 
 @end
+
+API_DEPRECATED_END

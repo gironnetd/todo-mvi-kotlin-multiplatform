@@ -14,6 +14,11 @@
 
 #import <UIKit/UIKit.h>
 
+API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
+                     "Use branded UITableView or UICollectionView instead: go/material-ios-lists. "
+                     "This is go/material-ios-migrations#not-scriptable 🕘",
+                     ios(11, 12))
+
 @protocol MDCCollectionViewStylingDelegate;
 @class MDCCollectionViewLayoutAttributes;
 
@@ -276,3 +281,5 @@ typedef NS_ENUM(NSUInteger, MDCCollectionViewCellLayoutType) {
 - (void)beginCellAppearanceAnimation;
 
 @end
+
+API_DEPRECATED_END

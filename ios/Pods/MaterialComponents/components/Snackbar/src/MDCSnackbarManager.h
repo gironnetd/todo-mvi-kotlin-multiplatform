@@ -26,6 +26,9 @@
 @protocol MDCSnackbarManagerDelegate;
 @protocol MDCSnackbarSuspensionToken;
 
+// TODO(b/238930139): Remove usage of this deprecated API.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 /**
  Provides a means of displaying an unobtrusive message to the user.
 
@@ -38,14 +41,44 @@
  UIWindow is used an attempt is made to find the top-most view controller in the view hierarchy.
  */
 @interface MDCSnackbarManager : NSObject <MDCElevationOverriding>
+#pragma clang diagnostic pop
+
+NS_ASSUME_NONNULL_BEGIN
 
 /**
- An instance of MDCSnackbarManager.
+ Initializes a snackbar manager.
+
+ If windowScene is null then there is no guarantee that the window that presents a snackbar will
+ belong to a given scene.
+
+ @param windowScene The scene that is searched for an appropriate window when presenting a snackbar.
+ @return An initialized MDCSnackbarManager object.
+ */
+- (instancetype)initWithWindowScene:(nullable UIWindowScene *)windowScene NS_DESIGNATED_INITIALIZER;
+
+/**
+ Convenience initializer.
+
+ @return An initialized MDCSnackbarManager object.
+ */
+- (instancetype)init;
+
+NS_ASSUME_NONNULL_END
+
+/**
+ The default shared instance of MDCSnackbarManager.
+
+ Any property set on this shared manager affects all the snackbar messages sent to this manager.
+
+ Consider creating a new manager instance or resetting the property values
+ (e.g. leadingMargin, trailingMargin) to their default values on the default
+ manager instance if you don't want the property values to affect all
+ snackbar messages.
  */
 @property(class, nonnull, nonatomic, readonly, strong) MDCSnackbarManager *defaultManager;
 
 /**
- Determines the Snackbar alignment to the screen.
+ Determines the Snackbar alignment to the screen horizontally.
 
  If called within an animation block, the change will be animated.
 
@@ -55,7 +88,39 @@
 
  @note The setter must be called from the main thread.
  */
-@property(nonatomic, assign) MDCSnackbarAlignment alignment;
+@property(nonatomic, assign) MDCSnackbarHorizontalAlignment horizontalAlignment;
+
+/**
+ Determines the Snackbar alignment to the screen vertically.
+
+ @note The setter must be called from the main thread.
+ */
+@property(nonatomic, assign) MDCSnackbarVerticalAlignment verticalAlignment;
+
+/**
+ Determines the Snackbar's top margin to the safe area of the screen.
+
+ Defaults to 8.
+ */
+@property(nonatomic, assign) CGFloat topMargin;
+
+/**
+ Determines the Snackbar's leading margin to the safe area of the screen.
+
+ Defaults to 8 when the traitCollection horizontal size class is compact.
+
+ Defaults to 24 when the traitCollection horizontal size class is regular.
+ */
+@property(nonatomic, assign) CGFloat leadingMargin;
+
+/**
+ Determines the Snackbar's trailing margin to the safe area of the screen.
+
+ Defaults to 8 when the traitCollection horizontal size class is compact.
+
+ Defaults to 24 when the traitCollection horizontal size class is regular.
+ */
+@property(nonatomic, assign) CGFloat trailingMargin;
 
 /**
  Shows @c message to the user, in a style consistent with the data contained in @c message.
@@ -99,7 +164,8 @@
 - (void)dismissAndCallCompletionBlocksWithCategory:(nullable NSString *)category;
 
 /**
- How far from the bottom of the screen messages are displayed.
+ How far from the bottom of the screen messages are displayed when @c verticalAlignment is @c
+ MDCSnackbarHorizontalAlignmentBottom.
 
  If called within an animation block, the change will be animated.
 
@@ -149,46 +215,93 @@
 
 /**
  The color for the background of the Snackbar message view.
+
+ If using the MDCSnackbarMessageView GM3 branding API, setting this property will have no effect.
+ Instead, customize background color in the MDCSnackbarManagerDelegate method
+ `snackbarManager:willPresentSnackbarWithMessageView:` after calling the branding API. See
+ go/material-ios-snackbar for details on using GM3 branding APIs.
  */
 @property(nonatomic, strong, nullable) UIColor *snackbarMessageViewBackgroundColor;
 
 /**
  The color for the shadow color for the Snackbar message view.
+
+ If using the MDCSnackbarMessageView GM3 branding API, setting this property will have no effect.
+ Instead, customize shadow color in the MDCSnackbarManagerDelegate method
+ `snackbarManager:willPresentSnackbarWithMessageView:` after calling the branding API. See
+ go/material-ios-snackbar for details on using GM3 branding APIs.
  */
 @property(nonatomic, strong, nullable) UIColor *snackbarMessageViewShadowColor;
 
-/** The elevation for the Snackbar message view. */
+/**
+ The elevation for the Snackbar message view.
+
+ If `usesGM3Shapes` is true, setting this property will have no effect. Instead, customize elevation
+ in the MDCSnackbarManagerDelegate method `snackbarManager:willPresentSnackbarWithMessageView:`
+ after calling the branding API. See go/material-ios-snackbar and go/material-ios-elevation for
+ details on using GM3 branding APIs.
+ */
 @property(nonatomic, assign) MDCShadowElevation messageElevation;
 
 /**
  The font for the message text in the Snackbar message view.
+
+ If using the MDCSnackbarMessageView GM3 branding API, setting this property will have no effect.
+ Instead, customize message font in the MDCSnackbarManagerDelegate method
+ `snackbarManager:willPresentSnackbarWithMessageView:` after calling the branding API. See
+ go/material-ios-snackbar for details on using GM3 branding APIs.
  */
 @property(nonatomic, strong, nullable) UIFont *messageFont;
 
 /**
  The color for the message text in the Snackbar message view.
+
+ If using the MDCSnackbarMessageView GM3 branding API, setting this property will have no effect.
+ Instead, customize message text color in the MDCSnackbarManagerDelegate method
+ `snackbarManager:willPresentSnackbarWithMessageView:` after calling the branding API. See
+ go/material-ios-snackbar for details on using GM3 branding APIs.
  */
 @property(nonatomic, strong, nullable) UIColor *messageTextColor;
 
 /**
  The font for the button text in the Snackbar message view.
+
+ If using the MDCSnackbarMessageView GM3 branding API, setting this property will have no effect.
+ Instead, customize button font in the MDCSnackbarManagerDelegate method
+ `snackbarManager:willPresentSnackbarWithMessageView:` after calling the branding API. See
+ go/material-ios-snackbar for details on using GM3 branding APIs.
  */
 @property(nonatomic, strong, nullable) UIFont *buttonFont;
 
 /**
  If true, converts button titles to uppercase. Defaults to MDCButton's default (YES).
+
+ If using the MDCSnackbarMessageView GM3 branding API, setting this property will have no effect and
+ button titles will not be converted to uppercase. See go/material-ios-snackbar for details on using
+ GM3 branding APIs.
  */
 @property(nonatomic, assign) BOOL uppercaseButtonTitle;
 
 /**
- Alpha of disabled buttons. Defaults to the MDCButton's default (0.12).
- */
-@property(nonatomic) CGFloat disabledButtonAlpha;
-
-/**
  The color for the ink view in the Snackbar message view's buttons.
+
+ If using the MDCSnackbarMessageView GM3 branding API, setting this property will have no effect.
+ See go/material-ios-snackbar for details on using GM3 branding APIs.
  */
 @property(nonatomic, strong, nullable) UIColor *buttonInkColor;
+
+/**
+ Enable a hidden touch affordance (button) for users to dismiss under VoiceOver.
+
+ It allows users to dismiss the snackbar in an explicit way. When it is enabled,
+ tapping on the message label won't dismiss the snackbar.
+
+ Defaults to @c NO.
+
+ If using the MDCSnackbarMessageView GM3 branding API, setting this value will have no effect; the
+ affordance will be enabled.
+ */
+@property(nonatomic, assign) BOOL enableDismissalAccessibilityAffordance;
 
 /**
  If enabled, modifications of class styling properties will be applied immediately
@@ -216,50 +329,52 @@
 /**
  Sets the button title color for a particular control state.
 
+ If using the MDCSnackbarMessageView GM3 branding API, setting this value will have no effect.
+ Instead, customize button title color in the MDCSnackbarManagerDelegate method
+ `snackbarManager:willPresentSnackbarWithMessageView:` after calling the branding API. See
+ go/material-ios-snackbar for details on using GM3 branding APIs.
+
  @param titleColor The title color.
  @param state The control state.
  */
 - (void)setButtonTitleColor:(nullable UIColor *)titleColor forState:(UIControlState)state;
 
 /**
- Indicates whether the Snackbar should automatically update its font when the device’s
- UIContentSizeCategory is changed.
+ If enabled, snackbars will use GM3 shape styling for buttons, shadows, etc.
 
- This property is modeled after the adjustsFontForContentSizeCategory property in the
- UIContentSizeCategoryAdjusting protocol added by Apple in iOS 10.0.
+ Note that enabling this BOOL is insufficient to style snackbars for GM3; see
+ go/material-ios-snackbar for details on how to use the GM3 branding APIs.
 
- If set to YES, this button will base its message font on MDCFontTextStyleBody2
- and its button font on MDCFontTextStyleButton.
-
- Default is set to NO.
+ Defaults to NO.
  */
-@property(nonatomic, readwrite, setter=mdc_setAdjustsFontForContentSizeCategory:)
-    BOOL mdc_adjustsFontForContentSizeCategory;
+@property(nonatomic, assign) BOOL usesGM3Shapes;
 
-/**
- Affects the fallback behavior for when a scaled font is not provided.
-
- If enabled, the font size will adjust even if a scaled font has not been provided for
- a given UIFont property on this component.
-
- If disabled, the font size will only be adjusted if a scaled font has been provided.
- This behavior most closely matches UIKit's.
-
- Default value is YES.
- */
-@property(nonatomic, assign)
-    BOOL adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable __deprecated_msg(
-        "Use UIFontMetrics and UIContentSizeCategoryAdjusting on iOS 11+ or MDCFontScaler on "
-        "earlier versions");
 /**
  If enabled, accessibilityViewIsModal will be enabled for all non-transient snackbar views by
  default. If accessibilityViewIsModal needs to be set for specific snackbar views,
- -willPresentSnackbarWithMessageView: in MDCSnackbarManagerDelegate can be used to access
- snackbar view and set the accessibilityViewIsModal value.
+ -snackbarManager:willPresentSnackbarWithMessageView: in MDCSnackbarManagerDelegate can be used to
+ access snackbar view and set the accessibilityViewIsModal value.
 
  Default is set to NO.
  */
 @property(nonatomic, assign) BOOL shouldEnableAccessibilityViewIsModal;
+
+/**
+ If disabled, @c MDCSnackbarManager will not show snackbar messages when VoiceOver
+ is running. Only consider setting this property to @c NO when your use case of snackbar provides
+ disruptive user experience when VoiceOver is running and not showing snackbar wouldn't block
+ user critical journey.
+
+ Default is set to YES.
+ */
+@property(nonatomic, assign) BOOL shouldShowMessageWhenVoiceOverIsRunning;
+
+/**
+ If disabled, @c MDCSnackbarManager will not show or dismiss snackbar messages with animation.
+
+ Default is set to YES.
+ */
+@property(nonatomic, assign, getter=isMessageAnimationEnabled) BOOL messageAnimationEnabled;
 
 /**
  The delegate for MDCSnackbarManager.defaultManager through which it may inform of snackbar
@@ -275,13 +390,19 @@
     (MDCSnackbarMessageView *_Nonnull messageView,
      UITraitCollection *_Nullable previousTraitCollection);
 
+// TODO(b/238930139): Remove usage of this deprecated API.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 /**
  A block that is invoked when the manager's current snackbar's MDCSnackbarMessageView elevation
  changes, and its mdc_elevationDidChangeBlock is called.
  */
 @property(nonatomic, copy, nullable) void (^mdc_elevationDidChangeBlockForMessageView)
     (id<MDCElevatable> _Nonnull object, CGFloat absoluteElevation);
+#pragma clang diagnostic pop
+
 @end
+
 
 /**
  A suspension token is returned when messages are suspended by the Snackbar manager.

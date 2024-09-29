@@ -14,6 +14,8 @@
 
 #import <UIKit/UIKit.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 /** The animation mode when animating backward progress. */
 typedef NS_ENUM(NSInteger, MDCProgressViewBackwardAnimationMode) {
 
@@ -56,7 +58,7 @@ IB_DESIGNABLE
 
  The default is nil.
 */
-@property(nonatomic, copy, nullable) NSArray *progressTintColors;
+@property(nonatomic, copy, nullable) NSArray<UIColor *> *progressTintColors;
 
 /**
  The color shown for the portion of the progress view that is not filled.
@@ -149,4 +151,24 @@ IB_DESIGNABLE
 @property(nonatomic, copy, nullable) void (^traitCollectionDidChangeBlock)
     (MDCProgressView *_Nonnull progressView, UITraitCollection *_Nullable previousTraitCollection);
 
+/**
+ The property that gates the NTC Determinate progress view changes. This enables the stop mark,
+ rounded corners, and gap.
+
+ For accessibility, this should be enabled for most determinate progress indicators. However, it may
+ be disabled when the determinate track extends the full width of the screen.
+
+ The default value is NO.
+ */
+@property(nonatomic, assign) BOOL enableDeterminateStopMark;
+
+/**
+ The color shown for the gap(s) between the progress bar(s) and the track.
+
+ The default is clearColor, which results in an appearance with no visible gaps.
+ */
+@property(nonatomic, strong, nullable) UIColor *gapColor UI_APPEARANCE_SELECTOR;
+
 @end
+
+NS_ASSUME_NONNULL_END

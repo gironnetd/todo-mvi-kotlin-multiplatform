@@ -15,6 +15,12 @@
 #import "MaterialAppBar.h"
 #import "MaterialColorScheme.h"
 
+API_DEPRECATED_BEGIN(
+    "🕘 Schedule time to migrate. "
+    "Use branded UINavigationController instead: go/material-ios-top-app-bars/gm2-migration. "
+    "This is go/material-ios-migrations#not-scriptable 🕘",
+    ios(11, 12))
+
 /**
  The Material Design color system's themer for instances of MDCAppBar.
 
@@ -70,7 +76,8 @@
  */
 + (void)applyColorScheme:(nonnull id<MDCColorScheme>)colorScheme
                 toAppBar:(nonnull MDCAppBar *)appBar
-    __deprecated_msg("Use MDCAppBarViewController's applyPrimaryThemeWithScheme");
+    __deprecated_msg(
+        "Use a branded UINavigationController instead. See go/material-ios-app-bars for guidance.");
 
 /**
  Applies a color scheme's properties to an MDCAppBar using the surface mapping.
@@ -86,7 +93,8 @@
  */
 + (void)applySurfaceVariantWithColorScheme:(nonnull id<MDCColorScheming>)colorScheme
                                   toAppBar:(nonnull MDCAppBar *)appBar
-    __deprecated_msg("Use MDCAppBarViewController's applySurfaceThemeWithScheme");
+    __deprecated_msg(
+        "Use a branded UINavigationController instead. See go/material-ios-app-bars for guidance.");
 
 /**
  Applies a color scheme's properties to an MDCAppBarViewController instance using the surface
@@ -103,6 +111,9 @@
  */
 + (void)applySurfaceVariantWithColorScheme:(nonnull id<MDCColorScheming>)colorScheme
                     toAppBarViewController:(nonnull MDCAppBarViewController *)appBarViewController
-    __deprecated_msg("Use MDCAppBarViewController's applySurfaceThemeWithScheme");
+    __deprecated_msg(
+        "Use a branded UINavigationController instead. See go/material-ios-app-bars for guidance.");
 
 @end
+
+API_DEPRECATED_END

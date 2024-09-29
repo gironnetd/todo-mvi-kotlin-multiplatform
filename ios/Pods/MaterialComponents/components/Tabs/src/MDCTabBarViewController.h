@@ -19,6 +19,11 @@
 // longer import delegates as transitive dependencies.
 #import "MDCTabBarControllerDelegate.h"
 
+API_DEPRECATED_BEGIN("🤖👀 Use a branded MDCTabBarView instead. "
+                     "See go/material-ios-tabs and go/material-ios-tabbar-migration for more info. "
+                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
+                     ios(12, 12))
+
 @protocol MDCTabBarControllerDelegate;
 
 /** The animation duration for the animation tab bar hiding and showing. Defaults to 0.3 seconds. */
@@ -73,3 +78,5 @@ __deprecated_msg(
 @end
 
 /** The delegate protocol for MDCTabBarViewController */
+
+API_DEPRECATED_END

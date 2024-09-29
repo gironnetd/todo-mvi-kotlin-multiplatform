@@ -14,6 +14,12 @@
 
 #import <UIKit/UIKit.h>
 
+API_DEPRECATED_BEGIN(
+    "🕘 Schedule time to migrate. "
+    "Use branded UITextField or UITextView instead: go/material-ios-text-fields/gm2-migration. "
+    "This is go/material-ios-migrations#not-scriptable 🕘",
+    ios(12, 12))
+
 /** This type is used to configure the behavior of an TextControl label. */
 typedef NS_ENUM(NSInteger, MDCTextControlLabelBehavior) {
   /** Indicates that the text field label animates to a position above the text when editing begins.
@@ -22,3 +28,5 @@ typedef NS_ENUM(NSInteger, MDCTextControlLabelBehavior) {
   /** Indicates that the text field label disappears when editing begins. */
   MDCTextControlLabelBehaviorDisappears,
 };
+
+API_DEPRECATED_END

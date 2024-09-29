@@ -14,7 +14,8 @@
 
 #import "MDCTypographyScheme.h"
 
-#import <MaterialComponents/MaterialTypography.h>
+#import "MDCFontScaler.h"
+#import "UIFont+MaterialScalable.h"
 
 @implementation MDCTypographyScheme
 
@@ -135,17 +136,9 @@
   copy.caption = self.caption;
   copy.button = self.button;
   copy.overline = self.overline;
-  copy.mdc_adjustsFontForContentSizeCategory = self.mdc_adjustsFontForContentSizeCategory;
+  copy.useCurrentContentSizeCategoryWhenApplied = self.useCurrentContentSizeCategoryWhenApplied;
 
   return copy;
-}
-
-- (BOOL)mdc_adjustsFontForContentSizeCategory {
-  return self.useCurrentContentSizeCategoryWhenApplied;
-}
-
-- (void)setMdc_adjustsFontForContentSizeCategory:(BOOL)mdc_adjustsFontForContentSizeCategory {
-  self.useCurrentContentSizeCategoryWhenApplied = mdc_adjustsFontForContentSizeCategory;
 }
 
 @end

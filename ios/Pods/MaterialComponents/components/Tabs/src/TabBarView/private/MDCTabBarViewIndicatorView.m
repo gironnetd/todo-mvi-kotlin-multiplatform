@@ -16,6 +16,8 @@
 
 #import "MDCTabBarViewIndicatorAttributes.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 /** Content view that displays a filled path and supports animation between states. */
 @interface MDCTabBarViewIndicatorShapeView : UIView
 
@@ -45,7 +47,7 @@
   return self;
 }
 
-- (instancetype)initWithCoder:(NSCoder *)aDecoder {
+- (nullable instancetype)initWithCoder:(NSCoder *)aDecoder {
   self = [super initWithCoder:aDecoder];
   if (self) {
     [self commonMDCTabBarViewIndicatorViewInit];
@@ -98,7 +100,7 @@
   return self;
 }
 
-- (instancetype)initWithCoder:(NSCoder *)aDecoder {
+- (nullable instancetype)initWithCoder:(NSCoder *)aDecoder {
   self = [super initWithCoder:aDecoder];
   if (self) {
     [self commonMDCTabBarViewIndicatorShapeViewInit];
@@ -112,20 +114,20 @@
   _indicatorPathAnimationDuration = 0.3;
 }
 
-- (UIBezierPath *)path {
+- (nullable UIBezierPath *)path {
   CAShapeLayer *shapeLayer = (CAShapeLayer *)self.layer;
   CGPathRef cgPath = shapeLayer.path;
   return cgPath ? [UIBezierPath bezierPathWithCGPath:cgPath] : nil;
 }
 
-- (void)setPath:(UIBezierPath *)path {
+- (void)setPath:(nullable UIBezierPath *)path {
   CAShapeLayer *shapeLayer = (CAShapeLayer *)self.layer;
   shapeLayer.path = path.CGPath;
 }
 
 #pragma mark - CALayerDelegate
 
-- (id<CAAction>)actionForLayer:(CALayer *)layer forKey:(NSString *)event {
+- (nullable id<CAAction>)actionForLayer:(CALayer *)layer forKey:(NSString *)event {
   id<CAAction> action = [super actionForLayer:layer forKey:event];
   // Support implicit animation of paths.
   if ((!action || action == [NSNull null]) && (layer == self.layer) && [event isEqual:@"path"]) {
@@ -145,10 +147,23 @@
 
 - (void)tintColorDidChange {
   [super tintColorDidChange];
+  [self updateLayerFillColor];
+}
 
-  // Update layer fill color
+#pragma mark - UITraitEnvironment
+
+- (void)traitCollectionDidChange:(nullable UITraitCollection *)previousTraitCollection {
+  [super traitCollectionDidChange:previousTraitCollection];
+  [self updateLayerFillColor];
+}
+
+#pragma mark - Private
+
+- (void)updateLayerFillColor {
   CAShapeLayer *shapeLayer = (CAShapeLayer *)self.layer;
   shapeLayer.fillColor = self.tintColor.CGColor;
 }
 
 @end
+
+NS_ASSUME_NONNULL_END

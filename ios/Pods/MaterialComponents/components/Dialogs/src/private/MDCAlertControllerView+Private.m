@@ -12,16 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#import <UIKit/UIKit.h>
+#import "MDCButton.h"
+#import "MDCAlertController.h"
+#import "MDCAlertControllerView.h"
 #import "MDCAlertActionManager.h"
 #import "MDCAlertControllerView+Private.h"
+#import "M3CButton.h"
 
-#import "MaterialShadowElevations.h"
+#import "MDCShadowElevations.h"
+#import "MDCFontTextStyle.h"
+#import "MDCTypography.h"
+#import "UIFont+MaterialTypography.h"
+#import "MDCMath.h"
 #import <MDFInternationalization/MDFInternationalization.h>
 
-#import "MaterialButtons.h"
-#import "MaterialDialogs.h"
-#import "MaterialTypography.h"
-#import "MaterialMath.h"
+NS_ASSUME_NONNULL_BEGIN
 
 // https://material.io/go/design-dialogs#dialogs-specs
 static const MDCFontTextStyle kTitleTextStyle = MDCFontTextStyleTitle;
@@ -34,7 +40,13 @@ static const CGFloat MDCDialogActionButtonMinimumHeight = 36.0f;
 static const CGFloat MDCDialogActionButtonMinimumWidth = 48.0f;
 static const CGFloat MDCDialogActionMinTouchTarget = 48.0f;
 
+static const CGFloat M3CDialogActionMinHeight = 44.0f;
+
 static const CGFloat MDCDialogMessageOpacity = 0.54f;
+
+/** KVO context for this file. */
+static char *const kKVOContextMDCAlertControllerViewPrivate =
+    "kKVOContextMDCAlertControllerViewPrivate";
 
 /** Calculates the minimum text height for a single line text using device metrics. */
 static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Nullable font) {
@@ -76,11 +88,16 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
 @property(nonatomic, strong, nullable) UIColor *buttonInkColor UI_APPEARANCE_SELECTOR;
 @property(nonatomic, assign) BOOL enableRippleBehavior;
 
+/** The most recent VoiceOver-assigned contentOffset for the contentScrollView whose x and
+ * y values were positive. */
+@property(nonatomic, assign) CGPoint contentScrollViewLastValidVoiceOverContentOffset;
+
 @end
 
 @implementation MDCAlertControllerView {
-  BOOL _mdc_adjustsFontForContentSizeCategory;
 }
+
+@synthesize adjustsFontForContentSizeCategory = _adjustsFontForContentSizeCategory;
 
 - (instancetype)initWithFrame:(CGRect)frame {
   self = [super initWithFrame:frame];
@@ -88,6 +105,8 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
     self.autoresizesSubviews = NO;
     self.clipsToBounds = YES;
     self.shouldGroupAccessibilityChildren = YES;
+    self.titlePinsToTop = YES;
+    _M3CButtonEnabled = NO;
 
     self.orderVerticalActionsByEmphasis = NO;
     self.actionsHorizontalAlignment = MDCContentHorizontalAlignmentTrailing;
@@ -97,16 +116,30 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
     self.titleInsets = UIEdgeInsetsMake(24.0f, 24.0f, 20.0f, 24.0f);
     self.contentInsets = UIEdgeInsetsMake(24.0f, 24.0f, 24.0f, 24.0f);
     self.actionsInsets = UIEdgeInsetsMake(8.0f, 8.0f, 8.0f, 8.0f);
+    self.M3CDialogContentInsets = UIEdgeInsetsMake(24.0f, 24.0f, 0.0f, 24.0f);
+    self.M3CButtonActionsInsets = UIEdgeInsetsMake(24.0f, 24.0f, 24.0f, 24.0f);
     self.actionsHorizontalMargin = 8.0f;
+    self.M3CButtonActionsVerticalMargin = 8.0f;
     self.actionsVerticalMargin = 12.0f;
     self.accessoryViewVerticalInset = 20.0f;
     self.accessoryViewHorizontalInset = 0.0f;
-
-    self.titleScrollView = [[UIScrollView alloc] initWithFrame:CGRectZero];
-    [self addSubview:self.titleScrollView];
+    self.shouldPlaceAccessoryViewAboveMessage = NO;
 
     self.contentScrollView = [[UIScrollView alloc] initWithFrame:CGRectZero];
+    self.titleView = [[UIView alloc] initWithFrame:CGRectZero];
+    // If the title pins to the bounds, it is a fixed view placed outside of any scroll views.
+    // Otherwise, it gets added to the content scroll view.
+    if (self.titlePinsToTop) {
+      [self addSubview:self.titleView];
+    } else {
+      [self.contentScrollView addSubview:self.titleView];
+    }
     [self addSubview:self.contentScrollView];
+    self.contentScrollViewLastValidVoiceOverContentOffset = CGPointZero;
+    [self.contentScrollView addObserver:self
+                             forKeyPath:NSStringFromSelector(@selector(contentOffset))
+                                options:NSKeyValueObservingOptionNew
+                                context:kKVOContextMDCAlertControllerViewPrivate];
 
     self.actionsScrollView = [[UIScrollView alloc] initWithFrame:CGRectZero];
     [self addSubview:self.actionsScrollView];
@@ -117,13 +150,10 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
     self.titleLabel = [[UILabel alloc] initWithFrame:CGRectZero];
     self.titleLabel.numberOfLines = 0;
     self.titleLabel.textAlignment = NSTextAlignmentNatural;
-    if (self.mdc_adjustsFontForContentSizeCategory) {
-      self.titleLabel.font = [UIFont mdc_preferredFontForMaterialTextStyle:MDCFontTextStyleTitle];
-    } else {
-      self.titleLabel.font = [MDCTypography titleFont];
-    }
+    self.titleLabel.font = [MDCTypography titleFont];
+    self.titleLabel.adjustsFontForContentSizeCategory = self.adjustsFontForContentSizeCategory;
     self.titleLabel.accessibilityTraits |= UIAccessibilityTraitHeader;
-    [self.titleScrollView addSubview:self.titleLabel];
+    [self.titleView addSubview:self.titleLabel];
 
     self.messageTextView = [[MDCNonselectableTextView alloc] initWithFrame:CGRectZero];
     self.messageTextView.textAlignment = NSTextAlignmentNatural;
@@ -132,13 +162,10 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
     self.messageTextView.editable = NO;
     self.messageTextView.scrollEnabled = NO;
     self.messageTextView.selectable = YES;  // Enables link tap.
-    if (self.mdc_adjustsFontForContentSizeCategory) {
-      self.messageTextView.font =
-          [UIFont mdc_preferredFontForMaterialTextStyle:MDCFontTextStyleBody1];
-    } else {
-      self.messageTextView.font = [MDCTypography body1Font];
-    }
+    self.messageTextView.font = [MDCTypography body1Font];
+    self.messageTextView.adjustsFontForContentSizeCategory = self.adjustsFontForContentSizeCategory;
     self.messageTextView.textColor = [UIColor colorWithWhite:0 alpha:MDCDialogMessageOpacity];
+    self.messageTextView.accessibilityRespondsToUserInteraction = YES;
     // The messageTextView is a private API, and therefore it needs to inherit its background
     // color from the alert's background so it can be themed (necessary for dark mode support,
     // for instance).
@@ -151,6 +178,13 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   return self;
 }
 
+- (UIEdgeInsets)contentInsets {
+  if (self.M3CButtonEnabled) {
+    return self.M3CDialogContentInsets;
+  }
+  return _contentInsets;
+}
+
 - (NSString *)title {
   return self.titleLabel.text;
 }
@@ -161,37 +195,39 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   [self setNeedsLayout];
 }
 
-- (void)setBackgroundColor:(UIColor *)backgroundColor {
+- (void)setBackgroundColor:(UIColor *_Nullable)backgroundColor {
   super.backgroundColor = backgroundColor;
-  self.titleScrollView.backgroundColor = backgroundColor;
+  self.titleView.backgroundColor = backgroundColor;
   self.contentScrollView.backgroundColor = backgroundColor;
   self.actionsScrollView.backgroundColor = backgroundColor;
 }
 
-- (UIColor *)backgroundColor {
+- (UIColor *_Nullable)backgroundColor {
   return super.backgroundColor;
 }
 
-- (void)addActionButton:(nonnull MDCButton *)button {
+- (void)addActionButton:(nonnull UIButton *)button {
   if (button.superview == nil) {
     [self.actionsScrollView addSubview:button];
-    if (_buttonColor) {
-      // We only set if _buttonColor since settingTitleColor to nil doesn't
-      // reset the title to the default
-      [button setTitleColor:_buttonColor forState:UIControlStateNormal];
+    if (!self.isM3CButtonEnabled) {
+      if (_buttonColor) {
+        // We only set if _buttonColor since settingTitleColor to nil doesn't
+        // reset the title to the default
+        [button setTitleColor:_buttonColor forState:UIControlStateNormal];
+      }
+      MDCButton *castedButton = (MDCButton *)button;
+      castedButton.enableRippleBehavior = self.enableRippleBehavior;
+      castedButton.inkColor = self.buttonInkColor;
+      // These two lines must be after @c setTitleFont:forState: in order to @c MDCButton to handle
+      // dynamic type correctly.
+      castedButton.titleLabel.adjustsFontForContentSizeCategory =
+          self.adjustsFontForContentSizeCategory;
+      // TODO(#1726): Determine default text color values for Normal and Disabled
+      castedButton.minimumSize =
+          CGSizeMake(MDCDialogActionButtonMinimumWidth, MDCDialogActionButtonMinimumHeight);
+      // Set centerVisibleArea to YES by default.
+      castedButton.centerVisibleArea = YES;
     }
-    button.enableRippleBehavior = self.enableRippleBehavior;
-    button.inkColor = self.buttonInkColor;
-    // These two lines must be after @c setTitleFont:forState: in order to @c MDCButton to handle
-    // dynamic type correctly.
-    button.adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable =
-        self.adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable;
-    button.mdc_adjustsFontForContentSizeCategory = self.mdc_adjustsFontForContentSizeCategory;
-    // TODO(#1726): Determine default text color values for Normal and Disabled
-    button.minimumSize =
-        CGSizeMake(MDCDialogActionButtonMinimumWidth, MDCDialogActionButtonMinimumHeight);
-    // Set centerVisibleArea to YES by default.
-    button.centerVisibleArea = YES;
   }
 }
 
@@ -206,7 +242,7 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   [button setElevation:MDCShadowElevationNone forState:UIControlStateNormal];
 }
 
-- (void)setTitleFont:(UIFont *)font {
+- (void)setTitleFont:(UIFont *_Nullable)font {
   _titleFont = font;
 
   [self updateTitleFont];
@@ -214,13 +250,6 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
 
 - (void)updateTitleFont {
   UIFont *titleFont = self.titleFont ?: [[self class] titleFontDefault];
-  if (self.mdc_adjustsFontForContentSizeCategory) {
-    if (self.adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable) {
-      titleFont =
-          [titleFont mdc_fontSizedForMaterialTextStyle:kTitleTextStyle
-                                  scaledForDynamicType:self.mdc_adjustsFontForContentSizeCategory];
-    }
-  }
 
   self.titleLabel.font = titleFont;
   [self setNeedsLayout];
@@ -233,7 +262,7 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   return [MDCTypography titleFont];
 }
 
-- (void)setTitleColor:(UIColor *)titleColor {
+- (void)setTitleColor:(UIColor *_Nullable)titleColor {
   _titleColor = titleColor;
 
   _titleLabel.textColor = titleColor;
@@ -247,11 +276,11 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   self.titleLabel.textAlignment = titleAlignment;
 }
 
-- (UIImage *)titleIcon {
+- (UIImage *_Nullable)titleIcon {
   return self.titleIconImageView.image;
 }
 
-- (void)setTitleIcon:(UIImage *)titleIcon {
+- (void)setTitleIcon:(UIImage *_Nullable)titleIcon {
   if (titleIcon == nil) {
     [self.titleIconImageView removeFromSuperview];
     self.titleIconImageView = nil;
@@ -261,8 +290,12 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
 
   if (self.titleIconImageView == nil) {
     self.titleIconImageView = [[UIImageView alloc] initWithImage:titleIcon];
+    self.titleIconImageView.adjustsImageSizeForAccessibilityContentSizeCategory = YES;
+    UIFont *titleFont = _titleFont ?: self.titleLabel.font;
+    self.titleIconImageView.preferredSymbolConfiguration =
+        [UIImageSymbolConfiguration configurationWithFont:titleFont];
     self.titleIconImageView.contentMode = UIViewContentModeScaleAspectFit;
-    [self.titleScrollView addSubview:self.titleIconImageView];
+    [self.titleView addSubview:self.titleIconImageView];
   } else {
     self.titleIconImageView.image = titleIcon;
   }
@@ -271,7 +304,7 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   [self setNeedsLayout];
 }
 
-- (void)setTitleIconTintColor:(UIColor *)titleIconTintColor {
+- (void)setTitleIconTintColor:(UIColor *_Nullable)titleIconTintColor {
   _titleIconTintColor = titleIconTintColor;
   self.titleIconImageView.tintColor = titleIconTintColor;
 }
@@ -281,7 +314,7 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   [self setNeedsLayout];
 }
 
-- (void)setTitleIconView:(UIView *)titleIconView {
+- (void)setTitleIconView:(UIView *_Nullable)titleIconView {
   if (titleIconView != nil && self.titleIconImageView != nil) {
     NSLog(@"Warning: unintended use of the API. The following APIs are not expected to be used"
            "together: 'setTitleIconView:' and `setTitleIcon:` API. Please set either, but not "
@@ -296,7 +329,7 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
     }
     _titleIconView = titleIconView;
     if (_titleIconView != nil) {
-      [self.titleScrollView addSubview:_titleIconView];
+      [self.titleView addSubview:_titleIconView];
     }
     [self setNeedsLayout];
   }
@@ -312,7 +345,7 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   [self setNeedsLayout];
 }
 
-- (void)setMessageFont:(UIFont *)messageFont {
+- (void)setMessageFont:(UIFont *_Nullable)messageFont {
   _messageFont = messageFont;
 
   [self updateMessageFont];
@@ -320,13 +353,6 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
 
 - (void)updateMessageFont {
   UIFont *messageFont = self.messageFont ?: [[self class] messageFontDefault];
-  if (self.mdc_adjustsFontForContentSizeCategory) {
-    if (self.adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable) {
-      messageFont = [messageFont
-          mdc_fontSizedForMaterialTextStyle:kMessageTextStyle
-                       scaledForDynamicType:self.mdc_adjustsFontForContentSizeCategory];
-    }
-  }
 
   self.messageTextView.font = messageFont;
   [self setNeedsLayout];
@@ -339,7 +365,7 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   return [MDCTypography body1Font];
 }
 
-- (void)setMessageColor:(UIColor *)messageColor {
+- (void)setMessageColor:(UIColor *_Nullable)messageColor {
   _messageColor = messageColor;
 
   _messageTextView.textColor = messageColor;
@@ -353,7 +379,7 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   self.messageTextView.textAlignment = messageAlignment;
 }
 
-- (void)setAccessoryView:(UIView *)accessoryView {
+- (void)setAccessoryView:(UIView *_Nullable)accessoryView {
   if (_accessoryView == accessoryView) {
     return;
   }
@@ -372,43 +398,41 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
 }
 
 - (void)updateButtonFont {
-  for (MDCButton *button in self.actionManager.buttonsInActionOrder) {
-    UIFont *buttonFont;
-    if (button.enableTitleFontForState) {
-      buttonFont = [button titleFontForState:UIControlStateNormal];
-    } else {
-      buttonFont = button.titleLabel.font;
-    }
-    if (self.mdc_adjustsFontForContentSizeCategory) {
-      if (self.adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable) {
-        buttonFont = [buttonFont
-            mdc_fontSizedForMaterialTextStyle:kTitleTextStyle
-                         scaledForDynamicType:self.mdc_adjustsFontForContentSizeCategory];
+  if (!self.isM3CButtonEnabled) {
+    for (MDCButton *button in self.actionManager.buttonsInActionOrder) {
+      UIFont *buttonFont;
+      if (button.enableTitleFontForState) {
+        buttonFont = [button titleFontForState:UIControlStateNormal];
+      } else {
+        buttonFont = button.titleLabel.font;
+      }
+      if (button.enableTitleFontForState) {
+        [button setTitleFont:buttonFont forState:UIControlStateNormal];
+      } else {
+        button.titleLabel.font = buttonFont;
       }
     }
-    if (button.enableTitleFontForState) {
-      [button setTitleFont:buttonFont forState:UIControlStateNormal];
-    } else {
-      button.titleLabel.font = buttonFont;
+
+    [self setNeedsLayout];
+  }
+}
+
+- (void)setButtonColor:(UIColor *_Nullable)color {
+  _buttonColor = color;
+  if (!self.isM3CButtonEnabled) {
+    for (MDCButton *button in self.actionManager.buttonsInActionOrder) {
+      [button setTitleColor:_buttonColor forState:UIControlStateNormal];
     }
   }
-
-  [self setNeedsLayout];
 }
 
-- (void)setButtonColor:(UIColor *)color {
-  _buttonColor = color;
-
-  for (MDCButton *button in self.actionManager.buttonsInActionOrder) {
-    [button setTitleColor:_buttonColor forState:UIControlStateNormal];
-  }
-}
-
-- (void)setButtonInkColor:(UIColor *)color {
+- (void)setButtonInkColor:(UIColor *_Nullable)color {
   _buttonInkColor = color;
 
-  for (MDCButton *button in self.actionManager.buttonsInActionOrder) {
-    button.inkColor = color;
+  if (!self.isM3CButtonEnabled) {
+    for (MDCButton *button in self.actionManager.buttonsInActionOrder) {
+      button.inkColor = color;
+    }
   }
 }
 
@@ -430,20 +454,67 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   }
   _enableRippleBehavior = enableRippleBehavior;
 
-  for (MDCButton *button in self.actionManager.buttonsInActionOrder) {
-    button.enableRippleBehavior = enableRippleBehavior;
+  if (!self.isM3CButtonEnabled) {
+    for (MDCButton *button in self.actionManager.buttonsInActionOrder) {
+      button.enableRippleBehavior = enableRippleBehavior;
+    }
   }
+}
+
+- (void)setTitlePinsToTop:(BOOL)titlePinsToTop {
+  if (titlePinsToTop == _titlePinsToTop) {
+    return;
+  }
+  _titlePinsToTop = titlePinsToTop;
+  [self.titleView removeFromSuperview];
+  if (_titlePinsToTop) {
+    [self addSubview:self.titleView];
+  } else {
+    [self.contentScrollView addSubview:self.titleView];
+  }
+  [self setNeedsLayout];
 }
 
 #pragma mark - Internal
 
+- (CGFloat)buttonHeight {
+  if (self.isM3CButtonEnabled) {
+    return M3CDialogActionMinHeight;
+  }
+  return MAX(MDCDialogActionButtonMinimumHeight, MDCDialogActionMinTouchTarget);
+}
+
+- (void)observeValueForKeyPath:(nullable NSString *)keyPath
+                      ofObject:(nullable id)object
+                        change:(nullable NSDictionary<NSKeyValueChangeKey, id> *)change
+                       context:(nullable void *)context {
+  if (context == kKVOContextMDCAlertControllerViewPrivate) {
+    if (UIAccessibilityIsVoiceOverRunning() && (object == self.contentScrollView)) {
+      // For some reason, VoiceOver sets a contentOffset with negative x and y values on
+      // self.contentScrollView when the user navigates through the text in
+      // self.messageTextView word by word in landscape. This results in the text VoiceOver is
+      // focusing on to not be visible. This code remembers the contentOffsets with positive x and y
+      // values that VoiceOver sets, and re-applies them when it finds that VoiceOver has set ones
+      // with negative x and y values. (b/181607796)
+      CGPoint contentOffset = self.contentScrollView.contentOffset;
+      BOOL isValidContentOffset = (contentOffset.x >= 0 && contentOffset.y >= 0);
+      if (isValidContentOffset) {
+        self.contentScrollViewLastValidVoiceOverContentOffset = contentOffset;
+      } else {
+        self.contentScrollView.contentOffset =
+            self.contentScrollViewLastValidVoiceOverContentOffset;
+      }
+    }
+  }
+}
+
 - (CGSize)actionFittingSizeInHorizontalLayout {
   CGSize size = CGSizeMake([self horizontalSpacing], 0.0f);
-  NSArray<MDCButton *> *buttons = self.actionManager.buttonsInActionOrder;
+  NSArray<UIButton *> *buttons = self.actionManager.buttonsInActionOrder;
   UIEdgeInsets actionsInsets = [self actionsInsetsForButtons:buttons isHorizontalLayout:YES];
+
   if (0 < buttons.count) {
-    CGFloat maxButtonHeight =
-        MAX(MDCDialogActionButtonMinimumHeight, MDCDialogActionMinTouchTarget);
+    CGFloat maxButtonHeight = [self buttonHeight];
     for (UIButton *button in buttons) {
       CGSize buttonSize = [button sizeThatFits:size];
       size.width += buttonSize.width;
@@ -452,26 +523,30 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
     size.height = actionsInsets.top + maxButtonHeight + actionsInsets.bottom;
   }
 
+  NSUInteger count = self.actionManager.buttonsInActionOrder.count;
+  if (self.actionsHorizontalAlignment == MDCContentHorizontalAlignmentJustified) {
+    size.width = [self widestAction] * count + [self horizontalSpacing];
+  }
+
   return size;
 }
 
 - (CGSize)actionButtonsSizeInVerticalLayout {
   CGSize size = CGSizeZero;
-  NSArray<MDCButton *> *buttons = self.actionManager.buttonsInActionOrder;
+  NSArray<UIButton *> *buttons = self.actionManager.buttonsInActionOrder;
   UIEdgeInsets actionsInsets = [self actionsInsetsForButtons:buttons isHorizontalLayout:NO];
   if (0 < buttons.count) {
     size.height = actionsInsets.top + actionsInsets.bottom;
     CGFloat widthInset = actionsInsets.left + actionsInsets.right;
     for (NSUInteger index = 0; index < buttons.count; ++index) {
-      MDCButton *button = buttons[index];
+      UIButton *button = buttons[index];
       CGSize buttonSize = [button sizeThatFits:size];
-      CGFloat minButtonHeight =
-          MAX(MDCDialogActionButtonMinimumHeight, MDCDialogActionMinTouchTarget);
+      CGFloat minButtonHeight = [self buttonHeight];
       buttonSize.height = MAX(buttonSize.height, minButtonHeight);
       size.height += buttonSize.height;
       size.width = MAX(size.width, buttonSize.width + widthInset);
       if (button != buttons.lastObject) {
-        MDCButton *nextButton = buttons[index + 1];
+        UIButton *nextButton = buttons[index + 1];
         CGFloat verticalMargin = [self actionsVerticalMarginBetweenTopButton:button
                                                                 bottomButton:nextButton];
         size.height += verticalMargin;
@@ -482,9 +557,13 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   return size;
 }
 
-- (UIEdgeInsets)actionsInsetsForButtons:(NSArray<MDCButton *> *)buttons
+- (UIEdgeInsets)actionsInsetsForButtons:(NSArray<UIButton *> *)buttons
                      isHorizontalLayout:(BOOL)isHorizontalLayout {
   UIEdgeInsets actionInsets = self.actionsInsets;
+
+  if (self.isM3CButtonEnabled) {
+    return self.M3CButtonActionsInsets;
+  }
 
   if (buttons.count == 0) {
     return actionInsets;
@@ -492,7 +571,7 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
 
   if (isHorizontalLayout) {
     CGFloat maxButtonHeight = MDCDialogActionButtonMinimumHeight;
-    for (MDCButton *button in buttons) {
+    for (UIButton *button in buttons) {
       CGSize buttonSize = [button sizeThatFits:CGSizeZero];
       maxButtonHeight = MAX(maxButtonHeight, buttonSize.height);
     }
@@ -503,13 +582,13 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
       actionInsets.bottom -= verticalInsetsAdjustment / 2;
     }
   } else {
-    MDCButton *topButton = buttons.firstObject;
+    UIButton *topButton = buttons.firstObject;
     CGSize topButtonSize = [topButton sizeThatFits:CGSizeZero];
     if (topButtonSize.height < MDCDialogActionMinTouchTarget) {
       CGFloat verticalInsetsAdjustment = MDCDialogActionMinTouchTarget - topButtonSize.height;
       actionInsets.top -= verticalInsetsAdjustment / 2;
     }
-    MDCButton *bottomButton = buttons.lastObject;
+    UIButton *bottomButton = buttons.lastObject;
     CGSize bottomButtonSize = [bottomButton sizeThatFits:CGSizeZero];
     if (bottomButtonSize.height < MDCDialogActionMinTouchTarget) {
       CGFloat verticalInsetsAdjustment = MDCDialogActionMinTouchTarget - bottomButtonSize.height;
@@ -520,49 +599,65 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   return actionInsets;
 }
 
-- (CGFloat)actionsVerticalMarginBetweenTopButton:(MDCButton *)topButton
-                                    bottomButton:(MDCButton *)bottomButton {
-  CGFloat actionsVerticalMargin = self.actionsVerticalMargin;
+- (CGFloat)actionsVerticalMarginBetweenTopButton:(UIButton *)topButton
+                                    bottomButton:(UIButton *)bottomButton {
+  CGFloat actionsVerticalMargin = self.M3CButtonActionsVerticalMargin;
+
   CGSize topButtonSize = [topButton sizeThatFits:CGSizeZero];
-  if (topButtonSize.height < MDCDialogActionMinTouchTarget) {
-    CGFloat verticalInsetsAdjustment = MDCDialogActionMinTouchTarget - topButtonSize.height;
-    actionsVerticalMargin -= verticalInsetsAdjustment / 2;
-  }
   CGSize bottomButtonSize = [bottomButton sizeThatFits:CGSizeZero];
-  if (bottomButtonSize.height < MDCDialogActionMinTouchTarget) {
-    CGFloat verticalInsetsAdjustment = MDCDialogActionMinTouchTarget - bottomButtonSize.height;
-    actionsVerticalMargin -= verticalInsetsAdjustment / 2;
+  if (!self.isM3CButtonEnabled) {
+    actionsVerticalMargin = self.actionsVerticalMargin;
+    if (topButtonSize.height < MDCDialogActionMinTouchTarget) {
+      CGFloat verticalInsetsAdjustment = MDCDialogActionMinTouchTarget - topButtonSize.height;
+      actionsVerticalMargin -= verticalInsetsAdjustment / 2;
+    }
+    if (bottomButtonSize.height < MDCDialogActionMinTouchTarget) {
+      CGFloat verticalInsetsAdjustment = MDCDialogActionMinTouchTarget - bottomButtonSize.height;
+      actionsVerticalMargin -= verticalInsetsAdjustment / 2;
+    }
   }
   return actionsVerticalMargin;
 }
 
 - (CGFloat)horizontalSpacing {
   NSUInteger count = self.actionManager.buttonsInActionOrder.count;
-  CGFloat spacing = self.actionsInsets.left + self.actionsInsets.right +
-                    (count - 1) * self.actionsHorizontalMargin;
+  UIEdgeInsets insetsToUse =
+      self.isM3CButtonEnabled ? self.M3CButtonActionsInsets : self.actionsInsets;
+  CGFloat spacing =
+      insetsToUse.left + insetsToUse.right + (count - 1) * self.actionsHorizontalMargin;
   return spacing;
 }
 
 - (CGFloat)widestAction {
   CGFloat widest = 0.0f;
-  for (MDCButton *button in self.actionManager.buttonsInActionOrder) {
-    // For justified alignment, minimumSize is used to control button's visible area.
-    // If user sets a custom value, it is ignored because button's final size is decided
-    // during layout.
-    // We need to reset minimumSize during sizeThatFits: to make sure it doesn't affect the
-    // calculation here.
-    CGSize currentMinimumSize = CGSizeZero;
-    if (self.actionsHorizontalAlignment == MDCContentHorizontalAlignmentJustified) {
-      currentMinimumSize = button.minimumSize;
-      button.minimumSize =
-          CGSizeMake(MDCDialogActionButtonMinimumWidth, MDCDialogActionButtonMinimumHeight);
+
+  if (self.isM3CButtonEnabled) {
+    for (M3CButton *button in self.actionManager.buttonsInActionOrder) {
+      CGSize buttonSize = [button sizeThatFits:CGSizeZero];
+      if (buttonSize.width > widest) {
+        widest = buttonSize.width;
+      }
     }
-    CGSize buttonSize = [button sizeThatFits:CGSizeZero];
-    if (buttonSize.width > widest) {
-      widest = buttonSize.width;
-    }
-    if (self.actionsHorizontalAlignment == MDCContentHorizontalAlignmentJustified) {
-      button.minimumSize = currentMinimumSize;
+  } else {
+    for (MDCButton *button in self.actionManager.buttonsInActionOrder) {
+      // For justified alignment, minimumSize is used to control button's visible area.
+      // If user sets a custom value, it is ignored because button's final size is decided
+      // during layout.
+      // We need to reset minimumSize during sizeThatFits: to make sure it doesn't affect the
+      // calculation here.
+      CGSize currentMinimumSize = CGSizeZero;
+      if (self.actionsHorizontalAlignment == MDCContentHorizontalAlignmentJustified) {
+        currentMinimumSize = button.minimumSize;
+        button.minimumSize =
+            CGSizeMake(MDCDialogActionButtonMinimumWidth, MDCDialogActionButtonMinimumHeight);
+      }
+      CGSize buttonSize = [button sizeThatFits:CGSizeZero];
+      if (buttonSize.width > widest) {
+        widest = buttonSize.width;
+      }
+      if (self.actionsHorizontalAlignment == MDCContentHorizontalAlignmentJustified) {
+        button.minimumSize = currentMinimumSize;
+      }
     }
   }
   return widest;
@@ -613,6 +708,9 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
 }
 
 - (CGFloat)accessoryVerticalInset {
+  if (self.shouldPlaceAccessoryViewAboveMessage && [self hasAccessoryView]) {
+    return self.accessoryViewVerticalInset;
+  }
   return ([self hasMessage] && [self hasAccessoryView]) ? self.accessoryViewVerticalInset : 0.0f;
 }
 
@@ -626,16 +724,6 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   return CGSizeZero;
 }
 
-// Returns the size of the title view or the original size of the title icon image.
-- (CGSize)titleIconImageSize {
-  if (self.titleIconView != nil) {
-    return self.titleIconView.frame.size;
-  } else if (self.titleIcon != nil) {
-    return self.titleIcon.size;
-  }
-  return CGSizeZero;
-}
-
 - (CGRect)titleFrameWithTitleSize:(CGSize)titleSize {
   CGFloat leftInset = self.titleInsets.left;
   CGFloat titleTop =
@@ -643,9 +731,8 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   return CGRectMake(leftInset, titleTop, titleSize.width, titleSize.height);
 }
 
-- (CGRect)messageFrameWithSize:(CGSize)messageSize {
-  CGFloat top = [self contentInsetTop];
-  return CGRectMake(self.contentInsets.left, top, messageSize.width, messageSize.height);
+- (CGFloat)messageTopInsetWithTitleFrame:(CGRect)titleFrame {
+  return CGRectGetMaxY(titleFrame) + [self titleInsetBottom];
 }
 
 /**
@@ -655,15 +742,19 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
  @param boundsSize is the total bounds without any internal margins or padding.
 */
 - (CGRect)titleIconFrameWithTitleSize:(CGSize)titleSize boundsSize:(CGSize)boundsSize {
-  CGSize titleIconViewSize = [self titleIconImageSize];
+  CGSize titleIconViewSize = [self.titleIconImageView sizeThatFits:CGSizeZero];
+  if (self.titleIconView != nil) {
+    // If titileIconsView is set, use its frame.
+    titleIconViewSize = self.titleIconView.frame.size;
+  }
   CGFloat leftInset = self.titleIconInsets.left;
   CGFloat topInset = self.titleIconInsets.top;
   CGFloat titleIconHeight = titleIconViewSize.height;
   CGFloat titleIconWidth = titleIconViewSize.width;
-  BOOL isRightOrRTLNatural = (self.titleIconAlignment == NSTextAlignmentRight ||
-                              (self.titleIconAlignment == NSTextAlignmentNatural &&
-                               [self mdf_effectiveUserInterfaceLayoutDirection] ==
-                                   UIUserInterfaceLayoutDirectionRightToLeft));
+  BOOL isRightOrRTLNatural =
+      (self.titleIconAlignment == NSTextAlignmentRight ||
+       (self.titleIconAlignment == NSTextAlignmentNatural &&
+        [self effectiveUserInterfaceLayoutDirection] == UIUserInterfaceLayoutDirectionRightToLeft));
 
   if (self.titleIconAlignment == NSTextAlignmentJustified) {
     // Justified images are sized to fit the alert's width (minus the insets).
@@ -724,6 +815,13 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   CGFloat maxWidth = MAX(messageSize.width, accessoryViewSize.width);
   CGFloat contentWidth = MAX(titleWidth + titleInsets, maxWidth + contentInsets);
 
+  // Recalculate the accessory view size using the `boundingWidth` to ensure the height calculated
+  // here matches what layoutSubviews will use for the frame.
+  accessoryViewSize =
+      [self.accessoryView systemLayoutSizeFittingSize:boundsSize
+                        withHorizontalFittingPriority:UILayoutPriorityRequired
+                              verticalFittingPriority:UILayoutPriorityFittingSizeLevel];
+
   CGFloat totalElementsHeight = messageSize.height + accessoryViewSize.height;
   CGFloat contentHeight = (fabs(contentWidth) <= FLT_EPSILON) || totalElementsHeight <= FLT_EPSILON
                               ? 0.0f
@@ -771,32 +869,18 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   CGSize verticalSize = [self actionButtonsSizeInVerticalLayout];
 
   BOOL isVertical = boundsSize.width < horizontalSize.width;
-  NSUInteger count = self.actionManager.buttonsInActionOrder.count;
-  if (self.actionsHorizontalAlignment == MDCContentHorizontalAlignmentJustified && count > 1) {
-    // b/155350470: ensure long justified actions are vertically aligned based on the longest
-    // button.
-    isVertical =
-        [self widestAction] > (CGFloat)ceil((boundingWidth - [self horizontalSpacing]) / count);
-  }
   CGSize actionsSize;
   if (isVertical) {
     // Use VerticalLayout
-    if (self.actionsHorizontalAlignmentInVerticalLayout == MDCContentHorizontalAlignmentJustified) {
-      verticalSize.width = boundingWidth - (self.actionsInsets.left + self.actionsInsets.right);
-    }
     actionsSize.width = MIN(verticalSize.width, boundsSize.width);
     actionsSize.height = MIN(verticalSize.height, boundsSize.height);
-    self.verticalActionsLayout = YES;
   } else {
     // Use HorizontalLayout
-    if (self.actionsHorizontalAlignment == MDCContentHorizontalAlignmentJustified) {
-      horizontalSize.width = boundingWidth - (self.actionsInsets.left + self.actionsInsets.right);
-    }
     actionsSize.width = MIN(horizontalSize.width, boundsSize.width);
     actionsSize.height = MIN(horizontalSize.height, boundsSize.height);
-    self.verticalActionsLayout = NO;
   }
 
+  self.verticalActionsLayout = isVertical;
   actionsSize.width = (CGFloat)ceil(actionsSize.width);
   actionsSize.height = (CGFloat)ceil(actionsSize.height);
 
@@ -807,6 +891,13 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   return YES;
 }
 
+- (void)setShouldPlaceAccessoryViewAboveMessage:(BOOL)shouldPlaceAccessoryViewAboveMessage {
+  if (_shouldPlaceAccessoryViewAboveMessage != shouldPlaceAccessoryViewAboveMessage) {
+    _shouldPlaceAccessoryViewAboveMessage = shouldPlaceAccessoryViewAboveMessage;
+    [self setNeedsLayout];
+  }
+}
+
 - (void)layoutSubviews {
   [super layoutSubviews];
 
@@ -814,15 +905,14 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   CGSize boundsSize = CGRectInfinite.size;
   boundsSize.width = CGRectGetWidth(self.bounds);
 
-  // Title view
+  // Calculate content and title sizes
   CGSize titleViewSize = [self calculateTitleViewSizeThatFitsWidth:boundsSize.width];
 
   CGRect titleViewRect = CGRectZero;
   titleViewRect.size.width = CGRectGetWidth(self.bounds);
   titleViewRect.size.height = titleViewSize.height;
 
-  self.titleScrollView.contentSize = titleViewRect.size;
-  self.titleScrollView.frame = titleViewRect;
+  self.titleView.frame = titleViewRect;
 
   // Content
   CGSize contentSize = [self calculateContentSizeThatFitsWidth:boundsSize.width];
@@ -830,10 +920,13 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   CGRect contentRect = CGRectZero;
   contentRect.size.width = CGRectGetWidth(self.bounds);
   contentRect.size.height = contentSize.height;
+  if (!self.titlePinsToTop) {
+    contentRect.size.height += titleViewSize.height;
+  }
 
   self.contentScrollView.contentSize = contentRect.size;
 
-  // Place Content in contentScrollView
+  // Place content in contentScrollView
   CGSize titleBoundsSize = boundsSize;
   titleBoundsSize.width = boundsSize.width - (self.titleInsets.left + self.titleInsets.right);
   CGSize titleSize = [self.titleLabel sizeThatFits:titleBoundsSize];
@@ -861,18 +954,34 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
 
   // Calculate the title frame after the title icon size has been determined.
   CGRect titleFrame = [self titleFrameWithTitleSize:titleSize];
-  CGRect messageFrame = [self messageFrameWithSize:messageSize];
+
+  CGFloat top = self.titlePinsToTop
+                    ? [self contentInsetTop]
+                    : [self messageTopInsetWithTitleFrame:titleFrame] + [self contentInsetTop];
+  CGRect messageFrame =
+      CGRectMake(self.contentInsets.left, top, messageSize.width, messageSize.height);
   CGRect accessoryViewFrame = CGRectMake(
       self.contentInsets.left + self.accessoryViewHorizontalInset,
       CGRectGetMaxY(messageFrame) + [self accessoryVerticalInset],
       accessoryViewSize.width - self.accessoryViewHorizontalInset * 2.0, accessoryViewSize.height);
+
+  if (self.shouldPlaceAccessoryViewAboveMessage && self.accessoryView) {
+    accessoryViewFrame =
+        CGRectMake(self.contentInsets.left + self.accessoryViewHorizontalInset,
+                   [self contentInsetTop] + [self messageTopInsetWithTitleFrame:titleFrame],
+                   accessoryViewSize.width - self.accessoryViewHorizontalInset * 2.0,
+                   accessoryViewSize.height);
+    messageFrame = CGRectMake(self.contentInsets.left,
+                              CGRectGetMaxY(accessoryViewFrame) + [self accessoryVerticalInset],
+                              messageSize.width, messageSize.height);
+  }
 
   self.titleLabel.frame = titleFrame;
   self.messageTextView.frame = messageFrame;
   self.accessoryView.frame = accessoryViewFrame;
 
   // Actions
-  NSArray<MDCButton *> *buttons = self.actionManager.buttonsInActionOrder;
+  NSArray<UIButton *> *buttons = self.actionManager.buttonsInActionOrder;
   CGSize actionSize = [self calculateActionsSizeThatFitsWidth:boundsSize.width];
 
   CGRect actionsFrame = CGRectZero;
@@ -882,12 +991,14 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   }
   self.actionsScrollView.contentSize = actionsFrame.size;
 
-  for (MDCButton *button in buttons) {
+  for (UIButton *button in buttons) {
     [button sizeToFit];
     CGRect buttonFrame = button.frame;
+    CGFloat minTouchTargetHeight =
+        self.isM3CButtonEnabled ? M3CDialogActionMinHeight : MDCDialogActionMinTouchTarget;
     button.frame = CGRectMake(buttonFrame.origin.x, buttonFrame.origin.y,
                               MAX(MDCDialogActionMinTouchTarget, CGRectGetWidth(buttonFrame)),
-                              MAX(MDCDialogActionMinTouchTarget, CGRectGetHeight(buttonFrame)));
+                              MAX(minTouchTargetHeight, CGRectGetHeight(buttonFrame)));
   }
 
   if (self.isVerticalActionsLayout) {
@@ -899,7 +1010,8 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   // Place scrollviews
   CGRect contentScrollViewRect = CGRectZero;
   contentScrollViewRect.size = self.contentScrollView.contentSize;
-  contentScrollViewRect.origin.y = CGRectGetMaxY(titleFrame) + [self titleInsetBottom];
+  contentScrollViewRect.origin.y =
+      self.titlePinsToTop ? [self messageTopInsetWithTitleFrame:titleFrame] : 0.0f;
 
   CGRect actionsScrollViewRect = CGRectZero;
   actionsScrollViewRect.size = self.actionsScrollView.contentSize;
@@ -910,15 +1022,14 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
                                   self.actionsScrollView.contentSize.height;
   // Check the layout: do both content and actions fit on the screen at once?
   if (requestedHeight > CGRectGetHeight(self.bounds)) {
-    // Complex layout case : Split the space between the two scrollviews.
+    // Actions take up max 1/2 Dialog height
     CGFloat maxActionsHeight = CGRectGetHeight(self.bounds) / 2.0f;
-    if (CGRectGetHeight(contentScrollViewRect) < maxActionsHeight) {
-      maxActionsHeight =
-          MIN(maxActionsHeight, CGRectGetHeight(self.bounds) - contentScrollViewRect.size.height);
-    }
-    actionsScrollViewRect.size.height = MIN(maxActionsHeight, actionsScrollViewRect.size.height);
+    CGFloat actionsHeight = MIN(maxActionsHeight, actionsScrollViewRect.size.height);
+    actionsScrollViewRect.size.height = actionsHeight;
+    actionsScrollViewRect.origin.y = CGRectGetHeight(self.bounds) - actionsHeight;
     contentScrollViewRect.size.height =
-        MAX(0.f, actionsScrollViewRect.origin.y - contentScrollViewRect.origin.y);
+        MAX(0.f, CGRectGetHeight(self.bounds) - actionsScrollViewRect.size.height -
+                     contentScrollViewRect.origin.y);
 
     self.messageTextView.accessibilityFrame = UIAccessibilityConvertFrameToScreenCoordinates(
         CGRectMake(messageFrame.origin.x, contentScrollViewRect.origin.y, messageFrame.size.width,
@@ -929,7 +1040,7 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   self.contentScrollView.frame = contentScrollViewRect;
 }
 
-- (void)layoutHorizontalButtons:(NSArray<MDCButton *> *)buttons actionSize:(CGSize)actionSize {
+- (void)layoutHorizontalButtons:(NSArray<UIButton *> *)buttons actionSize:(CGSize)actionSize {
   UIEdgeInsets actionsInsets = [self actionsInsetsForButtons:buttons isHorizontalLayout:YES];
   CGFloat maxButtonWidth =
       self.actionsScrollView.contentSize.width - (actionsInsets.left + actionsInsets.right);
@@ -947,7 +1058,14 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
     buttonOrigin.x = self.actionsScrollView.contentSize.width - actionsInsets.right;
   }
   buttonOrigin.y = actionsInsets.top;
-  for (MDCButton *button in buttons) {
+  for (UIButton *button in buttons) {
+    if (self.isM3CButtonEnabled && [button isKindOfClass:M3CButton.class]) {
+      M3CButton *m3cButton = (M3CButton *)button;
+      if (m3cButton.textCanWrap) {
+        m3cButton.textCanWrap = false;
+        m3cButton.titleLabel.preferredMaxLayoutWidth = 0;
+      }
+    }
     CGRect buttonRect = button.frame;
 
     buttonWidth = buttonRect.size.width;
@@ -958,9 +1076,12 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
       } else {
         buttonWidth = maxButtonWidth;
       }
-      // Adjust minimumSize based on maxButtonWidth to increase the visible area of button.
-      button.minimumSize = CGSizeMake(MAX(buttonWidth, MDCDialogActionButtonMinimumWidth),
-                                      button.minimumSize.height);
+      if (!self.isM3CButtonEnabled) {
+        MDCButton *castedButton = (MDCButton *)button;
+        // Adjust minimumSize based on maxButtonWidth to increase the visible area of button.
+        castedButton.minimumSize = CGSizeMake(MAX(buttonWidth, MDCDialogActionButtonMinimumWidth),
+                                              castedButton.minimumSize.height);
+      }
     }
 
     if (self.actionsHorizontalAlignment != MDCContentHorizontalAlignmentLeading) {
@@ -981,7 +1102,7 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
     }
   }
   // Handle RTL
-  if (self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+  if (self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
     for (UIButton *button in buttons) {
       CGRect flippedRect = MDFRectFlippedHorizontally(button.frame, CGRectGetWidth(self.bounds));
       button.frame = flippedRect;
@@ -989,7 +1110,7 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   }
 }
 
-- (void)layoutVerticalButtons:(NSArray<MDCButton *> *)buttons {
+- (void)layoutVerticalButtons:(NSArray<UIButton *> *)buttons {
   UIEdgeInsets actionsInsets = [self actionsInsetsForButtons:buttons isHorizontalLayout:NO];
   CGFloat maxButtonWidth =
       self.actionsScrollView.contentSize.width - (actionsInsets.left + actionsInsets.right);
@@ -1004,7 +1125,13 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
     buttonCenter.x = self.actionsScrollView.contentSize.width / 2.0f;
     buttonCenter.y = buttonOrigin.y;
     for (NSUInteger index = 0; index < buttons.count; ++index) {
-      MDCButton *button = buttons[index];
+      UIButton *button = buttons[index];
+      if (self.isM3CButtonEnabled && [button isKindOfClass:M3CButton.class]) {
+        M3CButton *m3cButton = (M3CButton *)button;
+        m3cButton.textCanWrap = YES;
+        self.titleLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
+        m3cButton.titleLabel.preferredMaxLayoutWidth = maxButtonWidth;
+      }
       CGRect buttonRect = button.bounds;
 
       if (CGRectGetWidth(buttonRect) > maxButtonWidth ||
@@ -1012,9 +1139,16 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
               MDCContentHorizontalAlignmentJustified) {
         buttonRect.size.width = maxButtonWidth;
         button.bounds = buttonRect;
-        // Adjust minimumSize based on maxButtonWidth to increase the visible area of button.
-        button.minimumSize = CGSizeMake(MAX(maxButtonWidth, MDCDialogActionButtonMinimumWidth),
-                                        button.minimumSize.height);
+        if (self.actionsHorizontalAlignmentInVerticalLayout ==
+            MDCContentHorizontalAlignmentJustified) {
+          if (!self.isM3CButtonEnabled) {
+            MDCButton *castedButton = (MDCButton *)button;
+            // Adjust minimumSize based on maxButtonWidth to increase the visible area of button.
+            castedButton.minimumSize =
+                CGSizeMake(MAX(maxButtonWidth, MDCDialogActionButtonMinimumWidth),
+                           castedButton.minimumSize.height);
+          }
+        }
       }
 
       buttonCenter.y += multiplier * (buttonRect.size.height / 2.0f);
@@ -1023,7 +1157,7 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
 
       if (button != buttons.lastObject) {
         buttonCenter.y += multiplier * (buttonRect.size.height / 2.0f);
-        MDCButton *nextButton = buttons[index + 1];
+        UIButton *nextButton = buttons[index + 1];
         CGFloat verticalMargin = [self actionsVerticalMarginBetweenTopButton:button
                                                                 bottomButton:nextButton];
         buttonCenter.y += multiplier * verticalMargin;
@@ -1032,7 +1166,7 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
 
   } else {  // Leading/Trailing alignment.
     for (NSUInteger index = 0; index < buttons.count; ++index) {
-      MDCButton *button = buttons[index];
+      UIButton *button = buttons[index];
       CGRect buttonRect = button.bounds;
       buttonOrigin.x = actionsInsets.left;
       if (self.actionsHorizontalAlignmentInVerticalLayout ==
@@ -1043,15 +1177,14 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
       buttonRect.origin = buttonOrigin;
       button.frame = buttonRect;
       if (button != buttons.lastObject) {
-        MDCButton *nextButton = buttons[index + 1];
+        UIButton *nextButton = buttons[index + 1];
         CGFloat verticalMargin = [self actionsVerticalMarginBetweenTopButton:button
                                                                 bottomButton:nextButton];
         buttonOrigin.y += multiplier * (buttonRect.size.height + verticalMargin);
       }
     }
     // Handle RTL
-    if (self.mdf_effectiveUserInterfaceLayoutDirection ==
-        UIUserInterfaceLayoutDirectionRightToLeft) {
+    if (self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
       for (UIButton *button in buttons) {
         CGRect flippedRect = MDFRectFlippedHorizontally(button.frame, CGRectGetWidth(self.bounds));
         button.frame = flippedRect;
@@ -1062,18 +1195,13 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
 
 #pragma mark - Dynamic Type
 
-- (BOOL)mdc_adjustsFontForContentSizeCategory {
-  return _mdc_adjustsFontForContentSizeCategory;
-}
-
-- (void)mdc_setAdjustsFontForContentSizeCategory:(BOOL)adjusts {
-  _mdc_adjustsFontForContentSizeCategory = adjusts;
-
-  for (MDCButton *button in self.actionManager.buttonsInActionOrder) {
-    button.mdc_adjustsFontForContentSizeCategory = adjusts;
+- (void)setAdjustsFontForContentSizeCategory:(BOOL)adjustsFontForContentSizeCategory {
+  _adjustsFontForContentSizeCategory = adjustsFontForContentSizeCategory;
+  self.titleLabel.adjustsFontForContentSizeCategory = adjustsFontForContentSizeCategory;
+  for (UIButton *button in self.actionManager.buttonsInActionOrder) {
+    button.titleLabel.adjustsFontForContentSizeCategory = adjustsFontForContentSizeCategory;
   }
-
-  [self updateFonts];
+  self.messageTextView.adjustsFontForContentSizeCategory = adjustsFontForContentSizeCategory;
 }
 
 // Update the fonts used based on whether Dynamic Type is enabled.
@@ -1091,7 +1219,7 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
 
 #pragma mark - UITextView
 
-- (void)setAttributedText:(NSAttributedString *)attributedText {
+- (void)setAttributedText:(NSAttributedString *_Nullable)attributedText {
   if ([self.attributedText isEqual:attributedText]) {
     return;
   }
@@ -1100,7 +1228,7 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   [self updateTopInsetAndTextContainerInset:self.textContainerInset];
 }
 
-- (void)setFont:(UIFont *)font {
+- (void)setFont:(UIFont *_Nullable)font {
   if ([self.font isEqual:font]) {
     return;
   }
@@ -1109,7 +1237,7 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   [self updateTopInsetAndTextContainerInset:self.textContainerInset];
 }
 
-- (void)setText:(NSString *)text {
+- (void)setText:(NSString *_Nullable)text {
   if ([self.text isEqual:text]) {
     return;
   }
@@ -1125,7 +1253,7 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
 #pragma mark - UIView
 
 // Disabling text selection when selectable is YES, while allowing gestures for inlined links.
-- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
+- (BOOL)pointInside:(CGPoint)point withEvent:(nullable UIEvent *)event {
   if (UIAccessibilityIsVoiceOverRunning()) {
     return [super pointInside:point withEvent:event];
   }
@@ -1138,10 +1266,13 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
   if (!position) {
     return NO;
   }
+  BOOL isRTL =
+      self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft;
 
-  UITextRange *range = [self.tokenizer rangeEnclosingPosition:position
-                                              withGranularity:UITextGranularityCharacter
-                                                  inDirection:UITextLayoutDirectionLeft];
+  UITextRange *range = [self.tokenizer
+      rangeEnclosingPosition:position
+             withGranularity:UITextGranularityCharacter
+                 inDirection:isRTL ? UITextLayoutDirectionRight : UITextLayoutDirectionLeft];
   if (!range) {
     return NO;
   }
@@ -1176,3 +1307,5 @@ static CGFloat SingleLineTextViewHeight(NSString *_Nullable title, UIFont *_Null
 }
 
 @end
+
+NS_ASSUME_NONNULL_END

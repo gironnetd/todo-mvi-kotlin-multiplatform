@@ -76,8 +76,6 @@ static inline CGPoint CGPointAddedToPoint(CGPoint a, CGPoint b) {
   MDCFeatureHighlightLayer *_displayMaskLayer;
   UIButton *_accessibilityView;
 
-  BOOL _mdc_adjustsFontForContentSizeCategory;
-
   // This view is a hack to work around UIKit calling our animation completion blocks immediately if
   // there is no UIKit content being animated. Since our appearance and disappearance animations are
   // mostly CAAnimations, we need to guarantee there will be a UIKit animation occuring in order to
@@ -192,19 +190,7 @@ static inline CGPoint CGPointAddedToPoint(CGPoint a, CGPoint b) {
   if (!_titleFont) {
     _titleFont = [MDCFeatureHighlightView defaultTitleFont];
   }
-  if (_mdc_adjustsFontForContentSizeCategory) {
-    if (_titleFont.mdc_scalingCurve && !_mdc_legacyFontScaling) {
-      // The font has an associated curve (M2+)
-      _titleLabel.font = [_titleFont mdc_scaledFontForCurrentSizeCategory];
-    } else {
-      // The original (M1) custom font + DT implementation
-      _titleLabel.font =
-          [_titleFont mdc_fontSizedForMaterialTextStyle:kTitleTextStyle
-                                   scaledForDynamicType:_mdc_adjustsFontForContentSizeCategory];
-    }
-  } else {
     _titleLabel.font = _titleFont;
-  }
 
   if (_titleLabel.attributedText) {
     NSMutableAttributedString *attributedString = [_titleLabel.attributedText mutableCopy];
@@ -231,19 +217,7 @@ static inline CGPoint CGPointAddedToPoint(CGPoint a, CGPoint b) {
   if (!_bodyFont) {
     _bodyFont = [MDCFeatureHighlightView defaultBodyFont];
   }
-  if (_mdc_adjustsFontForContentSizeCategory) {
-    if (_bodyFont.mdc_scalingCurve && !_mdc_legacyFontScaling) {
-      // The font has an associated curve (M2+)
-      _bodyLabel.font = [_bodyFont mdc_scaledFontForCurrentSizeCategory];
-    } else {
-      // The original (M1) custom font + DT implementation
-      _bodyLabel.font =
-          [_bodyFont mdc_fontSizedForMaterialTextStyle:kBodyTextStyle
-                                  scaledForDynamicType:_mdc_adjustsFontForContentSizeCategory];
-    }
-  } else {
     _bodyLabel.font = _bodyFont;
-  }
 
   if (_bodyLabel.attributedText) {
     NSMutableAttributedString *attributedString = [_bodyLabel.attributedText mutableCopy];
@@ -448,6 +422,15 @@ static inline CGPoint CGPointAddedToPoint(CGPoint a, CGPoint b) {
 }
 
 - (void)didTapView:(UITapGestureRecognizer *)tapGestureRecognizer {
+  BOOL hasVoiceOverFocusOnDismissView =
+      UIAccessibilityIsVoiceOverRunning() && [_accessibilityView accessibilityElementIsFocused];
+  if (self.interactionBlock && hasVoiceOverFocusOnDismissView) {
+    // Early return when the tap happens on the _accessibilityView as its accessibilityFrame
+    // (full-screen) should not be used for the position based calculation below.
+    self.interactionBlock(NO);
+    return;
+  }
+
   CGPoint pos = [tapGestureRecognizer locationInView:self];
   CGFloat pointDist = CGPointDistanceToPoint(_highlightPoint, pos);
   CGFloat centerDist = CGPointDistanceToPoint(_highlightCenter, pos);
@@ -569,21 +552,13 @@ static inline CGPoint CGPointAddedToPoint(CGPoint a, CGPoint b) {
   __block id pulseColorStart;
   __block id pulseColorEnd;
 #if MDC_AVAILABLE_SDK_IOS(13_0)
-  if (@available(iOS 13.0, *)) {
-    [self.traitCollection performAsCurrentTraitCollection:^{
-      pulseColorStart =
-          (__bridge id)
-              [self.innerHighlightColor colorWithAlphaComponent:kMDCFeatureHighlightPulseStartAlpha]
-                  .CGColor;
-      pulseColorEnd = (__bridge id)[self.innerHighlightColor colorWithAlphaComponent:0].CGColor;
-    }];
-  } else {
+  [self.traitCollection performAsCurrentTraitCollection:^{
     pulseColorStart =
         (__bridge id)
-            [_innerHighlightColor colorWithAlphaComponent:kMDCFeatureHighlightPulseStartAlpha]
+            [self.innerHighlightColor colorWithAlphaComponent:kMDCFeatureHighlightPulseStartAlpha]
                 .CGColor;
-    pulseColorEnd = (__bridge id)[_innerHighlightColor colorWithAlphaComponent:0].CGColor;
-  }
+    pulseColorEnd = (__bridge id)[self.innerHighlightColor colorWithAlphaComponent:0].CGColor;
+  }];
 #else
   pulseColorStart =
       (__bridge id)
@@ -668,29 +643,6 @@ static inline CGPoint CGPointAddedToPoint(CGPoint a, CGPoint b) {
 }
 
 #pragma mark - Dynamic Type Support
-
-- (BOOL)mdc_adjustsFontForContentSizeCategory {
-  return _mdc_adjustsFontForContentSizeCategory;
-}
-
-- (void)mdc_setAdjustsFontForContentSizeCategory:(BOOL)adjusts {
-  _mdc_adjustsFontForContentSizeCategory = adjusts;
-
-  if (_mdc_adjustsFontForContentSizeCategory) {
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(contentSizeCategoryDidChange:)
-                                                 name:UIContentSizeCategoryDidChangeNotification
-                                               object:nil];
-  } else {
-    [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                    name:UIContentSizeCategoryDidChangeNotification
-                                                  object:nil];
-  }
-
-  [self updateTitleFont];
-  [self updateBodyFont];
-}
-
 - (void)setAdjustsFontForContentSizeCategory:(BOOL)adjustsFontForContentSizeCategory {
   _adjustsFontForContentSizeCategory = adjustsFontForContentSizeCategory;
   self.titleLabel.adjustsFontForContentSizeCategory = adjustsFontForContentSizeCategory;

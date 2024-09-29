@@ -14,6 +14,11 @@
 
 #import <UIKit/UIKit.h>
 
+API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
+                     "Use branded UITableView or UICollectionView instead: go/material-ios-lists. "
+                     "This is go/material-ios-migrations#not-scriptable 🕘",
+                     ios(11, 12))
+
 /**
  The MDCCollectionGridBackgroundView class provides an implementation of UICollectionReusableView
  that displays a background view under cells at each section of a collection view in grid layout.
@@ -25,3 +30,5 @@
 @interface MDCCollectionGridBackgroundView : UICollectionReusableView
 
 @end
+
+API_DEPRECATED_END

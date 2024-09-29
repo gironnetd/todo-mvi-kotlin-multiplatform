@@ -15,6 +15,11 @@
 #import <QuartzCore/QuartzCore.h>
 #import <UIKit/UIKit.h>
 
+API_DEPRECATED_BEGIN("🤖👀 Use a branded UIPageControl instead. "
+                     "See go/material-ios-branding for more info. "
+                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
+                     ios(12, 12))
+
 /**
  This shape layer provides a circular indicator denoting a page in a page control.
 
@@ -57,3 +62,5 @@
               mediaTimingFunction:(CAMediaTimingFunction *)timingFunction;
 
 @end
+
+API_DEPRECATED_END
