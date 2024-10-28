@@ -14,7 +14,6 @@
 
 #import "MDCTextInputControllerFullWidth.h"
 
-#import "MDCPalettes.h"
 #import "MDCIntrinsicHeightTextView.h"
 #import "MDCMultilineTextField.h"
 #import "MDCTextField.h"
@@ -23,27 +22,25 @@
 #import "MDCTextInputController.h"
 #import "MDCTextInputUnderlineView.h"
 
-#import "MDCFontTextStyle.h"
-#import "UIFont+MaterialTypography.h"
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-implementations"
+#import "MaterialPalettes.h"
+#import "MaterialTypography.h"
 
 static const CGFloat MDCTextInputControllerFullWidthHintTextOpacity = (CGFloat)0.54;
 static const CGFloat MDCTextInputControllerFullWidthHorizontalInnerPadding = 8;
 static const CGFloat MDCTextInputControllerFullWidthHorizontalPadding = 16;
 static const CGFloat MDCTextInputControllerFullWidthVerticalPadding = 20;
 
-static inline UIColor *MDCTextInputControllerFullWidthInlinePlaceholderTextColorDefault(void) {
+static inline UIColor *MDCTextInputControllerFullWidthInlinePlaceholderTextColorDefault() {
   return [UIColor colorWithWhite:0 alpha:MDCTextInputControllerFullWidthHintTextOpacity];
 }
 
-static inline UIColor *MDCTextInputControllerFullWidthErrorColorDefault(void) {
+static inline UIColor *MDCTextInputControllerFullWidthErrorColorDefault() {
   return [MDCPalette redPalette].accent400;
 }
 
 #pragma mark - Class Properties
 
+static BOOL _mdc_adjustsFontForContentSizeCategoryDefault = NO;
 static UIColor *_backgroundColorDefault;
 static UIColor *_errorColorDefault;
 static UIColor *_inlinePlaceholderColorDefault;
@@ -171,7 +168,9 @@ static UIFont *_trailingUnderlineLabelFontDefault;
   }
 
   // This controller will handle Dynamic Type and all fonts for the text input
-  _mdc_adjustsFontForContentSizeCategory = _textInput.mdc_adjustsFontForContentSizeCategory || NO;
+  _mdc_adjustsFontForContentSizeCategory =
+      _textInput.mdc_adjustsFontForContentSizeCategory ||
+      [self class].mdc_adjustsFontForContentSizeCategoryDefault;
   _textInput.mdc_adjustsFontForContentSizeCategory = NO;
   _textInput.positioningDelegate = self;
 
@@ -1192,10 +1191,17 @@ static UIFont *_trailingUnderlineLabelFontDefault;
   }
 }
 
++ (BOOL)mdc_adjustsFontForContentSizeCategoryDefault {
+  return _mdc_adjustsFontForContentSizeCategoryDefault;
+}
+
++ (void)setMdc_adjustsFontForContentSizeCategoryDefault:
+    (BOOL)mdc_adjustsFontForContentSizeCategoryDefault {
+  _mdc_adjustsFontForContentSizeCategoryDefault = mdc_adjustsFontForContentSizeCategoryDefault;
+}
+
 - (void)contentSizeCategoryDidChange:(__unused NSNotification *)notification {
   [self updateLayout];
 }
 
 @end
-
-#pragma clang diagnostic pop

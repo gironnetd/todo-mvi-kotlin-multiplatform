@@ -133,7 +133,7 @@ class TaskDetailViewModel(
      * This is basically like a big switch statement of all possible types for the [MviResult]
      */
     private val reducer =
-      BiFunction { previousState: TaskDetailViewState, result: TaskDetailResult ->
+      BiFunction<TaskDetailViewState, TaskDetailResult, TaskDetailViewState> { previousState: TaskDetailViewState, result: TaskDetailResult ->
         when (result) {
           is PopulateTaskResult -> when (result) {
             is PopulateTaskResult.Success -> previousState.copy(

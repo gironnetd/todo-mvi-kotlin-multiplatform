@@ -14,12 +14,6 @@
 
 #import "MDCRippleView.h"
 
-API_DEPRECATED_BEGIN(
-    "🕘 Schedule time to migrate. "
-    "Use default system highlight behavior instead: go/material-ios-touch-response. "
-    "This is go/material-ios-migrations#not-scriptable 🕘",
-    ios(12, 12))
-
 /**
  Provides the current state of the ripple. The ripple is either in its normal state, or in the
  selected state where the ripple remains spread on the view.
@@ -51,8 +45,7 @@ typedef NS_OPTIONS(NSInteger, MDCRippleState) {
  should be used when one wants to leverage the Material state system and should ideally be
  configured/set alongside the UIKit APIs (i.e. UIControlState or cell's setSelected/setHighlighted).
  */
-__attribute__((objc_subclassing_restricted))
-@interface MDCStatefulRippleView : MDCRippleView
+__attribute__((objc_subclassing_restricted)) @interface MDCStatefulRippleView : MDCRippleView
 
 /**
  This BOOL is set to YES if the ripple is currently selected, or NO otherwise.
@@ -170,5 +163,3 @@ __attribute__((objc_subclassing_restricted))
 - (void)touchesCancelled:(nullable NSSet<UITouch *> *)touches withEvent:(nullable UIEvent *)event;
 
 @end
-
-API_DEPRECATED_END

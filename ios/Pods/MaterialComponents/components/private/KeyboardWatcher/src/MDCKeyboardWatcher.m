@@ -13,12 +13,7 @@
 // limitations under the License.
 
 #import "MDCKeyboardWatcher.h"
-
-#import <CoreGraphics/CoreGraphics.h>
-
 #import "MaterialApplication.h"
-
-NS_ASSUME_NONNULL_BEGIN
 
 NSString *const MDCKeyboardWatcherKeyboardWillShowNotification =
     @"MDCKeyboardWatcherKeyboardWillShowNotification";
@@ -94,12 +89,6 @@ static MDCKeyboardWatcher *_sKeyboardWatcher;
     return;
   }
 
-#if defined(TARGET_OS_VISION) && TARGET_OS_VISION
-  // For code review, use the review queue listed in go/material-visionos-review.
-
-  // The keyboard on visionOS is undocked
-  self.keyboardFrame = CGRectZero;
-#else
   CGRect keyWindowBounds = [UIApplication mdc_safeSharedApplication].keyWindow.bounds;
   CGRect screenBounds = [[UIScreen mainScreen] bounds];
   CGRect intersection = CGRectIntersection(screenBounds, keyboardRect);
@@ -116,11 +105,15 @@ static MDCKeyboardWatcher *_sKeyboardWatcher;
   } else {
     self.keyboardFrame = CGRectZero;
   }
-#endif
 }
 
 - (CGFloat)visibleKeyboardHeight {
   return CGRectGetHeight(self.keyboardFrame);
+}
+
+// TODO : keyboardOffset deprecated, delete.
+- (CGFloat)keyboardOffset {
+  return self.visibleKeyboardHeight;
 }
 
 + (NSTimeInterval)animationDurationFromKeyboardNotification:(NSNotification *)notification {
@@ -210,5 +203,3 @@ static UIViewAnimationOptions animationOptionsWithCurve(UIViewAnimationCurve ani
 }
 
 @end
-
-NS_ASSUME_NONNULL_END

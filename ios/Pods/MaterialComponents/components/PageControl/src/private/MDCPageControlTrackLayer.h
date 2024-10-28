@@ -15,11 +15,6 @@
 #import <QuartzCore/QuartzCore.h>
 #import <UIKit/UIKit.h>
 
-API_DEPRECATED_BEGIN("🤖👀 Use a branded UIPageControl instead. "
-                     "See go/material-ios-branding for more info. "
-                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
-                     ios(12, 12))
-
 /**
  This shape layer provides a rounded rectangular track on which a page indicator can travel
  between subsequent indicators. The track animates on appearance, removal, and when its
@@ -88,5 +83,3 @@ API_DEPRECATED_BEGIN("🤖👀 Use a branded UIPageControl instead. "
 - (void)resetAtPoint:(CGPoint)point;
 
 @end
-
-API_DEPRECATED_END

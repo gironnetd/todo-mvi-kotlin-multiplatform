@@ -14,11 +14,6 @@
 
 #import <UIKit/UIKit.h>
 
-API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
-                     "Use branded UITableView or UICollectionView instead: go/material-ios-lists. "
-                     "This is go/material-ios-migrations#not-scriptable 🕘",
-                     ios(12, 12))
-
 /**
  * Allows `UICollectionViewLayout` subclasses to inform `MDCBaseCell` what size the cell can be.
  *
@@ -43,5 +38,3 @@ API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
 @property(nonatomic, readonly) BOOL isFixedHeight;
 
 @end
-
-API_DEPRECATED_END

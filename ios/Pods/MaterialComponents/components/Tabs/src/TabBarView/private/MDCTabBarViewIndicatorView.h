@@ -14,8 +14,6 @@
 
 #import <UIKit/UIKit.h>
 
-NS_ASSUME_NONNULL_BEGIN
-
 @class MDCTabBarViewIndicatorAttributes;
 
 /** View responsible for drawing the indicator behind tab content and animating changes. */
@@ -40,5 +38,3 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)applySelectionIndicatorAttributes:(nonnull MDCTabBarViewIndicatorAttributes *)attributes;
 
 @end
-
-NS_ASSUME_NONNULL_END

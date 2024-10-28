@@ -15,8 +15,6 @@
 
 #import "MDCTabBarViewPrivateIndicatorContext.h"
 
-NS_ASSUME_NONNULL_BEGIN
-
 @implementation MDCTabBarViewPrivateIndicatorContext
 @synthesize bounds = _bounds;
 @synthesize contentFrame = _contentFrame;
@@ -68,5 +66,3 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 @end
-
-NS_ASSUME_NONNULL_END

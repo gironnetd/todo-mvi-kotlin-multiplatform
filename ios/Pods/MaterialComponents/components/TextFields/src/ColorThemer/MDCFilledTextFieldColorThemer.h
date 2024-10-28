@@ -14,14 +14,8 @@
 
 #import <Foundation/Foundation.h>
 
-@class MDCTextInputControllerFilled;
-@protocol MDCColorScheming;
-
-API_DEPRECATED_BEGIN(
-    "🕘 Schedule time to migrate. "
-    "Use branded UITextField or UITextView instead: go/material-ios-text-fields/gm2-migration. "
-    "This is go/material-ios-migrations#not-scriptable 🕘",
-    ios(12, 12))
+#import "MaterialColorScheme.h"
+#import "MaterialTextFields.h"
 
 /**
  The Material Design color system's filled text field themer.
@@ -49,5 +43,3 @@ API_DEPRECATED_BEGIN(
      toTextInputControllerFilled:(nonnull MDCTextInputControllerFilled *)textInputControllerFilled;
 
 @end
-
-API_DEPRECATED_END

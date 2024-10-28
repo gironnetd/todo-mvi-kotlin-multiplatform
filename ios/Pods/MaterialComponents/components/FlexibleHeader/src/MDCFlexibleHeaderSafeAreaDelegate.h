@@ -16,8 +16,6 @@
 
 @class MDCFlexibleHeaderViewController;
 
-API_DEPRECATED_BEGIN("Use a branded UINavigationController instead.", ios(12, API_TO_BE_DEPRECATED))
-
 /**
  This delegate makes it possible to customize which ancestor view controller is used when
  inferTopSafeAreaInsetFromViewController is enabled on MDCFlexibleHeaderViewController.
@@ -26,5 +24,3 @@ API_DEPRECATED_BEGIN("Use a branded UINavigationController instead.", ios(12, AP
 - (UIViewController *_Nullable)flexibleHeaderViewControllerTopSafeAreaInsetViewController:
     (nonnull MDCFlexibleHeaderViewController *)flexibleHeaderViewController;
 @end
-
-API_DEPRECATED_END

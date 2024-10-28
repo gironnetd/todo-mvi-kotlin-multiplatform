@@ -12,21 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import <UIKit/UIKit.h>
-
-API_DEPRECATED_BEGIN(
-    "🕘 Schedule time to migrate. "
-    "Use branded UITextField or UITextView instead: go/material-ios-text-fields/gm2-migration. "
-    "This is go/material-ios-migrations#not-scriptable 🕘",
-    ios(12, 12))
-
-@protocol MDCTextInput;
-
 /**
  MDCMultilineTextInputDelegate has a method common to the UITextFieldDelegate protocol but not
  found in UITextViewDelegate.
  */
-@protocol MDCMultilineTextInputDelegate <NSObject>
+
+#import <UIKit/UIKit.h>
+
+__deprecated_msg(
+    "MDCTextField and its associated classes are deprecated. Please use TextControls instead.")
+    @protocol MDCMultilineTextInputDelegate<NSObject>
 
 @optional
 
@@ -44,5 +39,3 @@ API_DEPRECATED_BEGIN(
 - (BOOL)multilineTextFieldShouldClear:(UIView<MDCTextInput> *)textField;
 
 @end
-
-API_DEPRECATED_END

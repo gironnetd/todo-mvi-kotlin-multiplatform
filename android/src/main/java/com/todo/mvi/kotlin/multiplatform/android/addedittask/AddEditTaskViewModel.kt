@@ -82,8 +82,8 @@ class AddEditTaskViewModel(
    */
   private fun compose(): Observable<AddEditTaskViewState> {
     return intentsSubject
-        .compose<AddEditTaskIntent>(intentFilter)
-        .map<AddEditTaskAction>(this::actionFromIntent)
+        .compose(intentFilter)
+        .map(this::actionFromIntent)
         // Special case where we do not want to pass this event down the stream
         .filter { action -> action !is AddEditTaskAction.SkipMe }
         .compose(actionProcessorHolder.actionProcessor)
@@ -140,7 +140,7 @@ class AddEditTaskViewModel(
      * creates a new [MviViewState] by only updating the related fields.
      * This is basically like a big switch statement of all possible types for the [MviResult]
      */
-    private val reducer = BiFunction { previousState: AddEditTaskViewState, result: AddEditTaskResult ->
+    private val reducer = BiFunction<AddEditTaskViewState, AddEditTaskResult, AddEditTaskViewState> { previousState: AddEditTaskViewState, result: AddEditTaskResult ->
       when (result) {
         is PopulateTaskResult -> when (result) {
           is PopulateTaskResult.Success -> {

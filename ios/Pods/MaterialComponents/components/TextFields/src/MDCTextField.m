@@ -23,6 +23,7 @@
 #import "private/MDCTextInputCommonFundament.h"
 
 #import "MaterialMath.h"
+#import "MaterialTypography.h"
 
 NSString *const MDCTextFieldTextDidSetTextNotification = @"MDCTextFieldTextDidSetTextNotification";
 NSString *const MDCTextInputDidToggleEnabledNotification =
@@ -33,7 +34,6 @@ NSString *const MDCTextInputDidToggleEnabledNotification =
 static const CGFloat MDCTextInputClearButtonImageBuiltInPadding = (CGFloat)-2.5;
 static const CGFloat MDCTextInputEditingRectRightViewPaddingCorrection = -2;
 static const CGFloat MDCTextInputTextRectYCorrection = 1;
-static const CGFloat kButtonFontOpacity = (CGFloat)0.54f;
 
 @interface MDCTextField () {
   UIColor *_cursorColor;
@@ -118,7 +118,7 @@ static const CGFloat kButtonFontOpacity = (CGFloat)0.54f;
   [super setBorderStyle:UITextBorderStyleNone];
 
   // Set the clear button color to black with 54% opacity.
-  self.clearButton.tintColor = [UIColor colorWithWhite:0 alpha:kButtonFontOpacity];
+  self.clearButton.tintColor = [UIColor colorWithWhite:0 alpha:[MDCTypography captionFontOpacity]];
 
   _cursorColor = MDCTextInputCursorColor();
   [self applyCursorColor];
@@ -237,7 +237,7 @@ static const CGFloat kButtonFontOpacity = (CGFloat)0.54f;
 
 - (void)setLeadingView:(UIView *)leadingView {
   if ([self shouldManuallyEnforceRightToLeftLayoutForOverlayViews] &&
-      self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+      self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
     self.rightView = leadingView;
   } else {
     self.leftView = leadingView;
@@ -246,7 +246,7 @@ static const CGFloat kButtonFontOpacity = (CGFloat)0.54f;
 
 - (UITextFieldViewMode)leadingViewMode {
   if ([self shouldManuallyEnforceRightToLeftLayoutForOverlayViews] &&
-      self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+      self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
     return self.rightViewMode;
   }
   return self.leftViewMode;
@@ -254,7 +254,7 @@ static const CGFloat kButtonFontOpacity = (CGFloat)0.54f;
 
 - (void)setLeadingViewMode:(UITextFieldViewMode)leadingViewMode {
   if ([self shouldManuallyEnforceRightToLeftLayoutForOverlayViews] &&
-      self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+      self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
     self.rightViewMode = leadingViewMode;
   } else {
     self.leftViewMode = leadingViewMode;
@@ -367,7 +367,7 @@ static const CGFloat kButtonFontOpacity = (CGFloat)0.54f;
 // In iOS 8, .leftView and .rightView are not swapped in RTL so we have to do that manually.
 - (UIView *)trailingView {
   if ([self shouldManuallyEnforceRightToLeftLayoutForOverlayViews] &&
-      self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+      self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
     return self.leftView;
   }
   return self.rightView;
@@ -375,7 +375,7 @@ static const CGFloat kButtonFontOpacity = (CGFloat)0.54f;
 
 - (void)setTrailingView:(UIView *)trailingView {
   if ([self shouldManuallyEnforceRightToLeftLayoutForOverlayViews] &&
-      self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+      self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
     self.leftView = trailingView;
   } else {
     self.rightView = trailingView;
@@ -384,7 +384,7 @@ static const CGFloat kButtonFontOpacity = (CGFloat)0.54f;
 
 - (UITextFieldViewMode)trailingViewMode {
   if ([self shouldManuallyEnforceRightToLeftLayoutForOverlayViews] &&
-      self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+      self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
     return self.leftViewMode;
   }
   return self.rightViewMode;
@@ -392,7 +392,7 @@ static const CGFloat kButtonFontOpacity = (CGFloat)0.54f;
 
 - (void)setTrailingViewMode:(UITextFieldViewMode)trailingViewMode {
   if ([self shouldManuallyEnforceRightToLeftLayoutForOverlayViews] &&
-      self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+      self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
     self.leftViewMode = trailingViewMode;
   } else {
     self.rightViewMode = trailingViewMode;
@@ -460,7 +460,7 @@ static const CGFloat kButtonFontOpacity = (CGFloat)0.54f;
 // In iOS 8, .leftView and .rightView are not swapped in RTL so we have to do that manually.
 - (UIView *)leadingView {
   if ([self shouldManuallyEnforceRightToLeftLayoutForOverlayViews] &&
-      self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+      self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
     return self.rightView;
   }
   return self.leftView;
@@ -507,7 +507,7 @@ static const CGFloat kButtonFontOpacity = (CGFloat)0.54f;
 
   // Standard textRect calculation
   UIEdgeInsets textInsets = self.textInsets;
-  if (self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+  if (self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
     textRect.origin.x += textInsets.right;
   } else {
     textRect.origin.x += textInsets.left;
@@ -532,20 +532,20 @@ static const CGFloat kButtonFontOpacity = (CGFloat)0.54f;
   }
 
   CGFloat leftViewWidth =
-      self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft
+      self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft
           ? CGRectGetWidth([self rightViewRectForBounds:bounds])
           : CGRectGetWidth([self leftViewRectForBounds:bounds]);
   leftViewWidth +=
-      self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft
+      self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft
           ? trailingViewPadding
           : leadingViewPadding;
 
   CGFloat rightViewWidth =
-      self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft
+      self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft
           ? CGRectGetWidth([self leftViewRectForBounds:bounds])
           : CGRectGetWidth([self rightViewRectForBounds:bounds]);
   rightViewWidth +=
-      self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft
+      self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft
           ? leadingViewPadding
           : trailingViewPadding;
 
@@ -584,7 +584,7 @@ static const CGFloat kButtonFontOpacity = (CGFloat)0.54f;
   actualY = textInsets.top - actualY + MDCTextInputTextRectYCorrection;
   textRect.origin.y = actualY;
 
-  if (self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+  if (self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
     // Now that the text field is laid out as if it were LTR, we can flip it if necessary.
     textRect = MDFRectFlippedHorizontally(textRect, CGRectGetWidth(bounds));
   }
@@ -597,7 +597,7 @@ static const CGFloat kButtonFontOpacity = (CGFloat)0.54f;
   CGRect editingRect = [self textRectForBounds:bounds];
 
   // The textRect comes to us flipped for RTL (if RTL) so we flip it back before adjusting.
-  if (self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+  if (self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
     editingRect = MDFRectFlippedHorizontally(editingRect, CGRectGetWidth(bounds));
   }
 
@@ -627,7 +627,7 @@ static const CGFloat kButtonFontOpacity = (CGFloat)0.54f;
     }
   }
 
-  if (self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+  if (self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
     editingRect = MDFRectFlippedHorizontally(editingRect, CGRectGetWidth(bounds));
   }
 
@@ -649,12 +649,13 @@ static const CGFloat kButtonFontOpacity = (CGFloat)0.54f;
   CGRect leftViewRect = [super leftViewRectForBounds:bounds];
   leftViewRect.origin.y = [self centerYForOverlayViews:CGRectGetHeight(leftViewRect)];
 
-  if ((self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) &&
+  if ((self.mdf_effectiveUserInterfaceLayoutDirection ==
+       UIUserInterfaceLayoutDirectionRightToLeft) &&
       [self.positioningDelegate respondsToSelector:@selector(trailingViewRectForBounds:
                                                                            defaultRect:)]) {
     leftViewRect = [self.positioningDelegate trailingViewRectForBounds:bounds
                                                            defaultRect:leftViewRect];
-  } else if ((self.effectiveUserInterfaceLayoutDirection ==
+  } else if ((self.mdf_effectiveUserInterfaceLayoutDirection ==
               UIUserInterfaceLayoutDirectionLeftToRight) &&
              [self.positioningDelegate respondsToSelector:@selector(leadingViewRectForBounds:
                                                                                  defaultRect:)]) {
@@ -670,12 +671,13 @@ static const CGFloat kButtonFontOpacity = (CGFloat)0.54f;
   CGRect rightViewRect = [super rightViewRectForBounds:bounds];
   rightViewRect.origin.y = [self centerYForOverlayViews:CGRectGetHeight(rightViewRect)];
 
-  if ((self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) &&
+  if ((self.mdf_effectiveUserInterfaceLayoutDirection ==
+       UIUserInterfaceLayoutDirectionRightToLeft) &&
       [self.positioningDelegate respondsToSelector:@selector(leadingViewRectForBounds:
                                                                           defaultRect:)]) {
     rightViewRect = [self.positioningDelegate leadingViewRectForBounds:bounds
                                                            defaultRect:rightViewRect];
-  } else if ((self.effectiveUserInterfaceLayoutDirection ==
+  } else if ((self.mdf_effectiveUserInterfaceLayoutDirection ==
               UIUserInterfaceLayoutDirectionLeftToRight) &&
              [self.positioningDelegate respondsToSelector:@selector(trailingViewRectForBounds:
                                                                                   defaultRect:)]) {

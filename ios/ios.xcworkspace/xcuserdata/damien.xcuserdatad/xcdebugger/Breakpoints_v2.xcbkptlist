@@ -32,8 +32,8 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "20"
             endingLineNumber = "20"
-            landmarkName = "loadTasksProcessor"
-            landmarkType = "24">
+            landmarkName = "TasksActionProcessorHolder"
+            landmarkType = "3">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -48,8 +48,8 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "23"
             endingLineNumber = "23"
-            landmarkName = "loadTasksProcessor"
-            landmarkType = "24">
+            landmarkName = "TasksActionProcessorHolder"
+            landmarkType = "3">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -64,8 +64,8 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "26"
             endingLineNumber = "26"
-            landmarkName = "loadTasksProcessor"
-            landmarkType = "24">
+            landmarkName = "TasksActionProcessorHolder"
+            landmarkType = "3">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -110,40 +110,10 @@
             filePath = "ios/util/RxExt.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "40"
-            endingLineNumber = "40"
+            startingLineNumber = "38"
+            endingLineNumber = "38"
             landmarkName = "from(_:)"
             landmarkType = "7">
-            <Locations>
-               <Location
-                  uuid = "E13FBE83-E246-4325-BE0D-7BA6150CC720 - ab39d6ed9a6bd06d"
-                  shouldBeEnabled = "No"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "closure #1 ((Swift.Result&lt;B, Swift.Error&gt;) -&gt; ()) -&gt; RxSwift.Disposable in static (extension in ios):RxSwift.PrimitiveSequence&lt; where B: AnyObject&gt;.from(__C.SharedSingleWrapper&lt;B&gt;) -&gt; RxSwift.PrimitiveSequence&lt;RxSwift.SingleTrait, B&gt;"
-                  moduleName = "ios"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/damien/Documents/Kotlin_Multiplatform/todo-mvi-kotlin-multiplatform/ios/ios/util/RxExt.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "40"
-                  endingLineNumber = "40">
-               </Location>
-               <Location
-                  uuid = "E13FBE83-E246-4325-BE0D-7BA6150CC720 - 136c77825b8986f5"
-                  shouldBeEnabled = "No"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "closure #1 (__C.SharedKotlinThrowable) -&gt; () in closure #1 ((Swift.Result&lt;B, Swift.Error&gt;) -&gt; ()) -&gt; RxSwift.Disposable in static (extension in ios):RxSwift.PrimitiveSequence&lt; where B: AnyObject&gt;.from(__C.SharedSingleWrapper&lt;B&gt;) -&gt; RxSwift.PrimitiveSequence&lt;RxSwift.SingleTrait, B&gt;"
-                  moduleName = "ios"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/damien/Documents/Kotlin_Multiplatform/todo-mvi-kotlin-multiplatform/ios/ios/util/RxExt.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "40"
-                  endingLineNumber = "40">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -192,50 +162,6 @@
             endingLineNumber = "40"
             landmarkName = "AddEditTaskActionProcessorHolder"
             landmarkType = "3">
-            <Locations>
-               <Location
-                  uuid = "D1F04C4F-EB15-4D5B-B16D-3688BD213B4D - 456208d946191c8f"
-                  shouldBeEnabled = "No"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "closure #2 (__C.SharedTask) -&gt; RxSwift.Observable&lt;ios.AddEditTaskResult.CreateTaskResult&gt; in closure #1 (RxSwift.Observable&lt;ios.AddEditTaskAction.CreateTaskAction&gt;) -&gt; RxSwift.Observable&lt;ios.AddEditTaskResult.CreateTaskResult&gt; in ios.AddEditTaskActionProcessorHolder.(createTaskProcessor in _EE6542A9CEF62DD8BD9611B4C379F871).getter : (RxSwift.Observable&lt;ios.AddEditTaskAction.CreateTaskAction&gt;) -&gt; RxSwift.Observable&lt;ios.AddEditTaskResult.CreateTaskResult&gt;"
-                  moduleName = "ios"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/damien/Documents/Kotlin_Multiplatform/todo-mvi-kotlin-multiplatform/ios/ios/addedittask/AddEditTaskProcessorHolder.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "41"
-                  endingLineNumber = "41">
-               </Location>
-               <Location
-                  uuid = "D1F04C4F-EB15-4D5B-B16D-3688BD213B4D - 2180221849c93c15"
-                  shouldBeEnabled = "No"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "closure #1 (__C.SharedTask) -&gt; Swift.Bool in closure #2 (__C.SharedTask) -&gt; RxSwift.Observable&lt;ios.AddEditTaskResult.CreateTaskResult&gt; in closure #1 (RxSwift.Observable&lt;ios.AddEditTaskAction.CreateTaskAction&gt;) -&gt; RxSwift.Observable&lt;ios.AddEditTaskResult.CreateTaskResult&gt; in ios.AddEditTaskActionProcessorHolder.(createTaskProcessor in _EE6542A9CEF62DD8BD9611B4C379F871).getter : (RxSwift.Observable&lt;ios.AddEditTaskAction.CreateTaskAction&gt;) -&gt; RxSwift.Observable&lt;ios.AddEditTaskResult.CreateTaskResult&gt;"
-                  moduleName = "ios"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/damien/Documents/Kotlin_Multiplatform/todo-mvi-kotlin-multiplatform/ios/ios/addedittask/AddEditTaskProcessorHolder.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "41"
-                  endingLineNumber = "41">
-               </Location>
-               <Location
-                  uuid = "D1F04C4F-EB15-4D5B-B16D-3688BD213B4D - d4c644cdb80feb95"
-                  shouldBeEnabled = "No"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "closure #2 (__C.SharedTask) -&gt; ios.AddEditTaskResult.CreateTaskResult in closure #2 (__C.SharedTask) -&gt; RxSwift.Observable&lt;ios.AddEditTaskResult.CreateTaskResult&gt; in closure #1 (RxSwift.Observable&lt;ios.AddEditTaskAction.CreateTaskAction&gt;) -&gt; RxSwift.Observable&lt;ios.AddEditTaskResult.CreateTaskResult&gt; in ios.AddEditTaskActionProcessorHolder.(createTaskProcessor in _EE6542A9CEF62DD8BD9611B4C379F871).getter : (RxSwift.Observable&lt;ios.AddEditTaskAction.CreateTaskAction&gt;) -&gt; RxSwift.Observable&lt;ios.AddEditTaskResult.CreateTaskResult&gt;"
-                  moduleName = "ios"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/damien/Documents/Kotlin_Multiplatform/todo-mvi-kotlin-multiplatform/ios/ios/addedittask/AddEditTaskProcessorHolder.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "41"
-                  endingLineNumber = "41">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -314,8 +240,8 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "58"
             endingLineNumber = "58"
-            landmarkName = "completeTaskProcessor"
-            landmarkType = "24">
+            landmarkName = "TasksActionProcessorHolder"
+            landmarkType = "3">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

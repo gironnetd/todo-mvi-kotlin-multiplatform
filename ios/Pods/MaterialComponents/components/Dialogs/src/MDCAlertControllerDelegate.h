@@ -22,22 +22,26 @@
 @optional
 
 /**
- Informs the receiver that the alert controller will appear on the screen.
+ Informs the receiver that the alert controller will appear on the screen or the application is
+ entering the foreground.
  */
 - (void)alertController:(nonnull MDCAlertController *)alertController willAppear:(BOOL)animated;
 
 /**
- Informs the receiver that the alert controller appeared on the screen.
+ Informs the receiver that the alert controller appeared on the screen or the application has
+ entered the foreground.
  */
 - (void)alertController:(nonnull MDCAlertController *)alertController didAppear:(BOOL)animated;
 
 /**
- Informs the receiver that the alert controller will disappear from the screen.
+ Informs the receiver that the alert controller will disappear from the screen or the application is
+ entering the background.
  */
 - (void)alertController:(nonnull MDCAlertController *)alertController willDisappear:(BOOL)animated;
 
 /**
- Informs the receiver that the alert controller disappeared from the screen.
+ Informs the receiver that the alert controller disappeared from the screen or the application has
+ entered the background.
  */
 - (void)alertController:(nonnull MDCAlertController *)alertController didDisappear:(BOOL)animated;
 

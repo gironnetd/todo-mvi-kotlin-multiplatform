@@ -23,10 +23,9 @@
 // This table is to be indexed using the generated enum.
 
 static NSString *const kMaterialSnackbarStringTable[] = {
-    @"MaterialSnackbarMessageViewTitleA11yHint",   // Double-tap to dismiss
-    @"MaterialSnackbarMessageViewDismissalLabel",  // Dismiss snackbar
+    @"MaterialSnackbarMessageViewTitleA11yHint",  // Double-tap to dismiss
 };
-#define kNumMaterialSnackbarStrings 2
+#define kNumMaterialSnackbarStrings 1
 #define kMaterialSnackbarStringsOffset 0
 #define kMaterialSnackbarStringsEnd 10000
 static NSString *const kMaterialSnackbarStringsTableName = @"MaterialSnackbar";

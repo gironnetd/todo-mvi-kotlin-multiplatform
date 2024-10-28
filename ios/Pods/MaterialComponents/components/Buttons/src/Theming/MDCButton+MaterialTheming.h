@@ -15,11 +15,6 @@
 #import <MaterialComponents/MaterialButtons.h>
 #import "MaterialContainerScheme.h"
 
-API_DEPRECATED_BEGIN("🤖👀 Use branded M3CButton instead. "
-                     "See go/material-ios-buttons/gm2-migration for more details. "
-                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
-                     ios(12, 12))
-
 /**
  This category is used to style MDCButtons instances to a specific Material style which can be found
  within the [Material Guidelines](https://material.io/design/components/buttons.html).
@@ -50,5 +45,3 @@ API_DEPRECATED_BEGIN("🤖👀 Use branded M3CButton instead. "
 - (void)applyTextThemeWithScheme:(nonnull id<MDCContainerScheming>)scheme;
 
 @end
-
-API_DEPRECATED_END

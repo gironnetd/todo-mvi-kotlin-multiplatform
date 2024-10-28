@@ -18,10 +18,6 @@
 #import "MDCCutCornerTreatment.h"
 #import "MDCRoundedCornerTreatment.h"
 
-API_DEPRECATED_BEGIN("🤖👀 Use explicit mask layers and shape paths instead. "
-                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
-                     ios(12, 12))
-
 @interface MDCCornerTreatment (CornerTypeInitalizer)
 
 /**
@@ -82,5 +78,3 @@ API_DEPRECATED_BEGIN("🤖👀 Use explicit mask layers and shape paths instead.
                                     valueType:(MDCCornerTreatmentValueType)valueType;
 
 @end
-
-API_DEPRECATED_END

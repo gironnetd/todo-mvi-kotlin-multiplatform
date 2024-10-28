@@ -139,7 +139,7 @@ NSString *const kDeselectedCellAccessibilityHintKey =
   void (^editingViewLayout)(void) = ^() {
     CGFloat txReorderTransform;
     CGFloat txSelectorTransform;
-    switch (self.effectiveUserInterfaceLayoutDirection) {
+    switch (self.mdf_effectiveUserInterfaceLayoutDirection) {
       case UIUserInterfaceLayoutDirectionLeftToRight:
         txReorderTransform = kEditingControlAppearanceOffset;
         txSelectorTransform = -kEditingControlAppearanceOffset;
@@ -213,7 +213,7 @@ NSString *const kDeselectedCellAccessibilityHintKey =
   self.contentView.frame = [self contentViewFrame];
 
   // If necessary flip subviews for RTL.
-  if (self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+  if (self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
     _accessoryView.frame =
         MDFRectFlippedHorizontally(_accessoryView.frame, CGRectGetWidth(self.bounds));
     self.contentView.frame =
@@ -239,8 +239,9 @@ NSString *const kDeselectedCellAccessibilityHintKey =
   switch (_accessoryType) {
     case MDCCollectionViewCellAccessoryDisclosureIndicator: {
       UIImage *image = [MDCIcons imageFor_ic_chevron_right];
-      if (self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
-        image = [image imageWithHorizontallyFlippedOrientation];
+      if (self.mdf_effectiveUserInterfaceLayoutDirection ==
+          UIUserInterfaceLayoutDirectionRightToLeft) {
+        image = [image mdf_imageWithHorizontallyFlippedOrientation];
       }
       accessoryImageView.image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
       break;
@@ -386,7 +387,8 @@ NSString *const kDeselectedCellAccessibilityHintKey =
         insets.left, CGRectGetHeight(self.bounds) - _attr.separatorLineHeight,
         CGRectGetWidth(self.bounds) - insets.left - insets.right, _attr.separatorLineHeight);
     separatorFrame = UIEdgeInsetsInsetRect(separatorFrame, separatorInset);
-    if (self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+    if (self.mdf_effectiveUserInterfaceLayoutDirection ==
+        UIUserInterfaceLayoutDirectionRightToLeft) {
       separatorFrame = MDFRectFlippedHorizontally(separatorFrame, CGRectGetWidth(self.bounds));
     }
     _separatorView.frame = separatorFrame;
@@ -427,7 +429,7 @@ NSString *const kDeselectedCellAccessibilityHintKey =
         _editingReorderImageView.tintColor = MDCCollectionViewCellGreyColor();
         _editingReorderImageView.autoresizingMask =
             MDFTrailingMarginAutoresizingMaskForLayoutDirection(
-                self.effectiveUserInterfaceLayoutDirection);
+                self.mdf_effectiveUserInterfaceLayoutDirection);
         [self addSubview:_editingReorderImageView];
       }
       CGAffineTransform transform = _editingReorderImageView.transform;
@@ -435,7 +437,8 @@ NSString *const kDeselectedCellAccessibilityHintKey =
       CGSize size = _editingReorderImageView.image.size;
       CGRect frame =
           CGRectMake(0, (CGRectGetHeight(self.bounds) - size.height) / 2, size.width, size.height);
-      if (self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+      if (self.mdf_effectiveUserInterfaceLayoutDirection ==
+          UIUserInterfaceLayoutDirectionRightToLeft) {
         frame = MDFRectFlippedHorizontally(frame, CGRectGetWidth(self.bounds));
       }
       _editingReorderImageView.frame = frame;
@@ -454,7 +457,7 @@ NSString *const kDeselectedCellAccessibilityHintKey =
         _editingSelectorImageView.tintColor = MDCCollectionViewCellGreyColor();
         _editingSelectorImageView.autoresizingMask =
             MDFLeadingMarginAutoresizingMaskForLayoutDirection(
-                self.effectiveUserInterfaceLayoutDirection);
+                self.mdf_effectiveUserInterfaceLayoutDirection);
         [self addSubview:_editingSelectorImageView];
       }
       CGAffineTransform transform = _editingSelectorImageView.transform;
@@ -463,7 +466,8 @@ NSString *const kDeselectedCellAccessibilityHintKey =
       CGFloat originX = CGRectGetWidth(self.bounds) - size.width;
       CGFloat originY = (CGRectGetHeight(self.bounds) - size.height) / 2;
       CGRect frame = (CGRect){{originX, originY}, size};
-      if (self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+      if (self.mdf_effectiveUserInterfaceLayoutDirection ==
+          UIUserInterfaceLayoutDirectionRightToLeft) {
         frame = MDFRectFlippedHorizontally(frame, CGRectGetWidth(self.bounds));
       }
       _editingSelectorImageView.frame = frame;
@@ -540,13 +544,19 @@ NSString *const kDeselectedCellAccessibilityHintKey =
 
 #pragma mark - RTL
 
-- (void)semanticContentAttribute:(UISemanticContentAttribute)semanticContentAttribute {
-  super.semanticContentAttribute = semanticContentAttribute;
+// UISemanticContentAttribute was added in iOS SDK 9.0 but is available on devices running earlier
+// version of iOS. We ignore the partial-availability warning that gets thrown on our use of this
+// symbol.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpartial-availability"
+- (void)mdf_setSemanticContentAttribute:(UISemanticContentAttribute)mdf_semanticContentAttribute {
+  [super mdf_setSemanticContentAttribute:mdf_semanticContentAttribute];
   // Reload the accessory type image if there is one.
   if ([_accessoryView isKindOfClass:[MDCAccessoryTypeImageView class]]) {
     self.accessoryType = self.accessoryType;
   }
 }
+#pragma clang diagnostic pop
 
 #pragma mark - Accessibility
 

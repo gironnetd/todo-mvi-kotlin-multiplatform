@@ -14,8 +14,7 @@
 
 #import "MDCProgressGradientView.h"
 
-#import <CoreGraphics/CoreGraphics.h>
-#import <QuartzCore/QuartzCore.h>
+#import <MDFInternationalization/MDFInternationalization.h>
 
 @interface MDCProgressGradientView ()
 
@@ -57,7 +56,7 @@
   CGPoint leftPoint = CGPointMake(0, CGRectGetMidY(self.gradientLayer.bounds));
   CGPoint rightPoint = CGPointMake(CGRectGetWidth(self.gradientLayer.bounds),
                                    CGRectGetMidY(self.gradientLayer.bounds));
-  if (self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+  if (self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
     [path moveToPoint:rightPoint];
     [path addLineToPoint:leftPoint];
   } else {
@@ -68,26 +67,16 @@
   self.shapeLayer.strokeColor = UIColor.blackColor.CGColor;
   self.shapeLayer.lineWidth = CGRectGetHeight(self.gradientLayer.bounds);
   if (self.gradientLayer.cornerRadius > 0) {
-    self.shapeLayer.lineCap = kCALineCapButt;
+    self.shapeLayer.lineCap = kCALineCapRound;
   }
   self.shapeLayer.path = path.CGPath;
 }
 
-- (void)setColors:(NSArray<UIColor *> *)colors {
-  NSMutableArray *colorArray = [[NSMutableArray alloc] init];
-
-  for (id item in colors) {
-    if ([item isKindOfClass:[UIColor class]]) {
-      [colorArray addObject:(id)[item CGColor]];
-    } else {
-      // Assumed to be a CGColor because that was passed in an earlier iteration of this logic.
-      [colorArray addObject:item];
-    }
-  }
-  self.gradientLayer.colors = [colorArray copy];
+- (void)setColors:(NSArray *)colors {
+  self.gradientLayer.colors = colors;
 }
 
-- (NSArray<UIColor *> *)colors {
+- (NSArray *)colors {
   return self.gradientLayer.colors;
 }
 

@@ -14,15 +14,8 @@
 
 #import <UIKit/UIKit.h>
 
-API_DEPRECATED_BEGIN("🤖👀 Use go/material-ios-branding APIs instead. "
-                     "See go/material-ios-tokens guidance for more details. "
-                     "This has go/material-ios-migrations#scriptable-potential 🤖👀",
-                     ios(12, 12))
-
 UIColor* _Nonnull MDCPaletteTintFromTargetColor(UIColor* _Nonnull targetColor,
                                                 NSString* _Nonnull tintName);
 
 UIColor* _Nonnull MDCPaletteAccentFromTargetColor(UIColor* _Nonnull targetColor,
                                                   NSString* _Nonnull accentName);
-
-API_DEPRECATED_END

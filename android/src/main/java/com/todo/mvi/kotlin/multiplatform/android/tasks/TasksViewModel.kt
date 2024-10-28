@@ -39,7 +39,7 @@ import com.todo.mvi.kotlin.multiplatform.android.tasks.TasksViewState.UiNotifica
 import com.todo.mvi.kotlin.multiplatform.android.tasks.TasksViewState.UiNotification.TASK_COMPLETE
 import com.todo.mvi.kotlin.multiplatform.android.util.notOfType
 import com.todo.mvi.kotlin.multiplatform.data.active
-import comtodomvikotlinmultiplatform.Task
+import com.todo.mvi.kotlin.multiplatform.data.Task
 import io.reactivex.Observable
 import io.reactivex.ObservableTransformer
 import io.reactivex.disposables.CompositeDisposable
@@ -138,7 +138,7 @@ class TasksViewModel(
      * creates a new [MviViewState] by only updating the related fields.
      * This is basically like a big switch statement of all possible types for the [MviResult]
      */
-    private val reducer = BiFunction { previousState: TasksViewState, result: TasksResult ->
+    private val reducer = BiFunction<TasksViewState, TasksResult, TasksViewState> { previousState: TasksViewState, result: TasksResult ->
       when (result) {
         is LoadTasksResult -> when (result) {
           is LoadTasksResult.Success -> {

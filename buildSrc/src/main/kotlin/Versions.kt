@@ -1,14 +1,14 @@
 object Versions {
     object JetBrains {
         object Kotlin {
-            const val VERSION = "1.8.20"
+            const val VERSION = "2.0.20"
         }
     }
 
     object Android {
         object Tools {
             object Build {
-                const val VERSION = "8.2.1"
+                const val VERSION = "8.6.1"
             }
         }
     }
@@ -58,13 +58,13 @@ object Versions {
 
         object Badoo {
             object Reaktive {
-                const val VERSION = "1.1.22"
+                const val VERSION = "2.3.0"
             }
         }
 
         object Squareup {
             object SQLDelight {
-                const val VERSION = "2.0.0"
+                const val VERSION = "2.0.2"
             }
         }
     }
@@ -72,8 +72,18 @@ object Versions {
     object Co {
         object TouchLab {
             object Stately {
-                const val VERSION = "1.1.7"
+                const val VERSION = "2.1.0"
             }
         }
     }
 }
+
+//sqldelight = "2.0.2"
+//rxbinding = "3.1.0"
+//rxjava = "2.2.21"
+//rxandroid = "2.1.1"
+//rxkotlin = "2.3.0"
+//reaktive = "2.3.0"
+//touchlab = "2.1.0"
+//ksp = "2.0.21-1.0.25"
+//kapt = "2.0.21"

@@ -14,11 +14,6 @@
 
 #import <UIKit/UIKit.h>
 
-API_DEPRECATED_BEGIN("🤖👀 Use go/material-ios-branding UISlider instead. "
-                     "See go/material-ios-slider/gm2-migration for more details. "
-                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
-                     ios(12, 12))
-
 @interface MDCNumericValueLabel : UIView <UIContentSizeCategoryAdjusting>
 
 /** The background color of the value label. */
@@ -34,5 +29,3 @@ API_DEPRECATED_BEGIN("🤖👀 Use go/material-ios-branding UISlider instead. "
 @property(nonatomic, strong, null_resettable) UIFont *font;
 
 @end
-
-API_DEPRECATED_END

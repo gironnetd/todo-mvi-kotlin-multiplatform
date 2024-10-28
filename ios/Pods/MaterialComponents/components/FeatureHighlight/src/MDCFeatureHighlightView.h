@@ -14,11 +14,6 @@
 
 #import <UIKit/UIKit.h>
 
-API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
-                     "Consider using a modal sheet to explain new features instead. "
-                     "This is go/material-ios-migrations#not-scriptable 🕘",
-                     ios(12, 12))
-
 @interface MDCFeatureHighlightView : UIView <UIContentSizeCategoryAdjusting>
 
 @property(nonatomic, strong, nullable) UIColor *innerHighlightColor UI_APPEARANCE_SELECTOR;
@@ -29,6 +24,18 @@ API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
 
 @property(nonatomic, strong, nullable) UIFont *bodyFont UI_APPEARANCE_SELECTOR;
 @property(nonatomic, strong, nullable) UIColor *bodyColor UI_APPEARANCE_SELECTOR;
+
+/*
+ Indicates whether the view's contents should automatically update their font when the device’s
+ UIContentSizeCategory changes.
+
+ This property is modeled after the adjustsFontForContentSizeCategory property in the
+ UIContentSizeCategoryAdjusting protocol added by Apple in iOS 10.0.
+
+ Default value is NO.
+ */
+@property(nonatomic, readwrite, setter=mdc_setAdjustsFontForContentSizeCategory:)
+    BOOL mdc_adjustsFontForContentSizeCategory UI_APPEARANCE_SELECTOR;
 
 /**
  Enable legacy font scaling curves for Dynamic Type.
@@ -46,5 +53,3 @@ API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
      UITraitCollection *_Nullable previousTraitCollection);
 
 @end
-
-API_DEPRECATED_END

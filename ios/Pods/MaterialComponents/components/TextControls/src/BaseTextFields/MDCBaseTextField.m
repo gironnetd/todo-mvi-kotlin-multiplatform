@@ -16,23 +16,14 @@
 
 #import <Foundation/Foundation.h>
 
-#import "MDCTextControlLabelBehavior.h"
-#import "MDCTextControlState.h"
-#import "MDCTextControlStyleBase.h"
-#import "MDCTextControl.h"
+#import "MaterialTextControls+Enums.h"
 #import "MDCTextControlAssistiveLabelDrawPriority.h"
+#import <MDFInternationalization/MDFInternationalization.h>
 
 #import "MDCBaseTextFieldDelegate.h"
-#import "MDCTextControlAssistiveLabelView.h"
-#import "MDCTextControlColorViewModel.h"
-#import "MDCTextControlHorizontalPositioning.h"
-#import "MDCTextControlHorizontalPositioningReference.h"
-#import "MDCTextControlLabelAnimation.h"
-#import "MDCTextControlLabelSupport.h"
-#import "MDCTextControlPlaceholderSupport.h"
-#import "MDCBaseTextFieldLayout.h"
-#import "MDCTextControlTextField.h"
-#import "MDCTextControlTextFieldSideViewAlignment.h"
+#import "MaterialTextControlsPrivate+BaseStyle.h"
+#import "MaterialTextControlsPrivate+Shared.h"
+#import "MaterialTextControlsPrivate+TextFields.h"
 
 static char *const kKVOContextMDCBaseTextField = "kKVOContextMDCBaseTextField";
 
@@ -43,18 +34,10 @@ static char *const kKVOContextMDCBaseTextField = "kKVOContextMDCBaseTextField";
 @property(strong, nonatomic) MDCBaseTextFieldLayout *layout;
 @property(nonatomic, assign) MDCTextControlState textControlState;
 @property(nonatomic, assign) MDCTextControlLabelPosition labelPosition;
-@property(nonatomic, assign) CGRect floatingLabelFrame;
-@property(nonatomic, assign) CGRect normalLabelFrame;
+@property(nonatomic, assign) CGRect labelFrame;
+@property(nonatomic, assign) NSTimeInterval animationDuration;
 @property(nonatomic, assign) CGFloat lastRecordedWidth;
 @property(nonatomic, assign) CGFloat lastCalculatedHeight;
-/**
- * This property is set in every layout cycle, in preLayoutSubviews, right after the current
- * labelPosition is determined . It's set to YES if the labelPosition changed and NO if it didn't.
- * It's referred to in animateLabel (called from postLayoutSubviews) when deciding on a label
- * animation duration. If it's NO, the label gets an animation duration of 0, to avoid buggy looking
- * frame/text animations. Otherwise, it uses the value in the animationDuration property.
- */
-@property(nonatomic, assign) BOOL labelPositionChanged;
 
 /**
  This property maps MDCTextControlStates as NSNumbers to
@@ -94,7 +77,7 @@ static char *const kKVOContextMDCBaseTextField = "kKVOContextMDCBaseTextField";
   [self setUpLabel];
   [self setUpAssistiveLabels];
   [self observeContentSizeCategoryNotifications];
-  [self observeLabelKeyPaths];
+  [self observeAssistiveLabelKeyPaths];
 }
 
 - (void)dealloc {
@@ -128,9 +111,6 @@ static char *const kKVOContextMDCBaseTextField = "kKVOContextMDCBaseTextField";
   UIFont *assistiveFont = [UIFont systemFontOfSize:assistiveFontSize];
   self.assistiveLabelView.leadingAssistiveLabel.font = assistiveFont;
   self.assistiveLabelView.trailingAssistiveLabel.font = assistiveFont;
-  UIGestureRecognizer *tapGestureRecognizer =
-      [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(becomeFirstResponder)];
-  [self.assistiveLabelView addGestureRecognizer:tapGestureRecognizer];
   [self addSubview:self.assistiveLabelView];
 }
 
@@ -207,16 +187,13 @@ static char *const kKVOContextMDCBaseTextField = "kKVOContextMDCBaseTextField";
  */
 - (void)preLayoutSubviews {
   self.textControlState = [self determineCurrentTextControlState];
-  MDCTextControlLabelPosition previousLabelPosition = self.labelPosition;
   self.labelPosition = [self determineCurrentLabelPosition];
-  self.labelPositionChanged = previousLabelPosition != self.labelPosition;
   MDCTextControlColorViewModel *colorViewModel =
       [self textControlColorViewModelForState:self.textControlState];
   [self applyColorViewModel:colorViewModel withLabelPosition:self.labelPosition];
   CGSize fittingSize = CGSizeMake(CGRectGetWidth(self.bounds), CGFLOAT_MAX);
   self.layout = [self calculateLayoutWithTextFieldSize:fittingSize];
-  self.normalLabelFrame = self.layout.labelFrameNormal;
-  self.floatingLabelFrame = self.layout.labelFrameFloating;
+  self.labelFrame = [self.layout labelFrameWithLabelPosition:self.labelPosition];
 }
 
 - (void)postLayoutSubviews {
@@ -383,7 +360,8 @@ static char *const kKVOContextMDCBaseTextField = "kKVOContextMDCBaseTextField";
   } else if (self.semanticContentAttribute == UISemanticContentAttributeForceLeftToRight) {
     return NO;
   } else {
-    return self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft;
+    return self.mdf_effectiveUserInterfaceLayoutDirection ==
+           UIUserInterfaceLayoutDirectionRightToLeft;
   }
 }
 
@@ -596,7 +574,6 @@ static char *const kKVOContextMDCBaseTextField = "kKVOContextMDCBaseTextField";
 #pragma mark Label
 
 - (void)animateLabel {
-  NSTimeInterval animationDuration = self.labelPositionChanged ? self.animationDuration : 0.0f;
   __weak MDCBaseTextField *weakSelf = self;
   [MDCTextControlLabelAnimation animateLabel:self.label
                                        state:self.labelPosition
@@ -605,13 +582,12 @@ static char *const kKVOContextMDCBaseTextField = "kKVOContextMDCBaseTextField";
                                   normalFont:self.normalFont
                                 floatingFont:self.floatingFont
                     labelTruncationIsPresent:self.layout.labelTruncationIsPresent
-                           animationDuration:animationDuration
+                           animationDuration:self.animationDuration
                                   completion:^(BOOL finished) {
                                     if (finished) {
                                       // Ensure that the label position is correct in case of
                                       // competing animations.
-                                      weakSelf.label.frame = [weakSelf.layout
-                                          labelFrameWithLabelPosition:self.labelPosition];
+                                      weakSelf.label.frame = weakSelf.labelFrame;
                                     }
                                   }];
 }
@@ -673,87 +649,28 @@ static char *const kKVOContextMDCBaseTextField = "kKVOContextMDCBaseTextField";
 
 #pragma mark Accessibility Overrides
 
-- (NSInteger)accessibilityElementCount {
-  if (self.isAccessibilityElement) {
-    return [super accessibilityElementCount];
-  } else {
-    return [self accessibilityElements].count;
-  }
-}
-
 - (NSString *)accessibilityLabel {
-  if (self.isAccessibilityElement) {
-    NSString *superAccessibilityLabel = [super accessibilityLabel];
-    if (superAccessibilityLabel.length > 0) {
-      return superAccessibilityLabel;
-    }
-
-    NSMutableArray *accessibilityLabelComponents = [[NSMutableArray alloc] init];
-    if (self.label.text.length > 0) {
-      [accessibilityLabelComponents addObject:self.label.text];
-    }
-    if (self.leadingAssistiveLabel.text.length > 0) {
-      [accessibilityLabelComponents addObject:self.leadingAssistiveLabel.text];
-    }
-    if (self.trailingAssistiveLabel.text.length > 0) {
-      [accessibilityLabelComponents addObject:self.trailingAssistiveLabel.text];
-    }
-
-    if (accessibilityLabelComponents.count > 0) {
-      return [accessibilityLabelComponents componentsJoinedByString:@", "];
-    }
-
-    return nil;
-  } else {
-    return [super accessibilityLabel];
+  NSString *superAccessibilityLabel = [super accessibilityLabel];
+  if (superAccessibilityLabel.length > 0) {
+    return superAccessibilityLabel;
   }
-}
 
-- (NSString *)accessibilityValue {
-  NSString *accessibilityValue = [super accessibilityValue];
-  NSString *accessibilityLabel = [self accessibilityLabel];
-  // Voice Over reads both the accessibility label and the accessibility value in succession.
-  // If no value is set on the text field, the accessibility value will be the placeholder.
-  // This means that if a placeholder is set and it is equal to the label text
-  // Voice Over will read the same string twice. Ex, "Label, Label, Text Field". This is
-  // confusing to the user, so if we determine this to be case, we manually return an empty
-  // accessibility value.
-  if (accessibilityLabel && [accessibilityValue isEqualToString:accessibilityLabel] &&
-      self.text.length == 0) {
-    // We need to return empty string rather than nil,
-    // otherwise Voice Over seems to still read a value.
-    accessibilityValue = @"";
+  NSMutableArray *accessibilityLabelComponents = [NSMutableArray new];
+  if (self.label.text.length > 0) {
+    [accessibilityLabelComponents addObject:self.label.text];
   }
-  return accessibilityValue;
-}
+  if (self.leadingAssistiveLabel.text.length > 0) {
+    [accessibilityLabelComponents addObject:self.leadingAssistiveLabel.text];
+  }
+  if (self.trailingAssistiveLabel.text.length > 0) {
+    [accessibilityLabelComponents addObject:self.trailingAssistiveLabel.text];
+  }
 
-- (NSArray *)accessibilityElements {
-  if (self.isAccessibilityElement) {
-    return [super accessibilityElements];
-  } else {
-    NSMutableArray *mutableElements = [[super accessibilityElements] mutableCopy];
-    if (self.label.isAccessibilityElement &&
-        self.labelPosition != MDCTextControlLabelPositionNone) {
-      // The label should be before the system text field element
-      [mutableElements insertObject:self.label atIndex:0];
-    }
-    if (self.leadingView.isAccessibilityElement && self.leadingView.superview == self) {
-      // The leading view should be first if it's there
-      [mutableElements insertObject:self.leadingView atIndex:0];
-    }
-    if (self.trailingView.isAccessibilityElement && self.trailingView.superview == self) {
-      // The trailing view should be after the system text field element or clear button if it's
-      // there
-      [mutableElements addObject:self.trailingView];
-    }
-    if (self.leadingAssistiveLabel.isAccessibilityElement) {
-      [mutableElements addObject:self.leadingAssistiveLabel];
-    }
-    if (self.trailingAssistiveLabel.isAccessibilityElement) {
-      [mutableElements addObject:self.trailingAssistiveLabel];
-    }
-    return [mutableElements copy];
+  if (accessibilityLabelComponents.count > 0) {
+    return [accessibilityLabelComponents componentsJoinedByString:@", "];
   }
+
+  return nil;
 }
 
 - (UIBezierPath *)accessibilityPath {
@@ -855,8 +772,8 @@ static char *const kKVOContextMDCBaseTextField = "kKVOContextMDCBaseTextField";
 
 #pragma mark - Key-value observing
 
-- (void)observeLabelKeyPaths {
-  for (NSString *keyPath in [MDCBaseTextField assistiveLabelKeyPaths]) {
+- (void)observeAssistiveLabelKeyPaths {
+  for (NSString *keyPath in [MDCBaseTextField assistiveLabelKVOKeyPaths]) {
     [self.leadingAssistiveLabel addObserver:self
                                  forKeyPath:keyPath
                                     options:NSKeyValueObservingOptionNew
@@ -866,25 +783,16 @@ static char *const kKVOContextMDCBaseTextField = "kKVOContextMDCBaseTextField";
                                      options:NSKeyValueObservingOptionNew
                                      context:kKVOContextMDCBaseTextField];
   }
-  for (NSString *keyPath in [MDCBaseTextField labelKeyPaths]) {
-    [self.label addObserver:self
-                 forKeyPath:keyPath
-                    options:NSKeyValueObservingOptionNew
-                    context:kKVOContextMDCBaseTextField];
-  }
 }
 
 - (void)removeObservers {
-  for (NSString *keyPath in [MDCBaseTextField assistiveLabelKeyPaths]) {
+  for (NSString *keyPath in [MDCBaseTextField assistiveLabelKVOKeyPaths]) {
     [self.leadingAssistiveLabel removeObserver:self
                                     forKeyPath:keyPath
                                        context:kKVOContextMDCBaseTextField];
     [self.trailingAssistiveLabel removeObserver:self
                                      forKeyPath:keyPath
                                         context:kKVOContextMDCBaseTextField];
-  }
-  for (NSString *keyPath in [MDCBaseTextField labelKeyPaths]) {
-    [self.label removeObserver:self forKeyPath:keyPath context:kKVOContextMDCBaseTextField];
   }
 }
 
@@ -893,41 +801,26 @@ static char *const kKVOContextMDCBaseTextField = "kKVOContextMDCBaseTextField";
                         change:(NSDictionary<NSKeyValueChangeKey, id> *)change
                        context:(void *)context {
   if (context == kKVOContextMDCBaseTextField) {
-    if (object == self.leadingAssistiveLabel || object == self.trailingAssistiveLabel) {
-      for (NSString *labelKeyPath in [MDCBaseTextField assistiveLabelKeyPaths]) {
-        if ([labelKeyPath isEqualToString:keyPath]) {
-          [self setNeedsLayout];
-          break;
-        }
+    if (object != self.leadingAssistiveLabel && object != self.trailingAssistiveLabel) {
+      return;
+    }
+
+    for (NSString *assistiveLabelKeyPath in [MDCBaseTextField assistiveLabelKVOKeyPaths]) {
+      if ([assistiveLabelKeyPath isEqualToString:keyPath]) {
+        [self setNeedsLayout];
+        break;
       }
-    } else if (object == self.label)
-      for (NSString *labelKeyPath in [MDCBaseTextField labelKeyPaths]) {
-        if ([labelKeyPath isEqualToString:keyPath]) {
-          [self setNeedsLayout];
-          break;
-        }
-      }
+    }
   }
 }
 
-+ (NSArray<NSString *> *)assistiveLabelKeyPaths {
++ (NSArray<NSString *> *)assistiveLabelKVOKeyPaths {
   static NSArray<NSString *> *keyPaths = nil;
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
     keyPaths = @[
       NSStringFromSelector(@selector(text)),
       NSStringFromSelector(@selector(font)),
-    ];
-  });
-  return keyPaths;
-}
-
-+ (NSArray<NSString *> *)labelKeyPaths {
-  static NSArray<NSString *> *keyPaths = nil;
-  static dispatch_once_t onceToken;
-  dispatch_once(&onceToken, ^{
-    keyPaths = @[
-      NSStringFromSelector(@selector(text)),
     ];
   });
   return keyPaths;

@@ -2,7 +2,9 @@ package com.todo.mvi.kotlin.multiplatform.data.source
 
 import com.badoo.reaktive.completable.CompletableWrapper
 import com.badoo.reaktive.single.SingleWrapper
-import comtodomvikotlinmultiplatform.Task
+import com.todo.mvi.kotlin.multiplatform.TasksDatabase
+import com.todo.mvi.kotlin.multiplatform.data.source.TasksDataSource
+import com.todo.mvi.kotlin.multiplatform.data.Task
 
 interface TasksDataSource {
 

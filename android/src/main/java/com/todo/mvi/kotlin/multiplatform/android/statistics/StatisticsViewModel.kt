@@ -79,8 +79,8 @@ class StatisticsViewModel(
    */
   private fun compose(): Observable<StatisticsViewState> {
     return intentsSubject
-        .compose<StatisticsIntent>(intentFilter)
-        .map<StatisticsAction>(this::actionFromIntent)
+        .compose(intentFilter)
+        .map(this::actionFromIntent)
         .compose(actionProcessorHolder.actionProcessor)
         // Cache each state and pass it to the reducer to create a new state from
         // the previous cached one and the latest Result emitted from the action processor.
@@ -121,7 +121,7 @@ class StatisticsViewModel(
      * creates a new [MviViewState] by only updating the related fields.
      * This is basically like a big switch statement of all possible types for the [MviResult]
      */
-    private val reducer = BiFunction { previousState: StatisticsViewState, result: StatisticsResult ->
+    private val reducer = BiFunction<StatisticsViewState, StatisticsResult, StatisticsViewState> { previousState: StatisticsViewState, result: StatisticsResult ->
       when (result) {
         is LoadStatisticsResult -> when (result) {
           is Success ->

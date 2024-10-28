@@ -16,12 +16,6 @@
 
 @protocol MDCTextInput;
 
-API_DEPRECATED_BEGIN(
-    "🕘 Schedule time to migrate. "
-    "Use branded UITextField or UITextView instead: go/material-ios-text-fields/gm2-migration. "
-    "This is go/material-ios-migrations#not-scriptable 🕘",
-    ios(12, 12))
-
 /**
  Protocol for custom character counters.
 
@@ -29,7 +23,9 @@ API_DEPRECATED_BEGIN(
  of context), this object can instead choose to do sophisticated counting (ie: ignoring whitespace,
  ignoring url strings, ignoring usernames, etc).
  */
-@protocol MDCTextInputCharacterCounter <NSObject>
+__deprecated_msg(
+    "MDCTextField and its associated classes are deprecated. Please use TextControls instead.")
+    @protocol MDCTextInputCharacterCounter<NSObject>
 
 /**
  Returns the count of characters for the text field.
@@ -47,8 +43,8 @@ API_DEPRECATED_BEGIN(
 
  MDCTextInputAllCharactersCounter is naive (counts each character regardless of context).
  */
-@interface MDCTextInputAllCharactersCounter : NSObject <MDCTextInputCharacterCounter>
+__deprecated_msg(
+    "MDCTextField and its associated classes are deprecated. Please use TextControls instead.")
+    @interface MDCTextInputAllCharactersCounter : NSObject<MDCTextInputCharacterCounter>
 
 @end
-
-API_DEPRECATED_END

@@ -16,10 +16,9 @@
 
 #import <MDFInternationalization/MDFInternationalization.h>
 
-#import "MDCTabBar.h"
-#import "MDCItemBarAlignment.h"
-
+#import "MaterialAnimationTiming.h"
 #import "MDCTabBarDisplayDelegate.h"
+#import "MDCTabBarIndicatorAttributes.h"
 #import "MDCTabBarIndicatorTemplate.h"
 #import "MDCTabBarSizeClassDelegate.h"
 #import "MDCItemBarCell.h"
@@ -127,7 +126,10 @@ static void *kItemPropertyContext = &kItemPropertyContext;
   collectionView.showsHorizontalScrollIndicator = NO;
   collectionView.showsVerticalScrollIndicator = NO;
 
-  collectionView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentScrollableAxes;
+  if (@available(iOS 11.0, *)) {
+    collectionView.contentInsetAdjustmentBehavior =
+        UIScrollViewContentInsetAdjustmentScrollableAxes;
+  }
 
   collectionView.dataSource = self;
   collectionView.delegate = self;
@@ -317,7 +319,9 @@ static void *kItemPropertyContext = &kItemPropertyContext;
 }
 
 - (void)safeAreaInsetsDidChange {
-  [super safeAreaInsetsDidChange];
+  if (@available(iOS 11.0, *)) {
+    [super safeAreaInsetsDidChange];
+  }
   [self setNeedsLayout];
 }
 
@@ -341,14 +345,20 @@ static void *kItemPropertyContext = &kItemPropertyContext;
   [self updateColors];
 }
 
-- (void)setSemanticContentAttribute:(UISemanticContentAttribute)semanticContentAttribute {
-  if (semanticContentAttribute == self.semanticContentAttribute) {
+// UISemanticContentAttribute was added in iOS SDK 9.0 but is available on devices running earlier
+// version of iOS. We ignore the partial-availability warning that gets thrown on our use of this
+// symbol.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpartial-availability"
+- (void)mdf_setSemanticContentAttribute:(UISemanticContentAttribute)semanticContentAttribute {
+  if (semanticContentAttribute == self.mdf_semanticContentAttribute) {
     return;
   }
-  super.semanticContentAttribute = semanticContentAttribute;
-  _collectionView.semanticContentAttribute = semanticContentAttribute;
+  [super mdf_setSemanticContentAttribute:semanticContentAttribute];
+  _collectionView.mdf_semanticContentAttribute = semanticContentAttribute;
   [_collectionView.collectionViewLayout invalidateLayout];
 }
+#pragma clang diagnostic pop
 
 #pragma mark - UICollectionViewDelegate
 
@@ -478,8 +488,10 @@ static void *kItemPropertyContext = &kItemPropertyContext;
 #pragma mark - Private
 
 - (CGFloat)adjustedCollectionViewWidth {
-  return CGRectGetWidth(
-      UIEdgeInsetsInsetRect(_collectionView.bounds, _collectionView.adjustedContentInset));
+  if (@available(iOS 11.0, *)) {
+    return CGRectGetWidth(
+        UIEdgeInsetsInsetRect(_collectionView.bounds, _collectionView.adjustedContentInset));
+  }
   return CGRectGetWidth(_collectionView.bounds);
 }
 
@@ -606,7 +618,7 @@ static void *kItemPropertyContext = &kItemPropertyContext;
 
   if (animate) {
     CAMediaTimingFunction *easeInOutFunction =
-        [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+        [CAMediaTimingFunction mdc_functionWithType:MDCAnimationTimingFunctionEaseInOut];
     // Wrap in explicit CATransaction to allow layer-based animations with the correct duration.
     [CATransaction begin];
     [CATransaction setAnimationDuration:kDefaultAnimationDuration];
@@ -708,7 +720,7 @@ static void *kItemPropertyContext = &kItemPropertyContext;
   if (animate) {
     [CATransaction begin];
     CAMediaTimingFunction *easeInOut =
-        [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+        [CAMediaTimingFunction mdc_functionWithType:MDCAnimationTimingFunctionEaseInOut];
     [CATransaction setAnimationTimingFunction:easeInOut];
     [UIView animateWithDuration:kDefaultAnimationDuration
                           delay:0
@@ -772,8 +784,10 @@ static void *kItemPropertyContext = &kItemPropertyContext;
   const BOOL isRegular = (sizeClass == UIUserInterfaceSizeClassRegular);
   CGFloat inset = isRegular ? kRegularInset : kCompactInset;
   // If the collection view has Safe Area insets, we don't want to add an extra horizontal inset.
-  if (_collectionView.safeAreaInsets.left > 0 || _collectionView.safeAreaInsets.right > 0) {
-    inset = 0;
+  if (@available(iOS 11.0, *)) {
+    if (_collectionView.safeAreaInsets.left > 0 || _collectionView.safeAreaInsets.right > 0) {
+      inset = 0;
+    }
   }
   return UIEdgeInsetsMake(0, inset, 0, inset);
 }
@@ -1019,7 +1033,7 @@ static void *kItemPropertyContext = &kItemPropertyContext;
   UIUserInterfaceLayoutDirection rtl = UIUserInterfaceLayoutDirectionRightToLeft;
   NSProcessInfo *processInfo = [NSProcessInfo processInfo];
   return [processInfo isOperatingSystemAtLeastVersion:iOS9Version] &&
-         self.collectionView.effectiveUserInterfaceLayoutDirection == rtl;
+         self.collectionView.mdf_effectiveUserInterfaceLayoutDirection == rtl;
 }
 
 /// Indicates if the superclass' layout appears to have been layed out in a left-to-right order. If
@@ -1109,8 +1123,10 @@ static void *kItemPropertyContext = &kItemPropertyContext;
 }
 
 - (CGRect)adjustedCollectionViewBounds {
-  return UIEdgeInsetsInsetRect(self.collectionView.bounds,
-                               self.collectionView.adjustedContentInset);
+  if (@available(iOS 11.0, *)) {
+    return UIEdgeInsetsInsetRect(self.collectionView.bounds,
+                                 self.collectionView.adjustedContentInset);
+  }
   return self.collectionView.bounds;
 }
 

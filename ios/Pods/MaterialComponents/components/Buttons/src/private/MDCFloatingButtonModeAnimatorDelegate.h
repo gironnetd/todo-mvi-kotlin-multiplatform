@@ -17,11 +17,6 @@
 
 #import "MDCFloatingButton.h"
 
-API_DEPRECATED_BEGIN("🤖👀 Use branded M3CButton instead. "
-                     "See go/material-ios-buttons/gm2-migration for more details. "
-                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
-                     ios(12, 12))
-
 @class MDCFloatingButtonModeAnimator;
 
 /**
@@ -38,5 +33,3 @@ API_DEPRECATED_BEGIN("🤖👀 Use branded M3CButton instead. "
                                                  mode:(MDCFloatingButtonMode)mode;
 
 @end
-
-API_DEPRECATED_END

@@ -1,7 +1,7 @@
 package com.todo.mvi.kotlin.multiplatform.util
 
 import kotlin.jvm.Synchronized
-import kotlin.jvm.Volatile
+import kotlin.concurrent.Volatile
 
 /**
  * Used to allow Singleton with arguments in Kotlin while keeping the code efficient and safe.

@@ -55,52 +55,20 @@ OBJC_EXTERN NSTimeInterval const MDCSnackbarLegacyTransitionDuration;
 - (void)dismissSnackbarViewAnimated:(BOOL)animated completion:(void (^)(void))completion;
 
 /**
- How far from the bottom of the screen Snackbars should be presented when @c verticalAlignment is @c
- MDCSnackbarHorizontalAlignmentBottom.
+ How far from the bottom of the screen should Snackbars be presented.
 
  If set inside of an animation block, the change will animate.
  */
 @property(nonatomic) CGFloat bottomOffset;
 
 /**
- Determines the horizontal alignment of the Snackbar on the screen (iPad only).
+ Determines whether the Snackbar is presented in the center of the of the screen or (on iPad only)
+ the leading edge of the screen.
 
  If called within an animation block, the change will be animated.
 
  @note This method must be called from the main thread.
 */
-@property(nonatomic) MDCSnackbarHorizontalAlignment horizontalAlignment;
-
-/**
- Determines the vertical alignment of the Snackbar on the screen.
-
- @note This method must be called from the main thread.
-*/
-@property(nonatomic) MDCSnackbarVerticalAlignment verticalAlignment;
-
-/**
- Determines the Snackbar's leading margin to the safe area of the screen.
-
- Defaults to 8 when the traitCollection horizontal size class is compact.
-
- Defaults to 24 when the traitCollection horizontal size class is regular.
- */
-@property(nonatomic, assign) CGFloat leadingMargin;
-
-/**
- Determines the Snackbar's trailing margin to the safe area of the screen.
-
- Defaults to 8 when the traitCollection horizontal size class is compact.
-
- Defaults to 24 when the traitCollection horizontal size class is regular.
- */
-@property(nonatomic, assign) CGFloat trailingMargin;
-
-/**
- Determines the Snackbar's top margin to the safe area of the screen.
-
- Defaults to 8.
- */
-@property(nonatomic, assign) CGFloat topMargin;
+@property(nonatomic) MDCSnackbarAlignment alignment;
 
 @end

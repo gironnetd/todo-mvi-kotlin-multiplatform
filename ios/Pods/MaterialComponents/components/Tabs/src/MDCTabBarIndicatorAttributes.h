@@ -14,17 +14,12 @@
 
 #import <UIKit/UIKit.h>
 
-API_DEPRECATED_BEGIN("🤖👀 Use a branded MDCTabBarView instead. "
-                     "See go/material-ios-tabs and go/material-ios-tabbar-migration for more info. "
-                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
-                     ios(12, 12))
-
 /** Defines how a tab bar indicator should appear in a specific context. */
-@interface MDCTabBarIndicatorAttributes : NSObject <NSCopying>
+__deprecated_msg("Use MDCTabBarViewIndicatorAttributes instead. See "
+                 "go/material-ios-tabbar-migration for more details.")
+    @interface MDCTabBarIndicatorAttributes : NSObject<NSCopying>
 
 /** If non-nil, a path that should be filled with the indicator tint color. */
 @property(nonatomic, nullable) UIBezierPath *path;
 
 @end
-
-API_DEPRECATED_END

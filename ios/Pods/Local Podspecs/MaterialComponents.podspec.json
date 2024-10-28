@@ -10,12 +10,15 @@
     "tag": "v124.2.0"
   },
   "platforms": {
-    "ios": "11.0"
+    "ios": "10.0"
   },
   "requires_arc": true,
   "subspecs": [
     {
       "name": "ActionSheet",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/ActionSheet/src/*.h",
       "source_files": [
         "components/ActionSheet/src/*.{h,m}",
@@ -59,6 +62,9 @@
     },
     {
       "name": "ActionSheet+Theming",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/ActionSheet/src/Theming/*.h",
       "source_files": [
         "components/ActionSheet/src/Theming/*.{h,m}",
@@ -87,6 +93,9 @@
     },
     {
       "name": "ActivityIndicator",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/ActivityIndicator/src/*.h",
       "source_files": [
         "components/ActivityIndicator/src/*.{h,m}",
@@ -97,7 +106,7 @@
       ],
       "dependencies": {
         "MDFInternationalization": [
-          "~> 3.0"
+
         ],
         "MaterialComponents/Palettes": [
 
@@ -123,6 +132,9 @@
     },
     {
       "name": "AnimationTiming",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/AnimationTiming/src/*.h",
       "source_files": [
         "components/AnimationTiming/src/*.{h,m}",
@@ -142,6 +154,9 @@
     },
     {
       "name": "AppBar",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/AppBar/src/*.h",
       "source_files": [
         "components/AppBar/src/*.{h,m}",
@@ -173,7 +188,7 @@
 
         ],
         "MDFInternationalization": [
-          "~> 3.0"
+
         ],
         "MaterialComponents/private/Icons/ic_arrow_back": [
 
@@ -279,6 +294,9 @@
     },
     {
       "name": "Banner",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/Banner/src/*.h",
       "source_files": "components/Banner/src/*.{h,m}",
       "dependencies": {
@@ -349,6 +367,9 @@
     },
     {
       "name": "BottomAppBar",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/BottomAppBar/src/*.h",
       "source_files": [
         "components/BottomAppBar/src/*.{h,m}",
@@ -356,7 +377,7 @@
       ],
       "dependencies": {
         "MDFInternationalization": [
-          "~> 3.0"
+
         ],
         "MaterialComponents/Buttons": [
 
@@ -382,6 +403,9 @@
     },
     {
       "name": "BottomNavigation",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/BottomNavigation/src/*.h",
       "source_files": [
         "components/BottomNavigation/src/*.{h,m}",
@@ -393,7 +417,7 @@
       ],
       "dependencies": {
         "MDFInternationalization": [
-          "~> 3.0"
+
         ],
         "MaterialComponents/Availability": [
 
@@ -444,6 +468,9 @@
     },
     {
       "name": "BottomNavigation+BottomNavigationController",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": [
         "components/BottomNavigation/src/MDCBottomNavigationBarController.h",
         "components/BottomNavigation/src/MaterialBottomNavigation+BottomNavigationController.h"
@@ -469,7 +496,47 @@
       ]
     },
     {
+      "name": "BottomNavigation+Theming",
+      "platforms": {
+        "ios": "10.0"
+      },
+      "public_header_files": "components/BottomNavigation/src/Theming/*.h",
+      "source_files": [
+        "components/BottomNavigation/src/Theming/*.{h,m}",
+        "components/BottomNavigation/src/Theming/private/*.{h,m}"
+      ],
+      "dependencies": {
+        "MaterialComponents/BottomNavigation": [
+
+        ],
+        "MaterialComponents/ShadowElevations": [
+
+        ],
+        "MaterialComponents/schemes/Color": [
+
+        ],
+        "MaterialComponents/schemes/Container": [
+
+        ],
+        "MaterialComponents/schemes/Typography": [
+
+        ]
+      },
+      "testspecs": [
+        {
+          "name": "UnitTests",
+          "test_type": "unit",
+          "source_files": [
+            "components/BottomNavigation/tests/unit/MDCBottomNavigationThemingTests.m"
+          ]
+        }
+      ]
+    },
+    {
       "name": "BottomSheet",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/BottomSheet/src/*.h",
       "source_files": [
         "components/BottomSheet/src/*.{h,m}",
@@ -539,6 +606,9 @@
     },
     {
       "name": "Buttons",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/Buttons/src/*.h",
       "source_files": [
         "components/Buttons/src/*.{h,m}",
@@ -546,7 +616,7 @@
       ],
       "dependencies": {
         "MDFInternationalization": [
-          "~> 3.0"
+
         ],
         "MDFTextAccessibility": [
 
@@ -729,6 +799,9 @@
     },
     {
       "name": "ButtonBar",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/ButtonBar/src/*.h",
       "source_files": [
         "components/ButtonBar/src/*.{h,m}",
@@ -736,7 +809,7 @@
       ],
       "dependencies": {
         "MDFInternationalization": [
-          "~> 3.0"
+
         ],
         "MaterialComponents/Buttons": [
 
@@ -759,6 +832,9 @@
     },
     {
       "name": "Cards",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/Cards/src/*.h",
       "source_files": "components/Cards/src/*.{h,m}",
       "exclude_files": [
@@ -821,6 +897,9 @@
     },
     {
       "name": "Chips",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/Chips/src/*.h",
       "source_files": [
         "components/Chips/src/*.{h,m}",
@@ -828,7 +907,7 @@
       ],
       "dependencies": {
         "MDFInternationalization": [
-          "~> 3.0"
+
         ],
         "MaterialComponents/Elevation": [
 
@@ -902,6 +981,9 @@
     },
     {
       "name": "CollectionCells",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/CollectionCells/src/*.h",
       "source_files": [
         "components/CollectionCells/src/*.{h,m}",
@@ -916,7 +998,7 @@
       ],
       "dependencies": {
         "MDFInternationalization": [
-          "~> 3.0"
+
         ],
         "MaterialComponents/CollectionLayoutAttributes": [
 
@@ -969,6 +1051,9 @@
     },
     {
       "name": "CollectionLayoutAttributes",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/CollectionLayoutAttributes/src/*.h",
       "source_files": "components/CollectionLayoutAttributes/src/*.{h,m}",
       "testspecs": [
@@ -985,6 +1070,9 @@
     },
     {
       "name": "Collections",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/Collections/src/*.h",
       "source_files": [
         "components/Collections/src/*.{h,m}",
@@ -1040,6 +1128,9 @@
     },
     {
       "name": "Dialogs",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/Dialogs/src/*.h",
       "source_files": [
         "components/Dialogs/src/*.{h,m}",
@@ -1071,7 +1162,7 @@
 
         ],
         "MDFInternationalization": [
-          "~> 3.0"
+
         ]
       },
       "testspecs": [
@@ -1165,6 +1256,9 @@
     },
     {
       "name": "Elevation",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/Elevation/src/*.h",
       "source_files": [
         "components/Elevation/src/*.{h,m}",
@@ -1199,6 +1293,9 @@
     },
     {
       "name": "FeatureHighlight",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/FeatureHighlight/src/*.h",
       "source_files": [
         "components/FeatureHighlight/src/*.{h,m}",
@@ -1257,6 +1354,9 @@
     },
     {
       "name": "FlexibleHeader",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/FlexibleHeader/src/*.h",
       "source_files": [
         "components/FlexibleHeader/src/*.{h,m}",
@@ -1341,7 +1441,27 @@
       }
     },
     {
+      "name": "FlexibleHeader+CanAlwaysExpandToMaximumHeight",
+      "platforms": {
+        "ios": "10.0"
+      },
+      "public_header_files": [
+        "components/FlexibleHeader/src/CanAlwaysExpandToMaximumHeight/*.h"
+      ],
+      "source_files": [
+        "components/FlexibleHeader/src/CanAlwaysExpandToMaximumHeight/*.{h,m}"
+      ],
+      "dependencies": {
+        "MaterialComponents/FlexibleHeader": [
+
+        ]
+      }
+    },
+    {
       "name": "HeaderStackView",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/HeaderStackView/src/*.h",
       "source_files": "components/HeaderStackView/src/*.{h,m}",
       "testspecs": [
@@ -1358,6 +1478,9 @@
     },
     {
       "name": "Ink",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/Ink/src/*.h",
       "source_files": [
         "components/Ink/src/*.{h,m}",
@@ -1388,6 +1511,9 @@
     },
     {
       "name": "LibraryInfo",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/LibraryInfo/src/*.h",
       "source_files": [
         "components/LibraryInfo/src/*.{h,m}",
@@ -1407,6 +1533,9 @@
     },
     {
       "name": "List",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/List/src/*.h",
       "source_files": [
         "components/List/src/*.{h,m}",
@@ -1432,7 +1561,7 @@
 
         ],
         "MDFInternationalization": [
-          "~> 3.0"
+
         ],
         "MaterialComponents/private/Math": [
 
@@ -1471,6 +1600,9 @@
     },
     {
       "name": "NavigationBar",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/NavigationBar/src/*.h",
       "source_files": "components/NavigationBar/src/*.{h,m}",
       "dependencies": {
@@ -1487,7 +1619,7 @@
 
         ],
         "MDFInternationalization": [
-          "~> 3.0"
+
         ],
         "MaterialComponents/private/Math": [
 
@@ -1555,6 +1687,9 @@
     },
     {
       "name": "NavigationDrawer",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/NavigationDrawer/src/*.h",
       "source_files": [
         "components/NavigationDrawer/src/*.{h,m}",
@@ -1636,6 +1771,9 @@
     },
     {
       "name": "OverlayWindow",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/OverlayWindow/src/*.h",
       "source_files": [
         "components/OverlayWindow/src/*.{h,m}",
@@ -1663,6 +1801,9 @@
     },
     {
       "name": "PageControl",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/PageControl/src/*.h",
       "source_files": [
         "components/PageControl/src/*.{h,m}",
@@ -1673,7 +1814,7 @@
       ],
       "dependencies": {
         "MDFInternationalization": [
-          "~> 3.0"
+
         ]
       },
       "testspecs": [
@@ -1690,6 +1831,9 @@
     },
     {
       "name": "Palettes",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/Palettes/src/*.h",
       "source_files": [
         "components/Palettes/src/*.{h,m}",
@@ -1709,6 +1853,9 @@
     },
     {
       "name": "ProgressView",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/ProgressView/src/*.h",
       "source_files": [
         "components/ProgressView/src/*.{h,m}",
@@ -1719,7 +1866,7 @@
       ],
       "dependencies": {
         "MDFInternationalization": [
-          "~> 3.0"
+
         ],
         "MaterialComponents/Palettes": [
 
@@ -1771,6 +1918,9 @@
     },
     {
       "name": "Ripple",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/Ripple/src/*.h",
       "source_files": [
         "components/Ripple/src/*.{h,m}",
@@ -1804,6 +1954,9 @@
     },
     {
       "name": "Shadow",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/Shadow/src/*.h",
       "source_files": "components/Shadow/src/*.{h,m}",
       "dependencies": {
@@ -1825,6 +1978,9 @@
     },
     {
       "name": "ShadowElevations",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/ShadowElevations/src/*.h",
       "source_files": [
         "components/ShadowElevations/src/*.{h,m}",
@@ -1844,6 +2000,9 @@
     },
     {
       "name": "ShadowLayer",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/ShadowLayer/src/*.h",
       "source_files": "components/ShadowLayer/src/*.{h,m}",
       "dependencies": {
@@ -1865,6 +2024,9 @@
     },
     {
       "name": "ShapeLibrary",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/ShapeLibrary/src/*.h",
       "source_files": [
         "components/ShapeLibrary/src/*.{h,m}",
@@ -1892,6 +2054,9 @@
     },
     {
       "name": "Shapes",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/Shapes/src/*.h",
       "source_files": [
         "components/Shapes/src/*.{h,m}",
@@ -1922,6 +2087,9 @@
     },
     {
       "name": "Slider",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": [
         "components/Slider/src/*.h"
       ],
@@ -1983,6 +2151,9 @@
     },
     {
       "name": "Snackbar",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/Snackbar/src/*.h",
       "source_files": [
         "components/Snackbar/src/*.{h,m}",
@@ -2048,6 +2219,9 @@
     },
     {
       "name": "Tabs",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/Tabs/src/*.h",
       "source_files": [
         "components/Tabs/src/*.{h,m}",
@@ -2057,7 +2231,7 @@
       ],
       "dependencies": {
         "MDFInternationalization": [
-          "~> 3.0"
+
         ],
         "MaterialComponents/AnimationTiming": [
 
@@ -2179,7 +2353,7 @@
 
         ],
         "MDFInternationalization": [
-          "~> 3.0"
+
         ]
       },
       "testspecs": [
@@ -2240,6 +2414,9 @@
     },
     {
       "name": "TextFields",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/TextFields/src/*.h",
       "source_files": [
         "components/TextFields/src/*.{h,m}",
@@ -2265,7 +2442,7 @@
 
         ],
         "MDFInternationalization": [
-          "~> 3.0"
+
         ]
       },
       "testspecs": [
@@ -2290,11 +2467,17 @@
     },
     {
       "name": "TextControls+Enums",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/TextControls/src/Enums/*.h",
       "source_files": "components/TextControls/src/Enums/*.{h,m}"
     },
     {
       "name": "TextControls+BaseTextAreas",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/TextControls/src/BaseTextAreas/*.h",
       "source_files": [
         "components/TextControls/src/BaseTextAreas/*.{h,m}",
@@ -2308,7 +2491,7 @@
 
         ],
         "MDFInternationalization": [
-          "~> 3.0"
+
         ]
       },
       "testspecs": [
@@ -2328,6 +2511,9 @@
     },
     {
       "name": "TextControls+BaseTextFields",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/TextControls/src/BaseTextFields/*.h",
       "source_files": [
         "components/TextControls/src/BaseTextFields/*.{h,m}",
@@ -2344,7 +2530,7 @@
 
         ],
         "MDFInternationalization": [
-          "~> 3.0"
+
         ]
       },
       "testspecs": [
@@ -2364,6 +2550,9 @@
     },
     {
       "name": "TextControls+FilledTextAreas",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/TextControls/src/FilledTextAreas/*.h",
       "source_files": [
         "components/TextControls/src/FilledTextAreas/*.{h,m}",
@@ -2397,6 +2586,9 @@
     },
     {
       "name": "TextControls+FilledTextAreasTheming",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/TextControls/src/FilledTextAreasTheming/*.h",
       "source_files": [
         "components/TextControls/src/FilledTextAreasTheming/*.{h,m}",
@@ -2422,6 +2614,9 @@
     },
     {
       "name": "TextControls+FilledTextFields",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/TextControls/src/FilledTextFields/*.h",
       "source_files": [
         "components/TextControls/src/FilledTextFields/*.{h,m}",
@@ -2455,6 +2650,9 @@
     },
     {
       "name": "TextControls+FilledTextFieldsTheming",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/TextControls/src/FilledTextFieldsTheming/*.h",
       "source_files": [
         "components/TextControls/src/FilledTextFieldsTheming/*.{h,m}",
@@ -2480,6 +2678,9 @@
     },
     {
       "name": "TextControls+OutlinedTextAreas",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/TextControls/src/OutlinedTextAreas/*.h",
       "source_files": [
         "components/TextControls/src/OutlinedTextAreas/*.{h,m}",
@@ -2513,6 +2714,9 @@
     },
     {
       "name": "TextControls+OutlinedTextAreasTheming",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/TextControls/src/OutlinedTextAreasTheming/*.h",
       "source_files": [
         "components/TextControls/src/OutlinedTextAreasTheming/*.{h,m}",
@@ -2543,6 +2747,9 @@
     },
     {
       "name": "TextControls+OutlinedTextFields",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/TextControls/src/OutlinedTextFields/*.h",
       "source_files": [
         "components/TextControls/src/OutlinedTextFields/*.{h,m}",
@@ -2576,6 +2783,9 @@
     },
     {
       "name": "TextControls+OutlinedTextFieldsTheming",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/TextControls/src/OutlinedTextFieldsTheming/*.h",
       "source_files": [
         "components/TextControls/src/OutlinedTextFieldsTheming/*.{h,m}",
@@ -2601,6 +2811,9 @@
     },
     {
       "name": "TextControls+UnderlinedTextFields",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/TextControls/src/UnderlinedTextFields/*.h",
       "source_files": [
         "components/TextControls/src/UnderlinedTextFields/*.{h,m}",
@@ -2620,6 +2833,9 @@
     },
     {
       "name": "TextControls+UnderlinedTextFieldsTheming",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/TextControls/src/UnderlinedTextFieldsTheming/*.h",
       "source_files": [
         "components/TextControls/src/UnderlinedTextFieldsTheming/*.{h,m}",
@@ -2678,6 +2894,9 @@
     },
     {
       "name": "Themes",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/Themes/src/*.h",
       "source_files": [
         "components/Themes/src/*.{h,m}",
@@ -2705,6 +2924,9 @@
     },
     {
       "name": "Typography",
+      "platforms": {
+        "ios": "10.0"
+      },
       "public_header_files": "components/Typography/src/*.h",
       "source_files": [
         "components/Typography/src/*.{h,m}",
@@ -3375,7 +3597,7 @@
 
             ],
             "MDFInternationalization": [
-              "~> 3.0"
+
             ],
             "MaterialComponents/private/Math": [
 

@@ -20,8 +20,6 @@
 
 @protocol MDCStatusBarShifterDelegate;
 
-API_DEPRECATED_BEGIN("Use a branded UINavigationController instead.", ios(12, API_TO_BE_DEPRECATED))
-
 /**
  The status bar shifter is responsible for the management of the status bar's offset as a header
  view is shifting off-screen.
@@ -93,5 +91,3 @@ API_DEPRECATED_BEGIN("Use a branded UINavigationController instead.", ios(12, AP
 - (void)didMoveToWindow;
 
 @end
-
-API_DEPRECATED_END

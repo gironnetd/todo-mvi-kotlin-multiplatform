@@ -14,22 +14,14 @@
 
 #import "MDCShadow.h"
 
-NS_ASSUME_NONNULL_BEGIN
-
 @implementation MDCShadow
 
-- (instancetype)initWithColor:(UIColor *)color
-                      opacity:(CGFloat)opacity
-                       radius:(CGFloat)radius
-                       offset:(CGSize)offset
-                       spread:(CGFloat)spread {
+- (instancetype)initWithOpacity:(CGFloat)opacity radius:(CGFloat)radius offset:(CGSize)offset {
   self = [super init];
   if (self) {
-    _color = color;
     _opacity = opacity;
     _radius = radius;
     _offset = offset;
-    _spread = spread;
   }
   return self;
 }
@@ -42,20 +34,17 @@ NS_ASSUME_NONNULL_BEGIN
     return NO;
   }
   MDCShadow *otherShadow = other;
-  return [_color isEqual:otherShadow.color] && _opacity == otherShadow.opacity &&
-         _radius == otherShadow.radius && CGSizeEqualToSize(_offset, otherShadow.offset) &&
-         _spread == otherShadow.spread;
+  return _opacity == otherShadow.opacity && _radius == otherShadow.radius &&
+         CGSizeEqualToSize(_offset, otherShadow.offset);
 }
 
 - (NSUInteger)hash {
   const NSUInteger kPrime = 31;
   NSUInteger result = 1;
-  result = result * kPrime + (NSUInteger)(_color.hash);
   result = result * kPrime + (NSUInteger)_opacity;
   result = result * kPrime + (NSUInteger)_radius;
   result = result * kPrime + (NSUInteger)(_offset.width);
   result = result * kPrime + (NSUInteger)(_offset.height);
-  result = result * kPrime + (NSUInteger)_spread;
   return result;
 }
 
@@ -64,40 +53,17 @@ NS_ASSUME_NONNULL_BEGIN
 @implementation MDCShadowBuilder
 
 - (MDCShadow *)build {
-  return [[MDCShadow alloc] initWithColor:self.color
-                                  opacity:self.opacity
-                                   radius:self.radius
-                                   offset:self.offset
-                                   spread:self.spread];
+  return [[MDCShadow alloc] initWithOpacity:self.opacity radius:self.radius offset:self.offset];
 }
 
-+ (MDCShadowBuilder *)builderWithColor:(UIColor *)color
-                               opacity:(CGFloat)opacity
-                                radius:(CGFloat)radius
-                                offset:(CGSize)offset {
++ (MDCShadowBuilder *)builderWithOpacity:(CGFloat)opacity
+                                  radius:(CGFloat)radius
+                                  offset:(CGSize)offset {
   MDCShadowBuilder *builder = [[MDCShadowBuilder alloc] init];
-  builder.color = color;
   builder.opacity = opacity;
   builder.radius = radius;
   builder.offset = offset;
-  builder.spread = 0.0f;
-  return builder;
-}
-
-+ (MDCShadowBuilder *)builderWithColor:(UIColor *)color
-                               opacity:(CGFloat)opacity
-                                radius:(CGFloat)radius
-                                offset:(CGSize)offset
-                                spread:(CGFloat)spread {
-  MDCShadowBuilder *builder = [[MDCShadowBuilder alloc] init];
-  builder.color = color;
-  builder.opacity = opacity;
-  builder.radius = radius;
-  builder.offset = offset;
-  builder.spread = spread;
   return builder;
 }
 
 @end
-
-NS_ASSUME_NONNULL_END

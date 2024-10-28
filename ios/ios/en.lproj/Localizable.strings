@@ -6,7 +6,7 @@
  
  */
 
-"app_name" = "TO-DO-MVI";
+"app_name" = "TO-DO List";
 "add_task" = "New TO-DO";
 "edit_task" = "Edit TO-DO";
 "task_marked_complete" = "Task marked complete";

@@ -16,11 +16,6 @@
 
 #import "MDCFontTextStyle.h"
 
-API_DEPRECATED_BEGIN("🤖👀 Use typography tokens instead. "
-                     "See go/material-ios-typography/gm2-migration for more details."
-                     "This has go/material-ios-migrations#scriptable-potential 🤖👀. ",
-                     ios(11, 12))
-
 @interface UIFont (MaterialTypography)
 
 /**
@@ -52,5 +47,3 @@ API_DEPRECATED_BEGIN("🤖👀 Use typography tokens instead. "
                                  scaledForDynamicType:(BOOL)scaled;
 
 @end
-
-API_DEPRECATED_END

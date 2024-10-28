@@ -14,12 +14,6 @@
 
 #import "MDCTextInputController.h"
 
-API_DEPRECATED_BEGIN(
-    "🕘 Schedule time to migrate. "
-    "Use branded UITextField or UITextView instead: go/material-ios-text-fields/gm2-migration. "
-    "This is go/material-ios-migrations#not-scriptable 🕘",
-    ios(12, 12))
-
 /**
  Material Design compliant text field for full width applications like email forms.
  https://material.io/go/design-text-fields#text-fields-field-variations
@@ -58,7 +52,9 @@ API_DEPRECATED_BEGIN(
 
  Underline View Mode - While editing
  */
-@interface MDCTextInputControllerFullWidth : NSObject <MDCTextInputController>
+__deprecated_msg(
+    "MDCTextField and its associated classes are deprecated. Please use TextControls instead.")
+    @interface MDCTextInputControllerFullWidth : NSObject<MDCTextInputController>
 
 /**
  Color for background for the various views making up a text field.
@@ -73,5 +69,3 @@ API_DEPRECATED_BEGIN(
 @property(class, nonatomic, null_resettable, strong) UIColor *backgroundColorDefault;
 
 @end
-
-API_DEPRECATED_END

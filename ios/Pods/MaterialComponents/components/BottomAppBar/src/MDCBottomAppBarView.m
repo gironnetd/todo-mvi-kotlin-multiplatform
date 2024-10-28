@@ -16,6 +16,8 @@
 
 #import "MDCBottomAppBarView.h"
 
+#import <MDFInternationalization/MDFInternationalization.h>
+
 #import "private/MDCBottomAppBarAttributes.h"
 #import "private/MDCBottomAppBarLayer.h"
 #import "MaterialButtons.h"
@@ -138,13 +140,15 @@ static const CGFloat kMDCBottomAppBarViewFloatingButtonElevationSecondary = 4;
   floatingButtonPoint.y = MAX(0, navigationBarMinY - self.floatingButtonVerticalOffset);
 
   UIEdgeInsets safeAreaInsets = UIEdgeInsetsZero;
-  safeAreaInsets = self.safeAreaInsets;
+  if (@available(iOS 11.0, *)) {
+    safeAreaInsets = self.safeAreaInsets;
+  }
 
   CGFloat leftCenter = kMDCBottomAppBarFloatingButtonPositionX + safeAreaInsets.left;
   CGFloat rightCenter =
       appBarWidth - kMDCBottomAppBarFloatingButtonPositionX - safeAreaInsets.right;
   BOOL isRTL =
-      self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft;
+      self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft;
   switch (self.floatingButtonPosition) {
     case MDCBottomAppBarFloatingButtonPositionLeading: {
       floatingButtonPoint.x = isRTL ? rightCenter : leftCenter;
@@ -274,8 +278,10 @@ static const CGFloat kMDCBottomAppBarViewFloatingButtonElevationSecondary = 4;
 
 - (UIEdgeInsets)mdc_safeAreaInsets {
   UIEdgeInsets insets = UIEdgeInsetsZero;
-  // Accommodate insets for iPhone X.
-  insets = self.safeAreaInsets;
+  if (@available(iOS 11.0, *)) {
+    // Accommodate insets for iPhone X.
+    insets = self.safeAreaInsets;
+  }
   return insets;
 }
 

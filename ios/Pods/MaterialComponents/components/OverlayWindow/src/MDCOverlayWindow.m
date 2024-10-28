@@ -14,10 +14,10 @@
 
 #import "MDCOverlayWindow.h"
 
-#import <CoreGraphics/CoreGraphics.h>
 #import <objc/runtime.h>
 
-#import "MDCAvailability.h"
+#import "MaterialApplication.h"
+#import "MaterialAvailability.h"
 
 /**
  A container view for overlay views.
@@ -58,6 +58,14 @@
 @end
 
 @implementation MDCOverlayWindow
+
+- (instancetype)init {
+  self = [super init];
+  if (self) {
+    [self commonInit];
+  }
+  return self;
+}
 
 - (instancetype)initWithFrame:(CGRect)frame {
   self = [super initWithFrame:frame];

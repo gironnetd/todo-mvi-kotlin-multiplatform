@@ -11,8 +11,9 @@ import com.badoo.reaktive.single.Single
 import com.badoo.reaktive.single.SingleWrapper
 import com.badoo.reaktive.single.singleOf
 import com.badoo.reaktive.single.wrap
+import com.todo.mvi.kotlin.multiplatform.TasksDatabase
 import com.todo.mvi.kotlin.multiplatform.data.source.TasksDataSource
-import comtodomvikotlinmultiplatform.Task
+import com.todo.mvi.kotlin.multiplatform.data.Task
 import kotlin.native.concurrent.ThreadLocal
 
 /**

@@ -16,12 +16,6 @@
 
 #import "MaterialElevation.h"
 
-API_DEPRECATED_BEGIN(
-    "🕘 Schedule time to migrate. "
-    "Use branded UINavigationController instead: go/material-ios-top-app-bars/gm2-migration. "
-    "This is go/material-ios-migrations#not-scriptable 🕘",
-    ios(11, 12))
-
 @protocol MDCButtonBarDelegate;
 
 /** Specifies the title alignment of the |MDCNavigationBar|. */
@@ -35,7 +29,6 @@ typedef NS_ENUM(NSInteger, MDCNavigationBarTitleAlignment) {
 /**
  Behaviors that affect the layout of an |MDCNavigationBar|'s titleView.
  */
-
 typedef NS_ENUM(NSInteger, MDCNavigationBarTitleViewLayoutBehavior) {
   /**
    The title view's width will equal the navigation bar's width minus any space consumed by the
@@ -48,20 +41,13 @@ typedef NS_ENUM(NSInteger, MDCNavigationBarTitleViewLayoutBehavior) {
   /**
    Align the title view's center with the navigation bar's center, if possible.
    */
-  MDCNavigationBarTitleViewLayoutBehaviorCenter,
-
-  /**
-   Align the title view's center with the navigation bar's center, if possible. Relies on the title
-   view's intrinsicContentSize to determine its width.
-   */
-  MDCNavigationBarTitleViewLayoutBehaviorCenterFit
+  MDCNavigationBarTitleViewLayoutBehaviorCenter
 };
 
 /**
  This protocol defines all of the properties on UINavigationItem that can be listened to by
  MDCNavigationBar.
  */
-
 @protocol MDCUINavigationItemObservables <NSObject>
 @required
 
@@ -398,5 +384,3 @@ IB_DESIGNABLE
     NSDictionary<NSAttributedStringKey, id> *titleTextAttributes UI_APPEARANCE_SELECTOR;
 
 @end
-
-API_DEPRECATED_END

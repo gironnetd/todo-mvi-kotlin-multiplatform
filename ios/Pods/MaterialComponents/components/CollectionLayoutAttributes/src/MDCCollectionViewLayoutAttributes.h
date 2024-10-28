@@ -14,11 +14,6 @@
 
 #import <UIKit/UIKit.h>
 
-API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
-                     "Use branded UITableView or UICollectionView instead: go/material-ios-lists. "
-                     "This is go/material-ios-migrations#not-scriptable 🕘",
-                     ios(12, 12))
-
 /** Types of cell ordinal positions available within a collectionView. */
 typedef NS_OPTIONS(NSUInteger, MDCCollectionViewOrdinalPosition) {
   /** Cell visually has top edge within section. */
@@ -119,5 +114,3 @@ typedef NS_OPTIONS(NSUInteger, MDCCollectionViewOrdinalPosition) {
 @property(nonatomic, assign) NSTimeInterval animateCellsOnAppearanceDelay;
 
 @end
-
-API_DEPRECATED_END

@@ -14,12 +14,8 @@
 
 #import "MDCTabBarItem.h"
 
-NS_ASSUME_NONNULL_BEGIN
-
 @implementation MDCTabBarItem
 
 @synthesize mdc_customView = _mdc_customView;
 
 @end
-
-NS_ASSUME_NONNULL_END

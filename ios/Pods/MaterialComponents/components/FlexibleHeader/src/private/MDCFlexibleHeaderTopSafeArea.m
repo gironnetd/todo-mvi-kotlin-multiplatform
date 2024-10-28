@@ -132,11 +132,15 @@ static const CGFloat kNonXStatusBarHeight = 20;
     return;
   }
 
-  CGFloat safeAreaTop = viewController.view.safeAreaInsets.top;
-  if (self.subtractsAdditionalSafeAreaInsets) {
-    safeAreaTop -= viewController.additionalSafeAreaInsets.top;
+  if (@available(iOS 11.0, *)) {
+    CGFloat safeAreaTop = viewController.view.safeAreaInsets.top;
+    if (self.subtractsAdditionalSafeAreaInsets) {
+      safeAreaTop -= viewController.additionalSafeAreaInsets.top;
+    }
+    self.extractedTopSafeAreaInset = safeAreaTop;
+  } else {
+    self.extractedTopSafeAreaInset = viewController.topLayoutGuide.length;
   }
-  self.extractedTopSafeAreaInset = safeAreaTop;
 }
 
 @end

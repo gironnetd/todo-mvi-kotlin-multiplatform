@@ -16,8 +16,6 @@
 
 @class MDCFlexibleHeaderMinMaxHeight;
 
-API_DEPRECATED_BEGIN("Use a branded UINavigationController instead.", ios(12, API_TO_BE_DEPRECATED))
-
 /**
  The delegate protocol through which MDCFlexibleHeaderMinMaxHeight communicates changes in the
  minimum and maximum height.
@@ -36,5 +34,3 @@ API_DEPRECATED_BEGIN("Use a branded UINavigationController instead.", ios(12, AP
 - (void)flexibleHeaderMinMaxHeightDidChange:(nonnull MDCFlexibleHeaderMinMaxHeight *)safeAreas;
 
 @end
-
-API_DEPRECATED_END

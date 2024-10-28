@@ -7,16 +7,16 @@ import co.touchlab.stately.ensureNeverFrozen
 import co.touchlab.stately.freeze
 import com.badoo.reaktive.completable.CompletableWrapper
 import com.badoo.reaktive.completable.completableOfEmpty
-import com.badoo.reaktive.completable.threadLocal
 import com.badoo.reaktive.completable.wrap
 import com.badoo.reaktive.observable.*
 import com.badoo.reaktive.single.*
 import com.todo.mvi.kotlin.multiplatform.data.source.local.DatabaseDriverFactory
 import com.todo.mvi.kotlin.multiplatform.data.source.local.TasksLocalDataSource
 import com.todo.mvi.kotlin.multiplatform.util.SingletonHolderDoubleArg
-import comtodomvikotlinmultiplatform.Task
+import com.todo.mvi.kotlin.multiplatform.TasksDatabase
+import com.todo.mvi.kotlin.multiplatform.data.source.TasksDataSource
+import com.todo.mvi.kotlin.multiplatform.data.Task
 import kotlin.native.concurrent.ThreadLocal
-
 
 /**
  * Concrete implementation to load tasks from the data sources into a cache.

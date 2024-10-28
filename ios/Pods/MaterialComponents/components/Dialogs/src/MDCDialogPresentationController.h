@@ -19,8 +19,6 @@
 #import "MDCDialogPresentationControllerDelegate.h"
 #import "MaterialShadowElevations.h"
 
-NS_ASSUME_NONNULL_BEGIN
-
 @class MDCDialogPresentationController;
 @protocol MDCDialogPresentationControllerDelegate;
 
@@ -52,9 +50,7 @@ NS_ASSUME_NONNULL_BEGIN
     dialogPresentationControllerDelegate;
 
 /**
- Should a tap on the dimmed background view dismiss the presented controller. This property must be
- enabled in order to make use of the @c MDCDialogPresentationControllerDelegate methods related to
- dismissal.
+ Should a tap on the dimmed background view dismiss the presented controller.
 
  Defaults to YES.
  */
@@ -112,13 +108,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, assign) CGAffineTransform dialogTransform;
 
 /**
- The spacing between the dialog and the @c safeArea of the presenting view controller.
-
- Defaults to {24, 20, 24, 20}.
- */
-@property(nonatomic, assign) UIEdgeInsets dialogEdgeInsets;
-
-/**
  Returns the size of the specified child view controller's content.
 
  The size is initially based on container.preferredSize. Width is will have a minimum of 280 and a
@@ -149,5 +138,3 @@ NS_ASSUME_NONNULL_BEGIN
      UITraitCollection *_Nullable previousTraitCollection);
 
 @end
-
-NS_ASSUME_NONNULL_END

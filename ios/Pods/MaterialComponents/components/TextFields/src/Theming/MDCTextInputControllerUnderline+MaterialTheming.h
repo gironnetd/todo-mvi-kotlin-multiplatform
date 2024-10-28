@@ -15,12 +15,6 @@
 #import "MaterialContainerScheme.h"
 #import "MaterialTextFields.h"
 
-API_DEPRECATED_BEGIN(
-    "🕘 Schedule time to migrate. "
-    "Use branded UITextField or UITextView instead: go/material-ios-text-fields/gm2-migration. "
-    "This is go/material-ios-migrations#not-scriptable 🕘",
-    ios(12, 12))
-
 /**
  This category is used to style MDCTextInputControllerUnderline instances to a specific Material
  style which can be found within the [Material
@@ -37,5 +31,3 @@ API_DEPRECATED_BEGIN(
 - (void)applyThemeWithScheme:(nonnull id<MDCContainerScheming>)scheme;
 
 @end
-
-API_DEPRECATED_END

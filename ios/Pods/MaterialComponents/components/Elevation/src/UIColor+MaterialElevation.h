@@ -15,12 +15,6 @@
 #import <CoreGraphics/CoreGraphics.h>
 #import <UIKit/UIKit.h>
 
-API_DEPRECATED_BEGIN("🤖👀 Use colors with dynamic providers that handle elevation instead. "
-                     "See go/material-ios-color/gm2-migration and "
-                     "go/material-ios-shadow/gm2-migration for more info. "
-                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
-                     ios(12, 12))
-
 /**
  Provides extension to UIColor for Material Elevation usage.
  */
@@ -69,5 +63,3 @@ API_DEPRECATED_BEGIN("🤖👀 Use colors with dynamic providers that handle ele
                          (nonnull UITraitCollection *)traitCollection
                                                 elevation:(CGFloat)elevation;
 @end
-
-API_DEPRECATED_END

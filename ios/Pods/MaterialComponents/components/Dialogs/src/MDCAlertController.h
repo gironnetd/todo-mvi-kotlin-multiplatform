@@ -20,18 +20,12 @@
 // longer import delegates as transitive dependencies.
 #import "MDCAlertControllerDelegate.h"
 #import "MaterialElevation.h"
-#import "M3CButton.h"
 #import "MaterialShadowElevations.h"
-
-NS_ASSUME_NONNULL_BEGIN
 
 @class MDCAlertAction;
 @class MDCAlertController;
 @protocol MDCAlertControllerDelegate;
 
-// TODO(b/238930139): Remove usage of this deprecated API.
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 /**
  MDCAlertController displays an alert message to the user, similar to UIAlertController.
 
@@ -42,7 +36,6 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @interface MDCAlertController
     : UIViewController <MDCElevatable, MDCElevationOverriding, UIContentSizeCategoryAdjusting>
-#pragma clang diagnostic pop
 
 /**
  Convenience constructor to create and return a view controller for displaying an alert to the user.
@@ -81,8 +74,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable instancetype)initWithCoder:(nonnull NSCoder *)aDecoder NS_UNAVAILABLE;
 
 /**
- A block that is invoked when a link (a URL) in the attributed message text is
- tapped.
+ A block that is invoked when a link (a URL) in the attributed message text is tapped.
 
  @param URL The URL of the link that was tapped. May include external or internal URLs.
  @param range The range of characters (in the attributed text) of the link that was tapped.
@@ -94,17 +86,6 @@ NS_ASSUME_NONNULL_BEGIN
 API_AVAILABLE(ios(10.0))
 typedef BOOL (^MDCAttributedMessageActionHandler)(NSURL *_Nonnull URL, NSRange range,
                                                   UITextItemInteraction interaction);
-
-/**
- Sets the flag to use `M3CButton` instead of `MDCButton`, this flag would be
- eventually removed when `MDCButton` is deleted.
-
- Defaults to NO.
-
- This function should be called right after creation of the
- MDCAlertController.
- */
-@property(nonatomic, assign, getter=isM3CButtonEnabled) BOOL M3CButtonEnabled;
 
 /**
  An action that is invoked when a link (URL) in the attributed message is interacted with. Applies
@@ -176,28 +157,21 @@ typedef BOOL (^MDCAttributedMessageActionHandler)(NSURL *_Nonnull URL, NSRange r
 /** The color applied to the alert's buttons ink effect.*/
 @property(nonatomic, strong, nullable) UIColor *buttonInkColor;
 
-/**
- The semi-transparent color which is applied to the overlay covering the content
- behind the Alert (the scrim) when presented by
- @c MDCDialogPresentationController.
- */
+/** The semi-transparent color which is applied to the overlay covering the content
+     behind the Alert (the scrim) when presented by @c MDCDialogPresentationController.*/
 @property(nonatomic, strong, nullable) UIColor *scrimColor;
 
 /** The Alert background color.*/
 @property(nonatomic, strong, nullable) UIColor *backgroundColor;
 
-/**
- The corner radius applied to the Alert Controller view. Defaults to 0
- (no round corners)
- */
+/** The corner radius applied to the Alert Controller view. Defaults to 0 (no round corners) */
 @property(nonatomic, assign) CGFloat cornerRadius;
 
 /** The elevation that will be applied to the Alert Controller view. Defaults to 24. */
 @property(nonatomic, assign) MDCShadowElevation elevation;
 
 /**
- The color of the shadow that will be applied to the @c MDCAlertController view.
- Defaults to black.
+ The color of the shadow that will be applied to the @c MDCAlertController view. Defaults to black.
  */
 @property(nonatomic, copy, nonnull) UIColor *shadowColor;
 
@@ -261,13 +235,6 @@ typedef BOOL (^MDCAttributedMessageActionHandler)(NSURL *_Nonnull URL, NSRange r
 @property(nonatomic, strong, nullable) UIView *accessoryView;
 
 /**
- By setting this property to @c YES, the accessoryView will be placed on top of the message.
-
- Defaults to @c NO.
- */
-@property(nonatomic, assign) BOOL shouldPlaceAccessoryViewAboveMessage;
-
-/**
  Notifies the alert controller that the size of the accessory view needs to be recalculated due to
  content changes. Note that MDCAccessorizedAlertController will automatically recalculate the
  accessory view's size if the alert's width changes.
@@ -296,15 +263,17 @@ typedef BOOL (^MDCAttributedMessageActionHandler)(NSURL *_Nonnull URL, NSRange r
  */
 @property(nonatomic, assign) CGFloat presentationInitialScaleFactor;
 
-/**
- The spacing between the dialog and the @c safeArea of the presenting view controller.
+/*
+ Indicates whether the alert contents should automatically update their font when the device’s
+ UIContentSizeCategory changes.
 
- @note Dialogs have a minimum width of 280pt. If the horizonal insets force the dialog to be less
- than the 280pt required the dialog will apply equal insets to both sides to allow the 280pt.
+ This property is modeled after the adjustsFontForContentSizeCategory property in the
+ UIContentSizeCategoryAdjusting protocol added by Apple in iOS 10.0.
 
- Defaults to {24, 20, 24, 20}.
+ Defaults to @c NO.
  */
-@property(nonatomic, assign) UIEdgeInsets dialogEdgeInsets;
+@property(nonatomic, readwrite, setter=mdc_setAdjustsFontForContentSizeCategory:)
+    BOOL mdc_adjustsFontForContentSizeCategory;
 
 /**
  By setting this property to @c YES, the Ripple component will be used instead of Ink
@@ -326,22 +295,24 @@ typedef BOOL (^MDCAttributedMessageActionHandler)(NSURL *_Nonnull URL, NSRange r
     (MDCAlertController *_Nullable alertController,
      UITraitCollection *_Nullable previousTraitCollection);
 
-/** @c MDCAlertController handles its own transitioning delegate. */
-- (void)setTransitioningDelegate:
-    (nullable id<UIViewControllerTransitioningDelegate>)transitioningDelegate NS_UNAVAILABLE;
-
-/** @c MDCAlertController.modalPresentationStyle is always @c UIModalPresentationCustom. */
-- (void)setModalPresentationStyle:(UIModalPresentationStyle)modalPresentationStyle NS_UNAVAILABLE;
-
 /**
- Whether or not title should scroll with the content.
+ Affects the fallback behavior for when a scaled font is not provided.
 
- If the title does not pin to the top of the content, it will scroll with the message when the
- message scrolls.
+ If @c YES, the font size will adjust even if a scaled font has not been provided for
+ a given @c UIFont property on this component.
+
+ If @c NO, the font size will only be adjusted if a scaled font has been provided.
 
  Defaults to @c YES.
  */
-@property(nonatomic, assign) BOOL titlePinsToTop;
+@property(nonatomic, assign) BOOL adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable;
+
+/** @c MDCAlertController handles its own transitioning delegate. */
+- (void)setTransitioningDelegate:
+    (_Nullable id<UIViewControllerTransitioningDelegate>)transitioningDelegate NS_UNAVAILABLE;
+
+/** @c MDCAlertController.modalPresentationStyle is always @c UIModalPresentationCustom. */
+- (void)setModalPresentationStyle:(UIModalPresentationStyle)modalPresentationStyle NS_UNAVAILABLE;
 
 #pragma mark - Alert Actions
 
@@ -357,23 +328,13 @@ typedef BOOL (^MDCAttributedMessageActionHandler)(NSURL *_Nonnull URL, NSRange r
 
  Actions are the possible reactions of the user to the presented alert. Actions are added as a
  button at the bottom of the alert. Affirmative actions should be added before dismissive actions.
- Action buttons will be laid out from the trailing side to the leading side (unless
- @c actionsHorizontalAlignment is changed from the default) if possible, or top to bottom (by
- default), depending on space.
+ Action buttons will be laid out from right to left if possible or top to bottom depending on space.
 
  Material spec recommends alerts should not have more than two actions.
 
  @param action Will be added to the end of @c MDCAlertController actions.
  */
 - (void)addAction:(nonnull MDCAlertAction *)action;
-
-/**
- Adds an array of actions to the alert dialog.
-
- @param actions Will be added to the end of @c MDCAlertController actions.
- @seealso This is a _convenience_ API for @c addAction:.
- */
-- (void)addActions:(nonnull NSArray<MDCAlertAction *> *)actions;
 
 // TODO(https://github.com/material-components/material-components-ios/issues/9891): Replace
 // MDCActionEmphasis with UIControlContentHorizontalAlignment after dropping support for iOS 10.
@@ -492,7 +453,7 @@ typedef void (^MDCActionHandler)(MDCAlertAction *_Nonnull action);
  @return An initialized @c MDCActionAlert object.
  */
 + (nonnull instancetype)actionWithTitle:(nonnull NSString *)title
-                                handler:(nullable MDCActionHandler)handler;
+                                handler:(__nullable MDCActionHandler)handler;
 
 /**
  An action that renders at the bottom of an alert controller as a button of the given emphasis.
@@ -507,7 +468,7 @@ typedef void (^MDCActionHandler)(MDCAlertAction *_Nonnull action);
  */
 + (nonnull instancetype)actionWithTitle:(nonnull NSString *)title
                                emphasis:(MDCActionEmphasis)emphasis
-                                handler:(nullable MDCActionHandler)handler;
+                                handler:(__nullable MDCActionHandler)handler;
 
 /** Alert actions must be created with actionWithTitle:handler: */
 - (nonnull instancetype)init NS_UNAVAILABLE;
@@ -516,11 +477,6 @@ typedef void (^MDCActionHandler)(MDCAlertAction *_Nonnull action);
  Title of the button shown on the alert dialog.
  */
 @property(nonatomic, nullable, readonly) NSString *title;
-
-/**
- The action to execute when the button is pressed.
- */
-@property(nonatomic, nullable, readonly) MDCActionHandler tapHandler;
 
 /**
  The @c MDCActionEmphasis emphasis of the button that will be rendered for the action.
@@ -556,5 +512,3 @@ typedef void (^MDCActionHandler)(MDCAlertAction *_Nonnull action);
 @property(nonatomic, assign) BOOL dismissOnAction;
 
 @end
-
-NS_ASSUME_NONNULL_END

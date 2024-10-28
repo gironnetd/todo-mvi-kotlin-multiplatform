@@ -24,22 +24,12 @@
  Applies the Material Theming "Primary" Top App Bar variant where the AppBar's surface is colored
  with @c primaryColor.
  */
-- (void)applyPrimaryThemeWithScheme:(id<MDCContainerScheming>)containerScheme
-    API_DEPRECATED(
-        "🕘 Schedule time to migrate. "
-        "Use branded UINavigationController instead: go/material-ios-top-app-bars/gm2-migration. "
-        "This is go/material-ios-migrations#not-scriptable 🕘",
-        ios(11, 12));
+- (void)applyPrimaryThemeWithScheme:(id<MDCContainerScheming>)containerScheme;
 
 /**
  Applies the Material Theming "Surface" Top App Bar variant where the AppBar's surface is colored
  with @c primaryColor;
  */
-- (void)applySurfaceThemeWithScheme:(id<MDCContainerScheming>)containerScheme
-    API_DEPRECATED(
-        "🕘 Schedule time to migrate. "
-        "Use branded UINavigationController instead: go/material-ios-top-app-bars/gm2-migration. "
-        "This is go/material-ios-migrations#not-scriptable 🕘",
-        ios(11, 12));
+- (void)applySurfaceThemeWithScheme:(id<MDCContainerScheming>)containerScheme;
 
 @end

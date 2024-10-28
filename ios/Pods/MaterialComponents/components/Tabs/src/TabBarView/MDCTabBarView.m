@@ -13,16 +13,12 @@
 // limitations under the License.
 
 #import "MDCTabBarView.h"
-#import <UIKit/UIKit.h>
 
 #import "private/MDCTabBarViewIndicatorView.h"
 #import "private/MDCTabBarViewItemView.h"
 #import "private/MDCTabBarViewItemViewDelegate.h"
 #import "private/MDCTabBarViewPrivateIndicatorContext.h"
-#import "MDCAvailability.h"
-#import "MDCBadgeAppearance.h"
-#import "MDCRippleTouchController.h"
-#import "MDCRippleView.h"
+#import "MaterialRipple.h"
 #import "MDCTabBarItemCustomViewing.h"
 #import "MDCTabBarViewCustomViewable.h"
 #import "MDCTabBarViewDelegate.h"
@@ -31,8 +27,8 @@
 
 #import <CoreGraphics/CoreGraphics.h>
 #import <QuartzCore/QuartzCore.h>
-
-NS_ASSUME_NONNULL_BEGIN
+#import "MaterialAnimationTiming.h"  // ComponentImport
+#import <MDFInternationalization/MDFInternationalization.h>
 
 // KVO contexts
 static char *const kKVOContextMDCTabBarView = "kKVOContextMDCTabBarView";
@@ -67,9 +63,6 @@ static const CGFloat kBottomDividerHeight = 1;
 /// Default duration in seconds for selection change animations.
 static const NSTimeInterval kSelectionChangeAnimationDuration = 0.3;
 
-/** The font size of the badge text. */
-static const CGFloat kBadgeFontSize = 8;
-
 static NSString *const kSelectedImageKeyPath = @"selectedImage";
 static NSString *const kImageKeyPath = @"image";
 static NSString *const kTitleKeyPath = @"title";
@@ -80,8 +73,6 @@ static NSString *const kAccessibilityTraitsKeyPath = @"accessibilityTraits";
 static NSString *const kTitlePositionAdjustment = @"titlePositionAdjustment";
 static NSString *const kLargeContentSizeImage = @"largeContentSizeImage";
 static NSString *const kLargeContentSizeImageInsets = @"largeContentSizeImageInsets";
-static NSString *const kBadgeValueKeyPath = @"badgeValue";
-static NSString *const kBadgeColorKeyPath = @"badgeColor";
 
 #ifdef __IPHONE_13_4
 @interface MDCTabBarView (PointerInteractions) <UIPointerInteractionDelegate,
@@ -151,7 +142,7 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
   return self;
 }
 
-- (nullable instancetype)initWithCoder:(NSCoder *)aDecoder {
+- (instancetype)initWithCoder:(NSCoder *)aDecoder {
   self = [super initWithCoder:aDecoder];
   if (self) {
     [self commonMDCTabBarViewInit];
@@ -176,17 +167,13 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
   self.backgroundColor = UIColor.whiteColor;
   self.showsHorizontalScrollIndicator = NO;
 
-  _itemBadgeAppearance = [[MDCBadgeAppearance alloc] init];
-  _itemBadgeAppearance.textColor = UIColor.whiteColor;
-  _itemBadgeAppearance.font = [UIFont systemFontOfSize:kBadgeFontSize];
-  _itemIconSize = CGSizeZero;
   _selectionIndicatorView = [[MDCTabBarViewIndicatorView alloc] init];
   _selectionIndicatorView.translatesAutoresizingMaskIntoConstraints = NO;
   _selectionIndicatorView.userInteractionEnabled = NO;
   _selectionIndicatorView.tintColor = UIColor.blackColor;
   _selectionIndicatorView.indicatorPathAnimationDuration = kSelectionChangeAnimationDuration;
   _selectionIndicatorView.indicatorPathTimingFunction =
-      [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+      [CAMediaTimingFunction mdc_functionWithType:MDCAnimationTimingFunctionEaseInOut];
 
   _selectionIndicatorTemplate = [[MDCTabBarViewUnderlineIndicatorTemplate alloc] init];
 
@@ -200,12 +187,9 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
 
   // By default, inset the content within the safe area. This is generally the desired behavior,
   // but clients can override it if they want.
-  [super setContentInsetAdjustmentBehavior:UIScrollViewContentInsetAdjustmentAlways];
-
-  // Tab bars only scroll horizontally, so it can't scroll to top. Setting this property to false
-  // prevents it from interfering with other scroll views on screen responding to the scroll-to-top
-  // gesture.
-  self.scrollsToTop = NO;
+  if (@available(iOS 11.0, *)) {
+    [super setContentInsetAdjustmentBehavior:UIScrollViewContentInsetAdjustmentAlways];
+  }
 
 #if defined(__IPHONE_13_0) && (__IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_13_0)
   if (@available(iOS 13, *)) {
@@ -222,11 +206,11 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
 
 #pragma mark - Properties
 
-- (void)setBarTintColor:(nullable UIColor *)barTintColor {
+- (void)setBarTintColor:(UIColor *)barTintColor {
   self.backgroundColor = barTintColor;
 }
 
-- (nullable UIColor *)barTintColor {
+- (UIColor *)barTintColor {
   return self.backgroundColor;
 }
 
@@ -245,7 +229,7 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
   [self updateRippleColorForAllViews];
 }
 
-- (void)setSelectionIndicatorStrokeColor:(nullable UIColor *)selectionIndicatorStrokeColor {
+- (void)setSelectionIndicatorStrokeColor:(UIColor *)selectionIndicatorStrokeColor {
   _selectionIndicatorStrokeColor = selectionIndicatorStrokeColor ?: UIColor.blackColor;
   self.selectionIndicatorView.tintColor = self.selectionIndicatorStrokeColor;
 }
@@ -307,13 +291,7 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
       mdcItemView.titleLabel.textColor = [self titleColorForState:UIControlStateNormal];
       mdcItemView.image = item.image;
       mdcItemView.selectedImage = item.selectedImage;
-      mdcItemView.badgeText = item.badgeValue;
-      mdcItemView.badgeColor = item.badgeColor;
-      mdcItemView.disableRippleBehavior = self.disableRippleBehavior;
       mdcItemView.rippleTouchController.rippleView.rippleColor = self.rippleColor;
-
-      mdcItemView.badgeAppearance = self.itemBadgeAppearance;
-      mdcItemView.iconSize = self.itemIconSize;
 
 #if defined(__IPHONE_13_0) && (__IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_13_0)
       if (@available(iOS 13, *)) {
@@ -353,11 +331,6 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
     newSelectedItem = self.selectedItem;
   }
 
-  _needsScrollToSelectedItem = YES;
-
-  // Nil out the selected item or styling code won't run in `setSelectedItem` if it is the same as
-  // the previous selected item (see b/228275516).
-  _selectedItem = nil;
   [self setSelectedItem:newSelectedItem animated:NO];
   [self addObserversToTabBarItems];
   [self updateTitleFontForAllViews];
@@ -366,41 +339,11 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
   [self setNeedsLayout];
 }
 
-- (void)setItemBadgeAppearance:(MDCBadgeAppearance *)itemBadgeAppearance {
-  _itemBadgeAppearance = [itemBadgeAppearance copy];
-
-  for (UIView *itemView in self.itemViews) {
-    if ([itemView isKindOfClass:[MDCTabBarViewItemView class]]) {
-      ((MDCTabBarViewItemView *)itemView).badgeAppearance = _itemBadgeAppearance;
-    }
-  }
-}
-
-- (void)setItemIconSize:(CGSize)itemIconSize {
-  _itemIconSize = itemIconSize;
-
-  for (UIView *itemView in self.itemViews) {
-    if ([itemView isKindOfClass:[MDCTabBarViewItemView class]]) {
-      ((MDCTabBarViewItemView *)itemView).iconSize = _itemIconSize;
-    }
-  }
-}
-
-- (void)setDisableRippleBehavior:(BOOL)disableRippleBehavior {
-  _disableRippleBehavior = disableRippleBehavior;
-
-  for (UIView *itemView in self.itemViews) {
-    if ([itemView isKindOfClass:[MDCTabBarViewItemView class]]) {
-      ((MDCTabBarViewItemView *)itemView).disableRippleBehavior = _disableRippleBehavior;
-    }
-  }
-}
-
-- (void)setSelectedItem:(nullable UITabBarItem *)selectedItem {
+- (void)setSelectedItem:(UITabBarItem *)selectedItem {
   [self setSelectedItem:selectedItem animated:YES];
 }
 
-- (void)setSelectedItem:(nullable UITabBarItem *)selectedItem animated:(BOOL)animated {
+- (void)setSelectedItem:(UITabBarItem *)selectedItem animated:(BOOL)animated {
   if (self.selectedItem == selectedItem) {
     return;
   }
@@ -471,12 +414,12 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
   }
 }
 
-- (void)setImageTintColor:(nullable UIColor *)imageTintColor forState:(UIControlState)state {
+- (void)setImageTintColor:(UIColor *)imageTintColor forState:(UIControlState)state {
   self.stateToImageTintColor[@(state)] = imageTintColor;
   [self updateImageTintColorForAllViews];
 }
 
-- (nullable UIColor *)imageTintColorForState:(UIControlState)state {
+- (UIColor *)imageTintColorForState:(UIControlState)state {
   UIColor *color = self.stateToImageTintColor[@(state)];
   if (color == nil) {
     color = self.stateToImageTintColor[@(UIControlStateNormal)];
@@ -519,12 +462,12 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
   }
 }
 
-- (void)setTitleColor:(nullable UIColor *)titleColor forState:(UIControlState)state {
+- (void)setTitleColor:(UIColor *)titleColor forState:(UIControlState)state {
   self.stateToTitleColor[@(state)] = titleColor;
   [self updateTitleColorForAllViewsAnimated:NO];
 }
 
-- (nullable UIColor *)titleColorForState:(UIControlState)state {
+- (UIColor *)titleColorForState:(UIControlState)state {
   UIColor *titleColor = self.stateToTitleColor[@(state)];
   if (!titleColor) {
     titleColor = self.stateToTitleColor[@(UIControlStateNormal)];
@@ -556,12 +499,12 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
   }
 }
 
-- (void)setTitleFont:(nullable UIFont *)titleFont forState:(UIControlState)state {
+- (void)setTitleFont:(UIFont *)titleFont forState:(UIControlState)state {
   self.stateToTitleFont[@(state)] = titleFont;
   [self updateTitleFontForAllViews];
 }
 
-- (nullable UIFont *)titleFontForState:(UIControlState)state {
+- (UIFont *)titleFontForState:(UIControlState)state {
   UIFont *titleFont = self.stateToTitleFont[@(state)];
   if (!titleFont) {
     titleFont = self.stateToTitleFont[@(UIControlStateNormal)];
@@ -623,7 +566,7 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
 
 #pragma mark - Custom APIs
 
-- (nullable id)accessibilityElementForItem:(UITabBarItem *)item {
+- (id)accessibilityElementForItem:(UITabBarItem *)item {
   NSUInteger itemIndex = [self.items indexOfObject:item];
   if (itemIndex == NSNotFound || itemIndex >= self.itemViews.count) {
     return nil;
@@ -649,7 +592,7 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
 }
 
 - (CAMediaTimingFunction *)selectionChangeAnimationTimingFunction {
-  return [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+  return [CAMediaTimingFunction mdc_functionWithType:MDCAnimationTimingFunctionEaseInOut];
 }
 
 #pragma mark - Key-Value Observing (KVO)
@@ -696,14 +639,6 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
            forKeyPath:kLargeContentSizeImageInsets
               options:NSKeyValueObservingOptionNew
               context:kKVOContextMDCTabBarView];
-    [item addObserver:self
-           forKeyPath:kBadgeValueKeyPath
-              options:NSKeyValueObservingOptionNew
-              context:kKVOContextMDCTabBarView];
-    [item addObserver:self
-           forKeyPath:kBadgeColorKeyPath
-              options:NSKeyValueObservingOptionNew
-              context:kKVOContextMDCTabBarView];
   }
 }
 
@@ -729,15 +664,13 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
     [item removeObserver:self
               forKeyPath:kLargeContentSizeImageInsets
                  context:kKVOContextMDCTabBarView];
-    [item removeObserver:self forKeyPath:kBadgeValueKeyPath context:kKVOContextMDCTabBarView];
-    [item removeObserver:self forKeyPath:kBadgeColorKeyPath context:kKVOContextMDCTabBarView];
   }
 }
 
-- (void)observeValueForKeyPath:(nullable NSString *)keyPath
-                      ofObject:(nullable id)object
-                        change:(nullable NSDictionary<NSKeyValueChangeKey, id> *)change
-                       context:(nullable void *)context {
+- (void)observeValueForKeyPath:(NSString *)keyPath
+                      ofObject:(id)object
+                        change:(NSDictionary<NSKeyValueChangeKey, id> *)change
+                       context:(void *)context {
   if (context == kKVOContextMDCTabBarView) {
     if (!object) {
       return;
@@ -765,10 +698,6 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
     } else if ([keyPath isEqualToString:kTitleKeyPath]) {
       tabBarItemView.titleLabel.text = newValue;
       [self markIntrinsicContentSizeAndLayoutNeedingUpdateForSelfAndItemView:tabBarItemView];
-    } else if ([keyPath isEqualToString:kBadgeValueKeyPath]) {
-      tabBarItemView.badgeText = newValue;
-    } else if ([keyPath isEqualToString:kBadgeColorKeyPath]) {
-      tabBarItemView.badgeColor = newValue;
     } else if ([keyPath isEqualToString:kAccessibilityLabelKeyPath]) {
       tabBarItemView.accessibilityLabel = newValue;
     } else if ([keyPath isEqualToString:kAccessibilityHintKeyPath]) {
@@ -842,7 +771,8 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
   if (self.needsScrollToSelectedItem) {
     self.needsScrollToSelectedItem = NO;
     // In RTL layouts, make sure we "begin" the selected item scroll offset from the leading edge.
-    if (self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+    if (self.mdf_effectiveUserInterfaceLayoutDirection ==
+        UIUserInterfaceLayoutDirectionRightToLeft) {
       CGFloat viewWidth = CGRectGetWidth(self.bounds);
       if (viewWidth < self.contentSize.width) {
         self.contentOffset = CGPointMake(self.contentSize.width - viewWidth, self.contentOffset.y);
@@ -857,7 +787,7 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
                  CGRectGetWidth(self.bounds), kBottomDividerHeight);
 }
 
-- (void)traitCollectionDidChange:(nullable UITraitCollection *)previousTraitCollection {
+- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
   [super traitCollectionDidChange:previousTraitCollection];
 
   if (self.traitCollectionDidChangeBlock) {
@@ -1076,7 +1006,7 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
   [self updateItemViewsShouldProcessRippleWithScrollViewGestures:YES];
 }
 
-- (void)willMoveToSuperview:(nullable UIView *)newSuperview {
+- (void)willMoveToSuperview:(UIView *)newSuperview {
   [super willMoveToSuperview:newSuperview];
   self.needsScrollToSelectedItem = YES;
 }
@@ -1189,7 +1119,8 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
 #pragma mark - Helpers
 
 - (BOOL)isRTL {
-  return self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft;
+  return self.mdf_effectiveUserInterfaceLayoutDirection ==
+         UIUserInterfaceLayoutDirectionRightToLeft;
 }
 
 - (void)scrollToItem:(UITabBarItem *)item animated:(BOOL)animated {
@@ -1223,11 +1154,8 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
 #ifdef __IPHONE_13_4
   if (@available(iOS 13.4, *)) {
     for (MDCTabBarView *view in self.itemViews) {
-      for (id<UIInteraction> interaction in view.interactions) {
-        if ([interaction isKindOfClass:[UIPointerInteraction class]]) {
-          UIPointerInteraction *pointerInteraction = (UIPointerInteraction *)interaction;
-          [pointerInteraction invalidate];
-        }
+      for (UIPointerInteraction *interaction in view.interactions) {
+        [interaction invalidate];
       }
     }
   }
@@ -1326,8 +1254,10 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
 
 - (CGRect)availableBoundsForSubviewLayout {
   CGRect availableBounds = CGRectStandardize(self.bounds);
-  if (_shouldAdjustForSafeAreaInsets) {
-    availableBounds = UIEdgeInsetsInsetRect(availableBounds, self.safeAreaInsets);
+  if (@available(iOS 11.0, *)) {
+    if (_shouldAdjustForSafeAreaInsets) {
+      availableBounds = UIEdgeInsetsInsetRect(availableBounds, self.safeAreaInsets);
+    }
   }
   return availableBounds;
 }
@@ -1338,7 +1268,7 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
 
 - (void)performAnimationBlockInCATransaction:(void (^)(void))animationBlock {
   CAMediaTimingFunction *easeInOutFunction =
-      [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+      [CAMediaTimingFunction mdc_functionWithType:MDCAnimationTimingFunctionEaseInOut];
   // Wrap in explicit CATransaction to allow layer-based animations with the correct duration.
   [CATransaction begin];
   [CATransaction setAnimationDuration:self.selectionChangeAnimationDuration];
@@ -1470,8 +1400,8 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
 #pragma mark - UIPointerInteractionDelegate
 
 #ifdef __IPHONE_13_4
-- (nullable UIPointerStyle *)pointerInteraction:(UIPointerInteraction *)interaction
-                                 styleForRegion:(UIPointerRegion *)region API_AVAILABLE(ios(13.4)) {
+- (UIPointerStyle *)pointerInteraction:(UIPointerInteraction *)interaction
+                        styleForRegion:(UIPointerRegion *)region API_AVAILABLE(ios(13.4)) {
   UIPointerStyle *pointerStyle = nil;
   if (interaction.view) {
     UITargetedPreview *targetedPreview = [[UITargetedPreview alloc] initWithView:interaction.view];
@@ -1498,9 +1428,9 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
 }
 
 #if MDC_AVAILABLE_SDK_IOS(13_0)
-- (nullable id<UILargeContentViewerItem>)largeContentViewerInteraction:
-                                             (UILargeContentViewerInteraction *)interaction
-                                                           itemAtPoint:(CGPoint)point
+- (id<UILargeContentViewerItem>)largeContentViewerInteraction:
+                                    (UILargeContentViewerInteraction *)interaction
+                                                  itemAtPoint:(CGPoint)point
     NS_AVAILABLE_IOS(13_0) {
   if (!CGRectContainsPoint(self.bounds, point)) {
     // The touch has wandered outside of the view. Do not display the content viewer.
@@ -1538,7 +1468,7 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
 }
 
 - (void)largeContentViewerInteraction:(UILargeContentViewerInteraction *)interaction
-                         didEndOnItem:(nullable id<UILargeContentViewerItem>)item
+                         didEndOnItem:(id<UILargeContentViewerItem>)item
                               atPoint:(CGPoint)point NS_AVAILABLE_IOS(13_0) {
   if (item) {
     for (NSUInteger i = 0; i < self.items.count; i++) {
@@ -1559,5 +1489,3 @@ static NSString *const kBadgeColorKeyPath = @"badgeColor";
 #endif  // MDC_AVAILABLE_SDK_IOS(13_0)
 
 @end
-
-NS_ASSUME_NONNULL_END

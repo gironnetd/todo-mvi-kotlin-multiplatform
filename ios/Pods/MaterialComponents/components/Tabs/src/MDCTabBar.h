@@ -22,11 +22,6 @@
 // longer import delegates as transitive dependencies.
 #import "MDCTabBarDelegate.h"
 
-API_DEPRECATED_BEGIN("🤖👀 Use a branded MDCTabBarView instead. "
-                     "See go/material-ios-tabs and go/material-ios-tabbar-migration for more info. "
-                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
-                     ios(12, 12))
-
 @class MDCTabBarItem;
 @protocol MDCTabBarDelegate;
 @protocol MDCTabBarIndicatorTemplate;
@@ -261,5 +256,3 @@ __deprecated_msg(
 @property(nonatomic, nonnull) UIColor *inkColor UI_APPEARANCE_SELECTOR;
 
 @end
-
-API_DEPRECATED_END

@@ -14,11 +14,6 @@
 
 #import <UIKit/UIKit.h>
 
-API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
-                     "Use branded UITableView or UICollectionView instead: go/material-ios-lists. "
-                     "This is go/material-ios-migrations#not-scriptable 🕘",
-                     ios(11, 12))
-
 @protocol MDCCollectionViewEditingDelegate;
 
 /** The MDCCollectionViewEditing protocol defines the editing state for a UICollectionView. */
@@ -82,5 +77,3 @@ API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
 - (void)updateReorderCellPosition;
 
 @end
-
-API_DEPRECATED_END

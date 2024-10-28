@@ -14,22 +14,21 @@
 
 #import "MDCTabBar.h"
 
-#import "MDCInkView.h"
-#import "MDCRippleView.h"
-#import "MDCTabBarExtendedAlignment.h"
 #import "MDCTabBarAlignment.h"
-#import "MDCTabBarDelegate.h"
 #import "MDCTabBarItemAppearance.h"
 #import "MDCTabBarTextTransform.h"
-#import "MDCTabBarUnderlineIndicatorTemplate.h"
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wprivate-header"
-#import "MDCItemBar.h"
-#import "MDCItemBarAlignment.h"
 #import "MDCItemBarDelegate.h"
-#import "MDCItemBarStyle.h"
-#pragma clang diagnostic pop
-#import "MDCTypography.h"
+#import <MDFInternationalization/MDFInternationalization.h>
+
+#import "private/MDCItemBar.h"
+#import "private/MDCItemBarAlignment.h"
+#import "private/MDCItemBarStyle.h"
+#import "MaterialInk.h"
+#import "MaterialRipple.h"
+#import "MDCTabBarExtendedAlignment.h"
+#import "MDCTabBarDelegate.h"
+#import "MDCTabBarUnderlineIndicatorTemplate.h"
+#import "MaterialTypography.h"
 
 /// Padding between image and title in points, according to the spec.
 static const CGFloat kImageTitleSpecPadding = 10;
@@ -83,7 +82,9 @@ static MDCItemBarAlignment MDCItemBarAlignmentForTabBarAlignment(
   return MDCItemBarAlignmentLeading;
 }
 
-static inline UIColor *RippleColor(void) { return [UIColor colorWithWhite:1 alpha:(CGFloat)0.7]; }
+static inline UIColor *RippleColor() {
+  return [UIColor colorWithWhite:1 alpha:(CGFloat)0.7];
+}
 
 @protocol MDCTabBarSizeClassDelegate;
 @protocol MDCTabBarDisplayDelegate;
@@ -426,13 +427,19 @@ static inline UIColor *RippleColor(void) { return [UIColor colorWithWhite:1 alph
   }
 }
 
-- (void)setSemanticContentAttribute:(UISemanticContentAttribute)semanticContentAttribute {
-  if (semanticContentAttribute == self.semanticContentAttribute) {
+// UISemanticContentAttribute was added in iOS SDK 9.0 but is available on devices running earlier
+// version of iOS. We ignore the partial-availability warning that gets thrown on our use of this
+// symbol.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpartial-availability"
+- (void)mdf_setSemanticContentAttribute:(UISemanticContentAttribute)semanticContentAttribute {
+  if (semanticContentAttribute == self.mdf_semanticContentAttribute) {
     return;
   }
-  super.semanticContentAttribute = semanticContentAttribute;
-  _itemBar.semanticContentAttribute = semanticContentAttribute;
+  [super mdf_setSemanticContentAttribute:semanticContentAttribute];
+  _itemBar.mdf_semanticContentAttribute = semanticContentAttribute;
 }
+#pragma clang diagnostic pop
 
 #pragma mark - MDCAccessibility
 

@@ -14,16 +14,9 @@
 
 #import <UIKit/UIKit.h>
 
-API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
-                     "Consider using a modal sheet to explain new features instead. "
-                     "This is go/material-ios-migrations#not-scriptable 🕘",
-                     ios(12, 12))
-
 @interface MDCFeatureHighlightDismissGestureRecognizer : UIGestureRecognizer
 
 @property(nonatomic, readonly) CGFloat progress;
 @property(nonatomic, readonly) CGFloat velocity;
 
 @end
-
-API_DEPRECATED_END

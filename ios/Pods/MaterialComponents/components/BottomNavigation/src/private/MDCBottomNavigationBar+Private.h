@@ -38,6 +38,4 @@
  */
 - (nullable UITabBarItem *)tabBarItemForPoint:(CGPoint)point;
 
-@property(nonatomic, readonly) BOOL isTitleBelowIcon;
-
 @end

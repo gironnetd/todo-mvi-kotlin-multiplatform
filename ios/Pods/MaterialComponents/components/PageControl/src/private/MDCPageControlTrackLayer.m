@@ -14,8 +14,6 @@
 
 #import "MDCPageControlTrackLayer.h"
 
-#import <CoreGraphics/CoreGraphics.h>
-
 static const NSTimeInterval kPageControlAnimationDuration = 0.2;
 static const NSInteger kPageControlKeyframeCount = 2;
 static NSString *const kPageControlAnimationKeyDraw = @"drawTrack";

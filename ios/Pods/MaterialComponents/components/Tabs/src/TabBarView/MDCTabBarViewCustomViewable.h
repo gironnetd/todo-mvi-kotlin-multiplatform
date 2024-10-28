@@ -13,9 +13,6 @@
 // limitations under the License.
 
 #import <Foundation/Foundation.h>
-#import <UIKit/UIKit.h>
-
-NS_ASSUME_NONNULL_BEGIN
 
 /**
  A simple protocol that custom views rendered in MDCTabBarView must adopt.
@@ -48,5 +45,3 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setSelected:(BOOL)selected animated:(BOOL)animated;
 
 @end
-
-NS_ASSUME_NONNULL_END

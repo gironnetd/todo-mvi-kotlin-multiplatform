@@ -13,10 +13,8 @@
 // limitations under the License.
 
 #import "MDCShapeCategory.h"
-#import "MDCCornerTreatment+CornerTypeInitalizer.h"
-#import "MDCCutCornerTreatment.h"
-#import "MDCRoundedCornerTreatment.h"
-#import "MDCCornerTreatment.h"
+#import "MaterialShapeLibrary.h"
+#import "MaterialShapes.h"
 
 @implementation MDCShapeCategory
 

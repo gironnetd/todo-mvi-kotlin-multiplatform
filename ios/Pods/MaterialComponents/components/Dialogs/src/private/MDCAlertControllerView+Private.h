@@ -13,11 +13,9 @@
 // limitations under the License.
 
 #import <UIKit/UIKit.h>
-#import "MaterialButtons.h"
-#import "MDCAlertControllerView.h"
-#import "MDCAlertActionManager.h"
 
-NS_ASSUME_NONNULL_BEGIN
+#import "MDCAlertActionManager.h"
+#import "MaterialButtons.h"
 
 @interface MDCAlertControllerView ()
 
@@ -27,27 +25,15 @@ NS_ASSUME_NONNULL_BEGIN
 /** An optional custom UIView that is displaed under the alert message. */
 @property(nonatomic, nullable, strong) UIView *accessoryView;
 
-/**
- By setting this property to @c YES, the accessoryView will be placed on top of the message.
-
- Defaults to @c NO.
- */
-@property(nonatomic, assign) BOOL shouldPlaceAccessoryViewAboveMessage;
-
 /** An optional custom view above the title of the alert. */
 @property(nonatomic, strong, nullable) UIView *titleIconView;
 
 @property(nonatomic, nullable, weak) MDCAlertActionManager *actionManager;
 
-/** Whether or not title should pin to the top of the content. If the title does not pin to the top
- * of the content, it will scroll with the message when the message scrolls. */
-@property(nonatomic, assign) BOOL titlePinsToTop;
+/** The scroll view that holds the @c titleLabel. */
+@property(nonatomic, nonnull, strong) UIScrollView *titleScrollView;
 
-/** The view that holds the @c titleLabel. */
-@property(nonatomic, nonnull, strong) UIView *titleView;
-
-/** The scroll view that holds the @c messageTextView, the @c accessoryView, and, when
- * scrollTitleWithContent is @c YES, the @c titleView . */
+/** The scroll view that holds the @c messageTextView and @c accessoryView. */
 @property(nonatomic, nonnull, strong) UIScrollView *contentScrollView;
 
 /** The scroll view that holds all of the buttons created for each action. */
@@ -58,6 +44,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 /** The horizontal alignment of @c titleIcon. */
 @property(nonatomic, assign) NSTextAlignment titleIconAlignment;
+
+/** The horizontal alignment of @c title. */
+@property(nonatomic, assign) NSTextAlignment titleAlignment;
 
 /** The horizontal alignment of @c message. */
 @property(nonatomic, assign) NSTextAlignment messageAlignment;
@@ -72,20 +61,8 @@ NS_ASSUME_NONNULL_BEGIN
 /** Enables ordering actions by emphasis when they are vertically aligned. */
 @property(nonatomic, assign) BOOL orderVerticalActionsByEmphasis;
 
-// TODO(b/238930139): Remove usage of this deprecated API.
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-- (void)addActionButton:(nonnull UIButton *)button;
+- (void)addActionButton:(nonnull MDCButton *)button;
 + (void)styleAsTextButton:(nonnull MDCButton *)button;
-#pragma clang diagnostic pop
-
-/**
- Sets the flag to use `M3CButton` instead of `MDCButton`, this flag would be
- eventually removed when `MDCButton` is deleted.
-
- Defaults to NO
- */
-@property(nonatomic, assign, getter=isM3CButtonEnabled) BOOL M3CButtonEnabled;
 
 - (CGSize)calculatePreferredContentSizeForBounds:(CGSize)boundsSize;
 
@@ -93,6 +70,16 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)updateFonts;
 
-@end
+/**
+ Affects the fallback behavior for when a scaled font is not provided.
 
-NS_ASSUME_NONNULL_END
+ If @c YES, the font size will adjust even if a scaled font has not been provided for
+ a given @c UIFont property on this component.
+
+ If @c NO, the font size will only be adjusted if a scaled font has been provided.
+
+ Default value is @c YES.
+ */
+@property(nonatomic, assign) BOOL adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable;
+
+@end

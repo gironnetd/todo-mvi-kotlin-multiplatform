@@ -14,7 +14,7 @@ import com.todo.mvi.kotlin.multiplatform.android.mvibase.MviResult
 import com.todo.mvi.kotlin.multiplatform.android.mvibase.MviViewModel
 import com.todo.mvi.kotlin.multiplatform.android.util.schedulers.BaseSchedulerProvider
 import com.todo.mvi.kotlin.multiplatform.data.empty
-import comtodomvikotlinmultiplatform.Task
+import com.todo.mvi.kotlin.multiplatform.data.Task
 import io.reactivex.Observable
 import io.reactivex.ObservableTransformer
 import java.util.*

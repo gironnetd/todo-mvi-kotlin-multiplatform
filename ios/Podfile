@@ -1,9 +1,43 @@
+#target 'ios' do
+#  use_frameworks!
+#  platform :ios, '14.1'
+#  #pod 'MaterialComponents', :git => 'https://github.com/material-components/material-components-ios', :branch => 'develop'
+#  pod 'RxSwift', '6.7.1'
+#  pod 'RxCocoa', '6.7.1'
+#  pod 'RxGesture', '~> 4.0.4'
+#  pod 'shared', :path => '../shared'
+#end
+
+# Uncomment the next line to define a global platform for your project
+platform :ios, '16.0'
+
 target 'ios' do
+  # Comment the next line if you don't want to use dynamic frameworks
   use_frameworks!
-  platform :ios, '14.1'
-  pod 'MaterialComponents', :git => 'https://github.com/material-components/material-components-ios', :branch => 'develop'
-  pod 'RxSwift', '6.7.1'
-  pod 'RxCocoa', '6.7.1'
-  pod 'RxGesture', '~> 4.0.4'
-  pod 'shared', :path => '../shared'
+  # pod 'MaterialComponents', '~> 108.0.0'
+  pod 'MaterialComponents', :git => 'https://github.com/material-components/material-components-ios', :branch => 'stable'
+  pod 'RxSwift', '~> 6.0'
+  pod 'RxCocoa', '~> 6.0'
+  pod 'RxGesture', '~> 4.0.2'
+
+  # Pods for todo-mvi-rxswift-swift
+
+#  target 'ios-swiftTests' do
+#    inherit! :search_paths
+#    # Pods for testing
+#  end
+#
+#  target 'ios-swiftUITests' do
+#    # Pods for testing
+#  end
+
 end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = "12"
+    end
+  end
+end
+

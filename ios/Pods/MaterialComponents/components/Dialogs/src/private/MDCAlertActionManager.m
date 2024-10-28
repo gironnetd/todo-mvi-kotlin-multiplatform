@@ -13,13 +13,12 @@
 // limitations under the License.
 
 #import "MDCAlertActionManager.h"
-#import "MDCButton.h"
-#import "MDCAlertController.h"
-#import "M3CButton.h"
+#import "MaterialButtons.h"
+#import "MaterialDialogs.h"
 
 @interface MDCAlertActionManager ()
 
-@property(nonatomic, nonnull, strong) NSMapTable<MDCAlertAction *, UIButton *> *actionButtons;
+@property(nonatomic, nonnull, strong) NSMapTable<MDCAlertAction *, MDCButton *> *actionButtons;
 
 @end
 
@@ -36,18 +35,16 @@
     _actionButtons = [NSMapTable
         mapTableWithKeyOptions:(NSMapTableObjectPointerPersonality | NSMapTableWeakMemory)
                   valueOptions:NSMapTableStrongMemory];
-    _M3CButtonEnabled = NO;
   }
   return self;
 }
 
-- (NSArray<UIButton *> *)buttonsInActionOrder {
-  NSMutableArray<UIButton *> *buttons =
+- (NSArray<MDCButton *> *)buttonsInActionOrder {
+  NSMutableArray<MDCButton *> *buttons =
       [[NSMutableArray alloc] initWithCapacity:self.actions.count];
-
   if ([self.actionButtons count] > 0) {
     for (MDCAlertAction *action in self.actions) {
-      UIButton *button = [self.actionButtons objectForKey:action];
+      MDCButton *button = [self.actionButtons objectForKey:action];
       if (button) {
         [buttons addObject:button];
       }
@@ -64,13 +61,13 @@
   return [_actions indexOfObjectIdenticalTo:action] != NSNotFound;
 }
 
-- (nullable UIButton *)buttonForAction:(nonnull MDCAlertAction *)action {
+- (nullable MDCButton *)buttonForAction:(nonnull MDCAlertAction *)action {
   return [self.actionButtons objectForKey:action];
 }
 
-- (nullable MDCAlertAction *)actionForButton:(nonnull UIButton *)button {
+- (nullable MDCAlertAction *)actionForButton:(nonnull MDCButton *)button {
   for (MDCAlertAction *action in self.actionButtons) {
-    UIButton *currButton = [self.actionButtons objectForKey:action];
+    MDCButton *currButton = [self.actionButtons objectForKey:action];
     if (currButton == button) {
       return action;
     }
@@ -80,10 +77,10 @@
 
 // creating a new buttons and associating it with the given action. the button is not added
 // to view hierarchy.
-- (UIButton *)createButtonForAction:(nonnull MDCAlertAction *)action
-                             target:(nullable id)target
-                           selector:(SEL _Nonnull)selector {
-  UIButton *button = [self.actionButtons objectForKey:action];
+- (nullable MDCButton *)createButtonForAction:(nonnull MDCAlertAction *)action
+                                       target:(nullable id)target
+                                     selector:(SEL _Nonnull)selector {
+  MDCButton *button = [self.actionButtons objectForKey:action];
   if (button == nil) {
     button = [self makeButtonForAction:action target:target selector:selector];
     [self.actionButtons setObject:button forKey:action];
@@ -91,15 +88,10 @@
   return button;
 }
 
-- (UIButton *)makeButtonForAction:(MDCAlertAction *)action
-                           target:(id)target
-                         selector:(SEL)selector {
-  UIButton *button;
-  if (self.isM3CButtonEnabled) {
-    button = [[M3CButton alloc] init];
-  } else {
-    button = [[MDCButton alloc] initWithFrame:CGRectZero];
-  }
+- (MDCButton *)makeButtonForAction:(MDCAlertAction *)action
+                            target:(id)target
+                          selector:(SEL)selector {
+  MDCButton *button = [[MDCButton alloc] initWithFrame:CGRectZero];
   [button setTitle:action.title forState:UIControlStateNormal];
   button.accessibilityIdentifier = action.accessibilityIdentifier;
 #ifdef __IPHONE_13_4

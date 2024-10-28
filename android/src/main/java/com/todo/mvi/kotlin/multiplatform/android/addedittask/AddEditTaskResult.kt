@@ -1,7 +1,7 @@
 package com.todo.mvi.kotlin.multiplatform.android.addedittask
 
 import com.todo.mvi.kotlin.multiplatform.android.mvibase.MviResult
-import comtodomvikotlinmultiplatform.Task
+import com.todo.mvi.kotlin.multiplatform.data.Task
 
 sealed class AddEditTaskResult : MviResult {
   sealed class PopulateTaskResult : AddEditTaskResult() {

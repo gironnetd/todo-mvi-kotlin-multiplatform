@@ -15,6 +15,8 @@
 #import "MDCThumbTrack.h"
 #import "private/MDCThumbTrack+Private.h"
 
+#import <MDFInternationalization/MDFInternationalization.h>
+
 #import "MDCNumericValueLabel.h"
 #import "MDCThumbView.h"
 #import "MaterialAvailability.h"
@@ -38,21 +40,30 @@ static const CGFloat kValueLabelMinHeight = 48.0f;
 static const CGFloat kValueLabelAspectRatio = 0.81f;
 static const CGFloat kValueLabelThumbPadding = 4.0f;
 
-static UIColor *ValueLabelTextColorDefault(void) { return UIColor.whiteColor; }
+static UIColor *ValueLabelTextColorDefault() {
+  return UIColor.whiteColor;
+}
 
-static UIColor *ValueLabelBackgroundColorDefault(void) { return UIColor.blueColor; }
+static UIColor *ValueLabelBackgroundColorDefault() {
+  return UIColor.blueColor;
+}
 
-static UIColor *TrackOnColorDefault(void) { return UIColor.blueColor; }
+static UIColor *TrackOnColorDefault() {
+  return UIColor.blueColor;
+}
 
-static UIColor *ThumbEnabledColorDefault(void) { return UIColor.blueColor; }
+static UIColor *ThumbEnabledColorDefault() {
+  return UIColor.blueColor;
+}
 
-static UIColor *InkColorDefault(void) {
+static UIColor *InkColorDefault() {
   return [UIColor.blueColor colorWithAlphaComponent:kTrackOnAlpha];
 }
 
-static UIFont *ValueLabelFontDefault(void) {
+static UIFont *ValueLabelFontDefault() {
   return [[MDCTypography fontLoader] regularFontOfSize:12];
 }
+
 
 // TODO(iangordon): Properly handle broken tgmath
 
@@ -636,10 +647,6 @@ static inline CGFloat DistanceFromPointToPoint(CGPoint point1, CGPoint point2) {
   // default to animating with Ease in / Ease out
 
   if (animated) {
-    BOOL hasInheritedAnimationDuration = UIView.inheritedAnimationDuration > 0;
-    NSTimeInterval animationDuration =
-        hasInheritedAnimationDuration ? UIView.inheritedAnimationDuration : kAnimationDuration;
-
     // UIView animateWithDuration:delay:options:animations: takes a different block signature.
     void (^animationCompletion)(BOOL) = ^void(BOOL finished) {
       if (!finished) {
@@ -663,46 +670,27 @@ static inline CGFloat DistanceFromPointToPoint(CGPoint point1, CGPoint point2) {
         (_value < _filledTrackAnchorValue && _filledTrackAnchorValue < previousValue);
     if (crossesAnchor) {
       CGFloat currentValue = _value;
-      CGFloat animationDurationToAnchor =
-          (fabs(previousValue - _filledTrackAnchorValue) / fabs(previousValue - currentValue)) *
-          animationDuration;
-      CGFloat animationDurationAfterAnchor = animationDuration - animationDurationToAnchor;
-      if (hasInheritedAnimationDuration) {
-        // If the animation duration is being set by a UIView animation block outside of this class,
-        // the first animation to the anchor will have the inherited duration. So to maintain a
-        // consistent animation speed throughout, the animation duration after the anchor should be
-        // proportionate to the relative distance traveled after the anchor.
-        animationDurationToAnchor = animationDuration;
-        animationDurationAfterAnchor = animationDuration *
-                                       fabs(currentValue - _filledTrackAnchorValue) /
-                                       fabs(previousValue - _filledTrackAnchorValue);
-      }
+      CGFloat animationDurationToAnchor = (fabs(previousValue - _filledTrackAnchorValue) /
+                                           fabs(previousValue - currentValue)) *
+                                          kAnimationDuration;
       void (^afterCrossingAnchorAnimation)(BOOL) = ^void(__unused BOOL finished) {
         UIViewAnimationOptions options = baseAnimationOptions | UIViewAnimationOptionCurveEaseOut;
-        [UIView animateWithDuration:animationDurationAfterAnchor
+        [UIView animateWithDuration:(kAnimationDuration - animationDurationToAnchor)
                               delay:0
                             options:options
                          animations:^{
                            [self updateViewsMainIsAnimated:animated
-                                              withDuration:animationDurationAfterAnchor
+                                              withDuration:(kAnimationDuration -
+                                                            animationDurationToAnchor)
                                           animationOptions:options];
                          }
                          completion:animationCompletion];
       };
-      UIViewAnimationOptions options = baseAnimationOptions;
-      if (!hasInheritedAnimationDuration) {
-        // If this class is controlling the animation, it can specify the animation curve; if not,
-        // default to UIViewAnimationOptionCurveEaseInOut by not specifying a curve.
-        options = options | UIViewAnimationOptionCurveEaseIn;
-      }
+      UIViewAnimationOptions options = baseAnimationOptions | UIViewAnimationOptionCurveEaseIn;
       [UIView animateWithDuration:animationDurationToAnchor
                             delay:0
                           options:options
                        animations:^{
-                         if (activeSegmentShrinking) {
-                           [self updateDotsViewActiveSegment];
-                         }
-
                          // Set _value ivar instead of property to avoid conflicts with logic that
                          // sends UIControlEventValueChanged.
 
@@ -719,7 +707,7 @@ static inline CGFloat DistanceFromPointToPoint(CGPoint point1, CGPoint point2) {
                        }
                        completion:afterCrossingAnchorAnimation];
     } else {
-      [UIView animateWithDuration:animationDuration
+      [UIView animateWithDuration:kAnimationDuration
                             delay:0
                           options:baseAnimationOptions
                        animations:^{
@@ -727,7 +715,7 @@ static inline CGFloat DistanceFromPointToPoint(CGPoint point1, CGPoint point2) {
                            [self updateDotsViewActiveSegment];
                          }
                          [self updateViewsMainIsAnimated:animated
-                                            withDuration:animationDuration
+                                            withDuration:kAnimationDuration
                                         animationOptions:baseAnimationOptions];
                        }
                        completion:animationCompletion];
@@ -1029,7 +1017,7 @@ static inline CGFloat DistanceFromPointToPoint(CGPoint point1, CGPoint point2) {
   CGFloat relValue = (position.x - _thumbRadius) / self.thumbPanRange;
   relValue = MAX(0, MIN(relValue, 1));
   // For RTL we invert the value
-  if (self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+  if (self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
     relValue = 1 - relValue;
   }
   return (1 - relValue) * _minimumValue + relValue * _maximumValue;
@@ -1073,7 +1061,7 @@ static inline CGFloat DistanceFromPointToPoint(CGPoint point1, CGPoint point2) {
   }
   CGFloat relValue = (value - _minimumValue) / fabs(_minimumValue - _maximumValue);
   // For RTL we invert the value
-  if (self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+  if (self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
     relValue = 1 - relValue;
   }
   return relValue;

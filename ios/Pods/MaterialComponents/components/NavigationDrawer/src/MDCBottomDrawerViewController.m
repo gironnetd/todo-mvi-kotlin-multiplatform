@@ -15,15 +15,10 @@
 #import "MDCBottomDrawerViewController.h"
 
 #import "private/MDCBottomDrawerHeaderMask.h"
-#import "UIView+MaterialElevationResponding.h"
-#import "MDCBottomDrawerPresentationController.h"
-#import "MDCBottomDrawerPresentationControllerDelegate.h"
-#import "MDCBottomDrawerState.h"
 #import "MDCBottomDrawerTransitionController.h"
 #import "MDCBottomDrawerViewControllerDelegate.h"
-#import "MDCShadowElevations.h"
-#import "MDCMath.h"
-#import "MDCLayoutMetrics.h"
+#import "MaterialMath.h"
+#import "MaterialUIMetrics.h"
 
 @interface MDCBottomDrawerViewController () <MDCBottomDrawerPresentationControllerDelegate>
 
@@ -169,44 +164,7 @@
   }
 }
 
-- (void)setIsScrimAccessibilityElement:(BOOL)isScrimAccessibilityElement {
-  if ([self.presentationController isKindOfClass:[MDCBottomDrawerPresentationController class]]) {
-    MDCBottomDrawerPresentationController *bottomDrawerPresentationController =
-        (MDCBottomDrawerPresentationController *)self.presentationController;
-    bottomDrawerPresentationController.isScrimAccessibilityElement = isScrimAccessibilityElement;
-  }
-}
-
-- (BOOL)isScrimAccessibilityElement {
-  if ([self.presentationController isKindOfClass:[MDCBottomDrawerPresentationController class]]) {
-    MDCBottomDrawerPresentationController *bottomDrawerPresentationController =
-        (MDCBottomDrawerPresentationController *)self.presentationController;
-    return bottomDrawerPresentationController.isScrimAccessibilityElement;
-  }
-  return NO;
-}
-
-- (void)setScrimAccessibilityLabel:(NSString *)scrimAccessibilityLabel {
-  if ([self.presentationController isKindOfClass:[MDCBottomDrawerPresentationController class]]) {
-    MDCBottomDrawerPresentationController *bottomDrawerPresentationController =
-        (MDCBottomDrawerPresentationController *)self.presentationController;
-    bottomDrawerPresentationController.scrimAccessibilityLabel = scrimAccessibilityLabel;
-  }
-}
-
-- (NSString *)scrimAccessibilityLabel {
-  if ([self.presentationController isKindOfClass:[MDCBottomDrawerPresentationController class]]) {
-    MDCBottomDrawerPresentationController *bottomDrawerPresentationController =
-        (MDCBottomDrawerPresentationController *)self.presentationController;
-    return bottomDrawerPresentationController.scrimAccessibilityLabel;
-  }
-  return nil;
-}
-
 - (BOOL)isAccessibilityMode {
-  if (self.disableFullScreenVoiceOver) {
-    return NO;
-  }
   return UIAccessibilityIsVoiceOverRunning() || UIAccessibilityIsSwitchControlRunning();
 }
 - (BOOL)isMobileLandscape {
@@ -357,24 +315,6 @@
   }
 }
 
-- (BOOL)swipeToDismissEnabled {
-  if ([self.presentationController isKindOfClass:[MDCBottomDrawerPresentationController class]]) {
-    MDCBottomDrawerPresentationController *bottomDrawerPresentationController =
-        (MDCBottomDrawerPresentationController *)self.presentationController;
-    return bottomDrawerPresentationController.swipeToDismissEnabled;
-  } else {
-    return YES;
-  }
-}
-
-- (void)setSwipeToDismissEnabled:(BOOL)swipeToDismissEnabled {
-  if ([self.presentationController isKindOfClass:[MDCBottomDrawerPresentationController class]]) {
-    MDCBottomDrawerPresentationController *bottomDrawerPresentationController =
-        (MDCBottomDrawerPresentationController *)self.presentationController;
-    bottomDrawerPresentationController.swipeToDismissEnabled = swipeToDismissEnabled;
-  }
-}
-
 - (void)setShouldIncludeSafeAreaInContentHeight:(BOOL)shouldIncludeSafeAreaInContentHeight {
   _shouldIncludeSafeAreaInContentHeight = shouldIncludeSafeAreaInContentHeight;
   if ([self.presentationController isKindOfClass:[MDCBottomDrawerPresentationController class]]) {
@@ -402,15 +342,6 @@
     MDCBottomDrawerPresentationController *bottomDrawerPresentationController =
         (MDCBottomDrawerPresentationController *)self.presentationController;
     bottomDrawerPresentationController.shouldUseStickyStatusBar = shouldUseStickyStatusBar;
-  }
-}
-
-- (void)setDisableFullScreenVoiceOver:(BOOL)disableFullScreenVoiceOver {
-  _disableFullScreenVoiceOver = disableFullScreenVoiceOver;
-  if ([self.presentationController isKindOfClass:[MDCBottomDrawerPresentationController class]]) {
-    MDCBottomDrawerPresentationController *bottomDrawerPresentationController =
-        (MDCBottomDrawerPresentationController *)self.presentationController;
-    bottomDrawerPresentationController.disableFullScreenVoiceOver = disableFullScreenVoiceOver;
   }
 }
 
@@ -522,7 +453,9 @@
 
 - (void)contentDrawerTopInset:(CGFloat)transitionToTop {
   CGFloat topInset = MDCFixedStatusBarHeightOnPreiPhoneXDevices;
-  topInset = self.view.safeAreaInsets.top;
+  if (@available(iOS 11.0, *)) {
+    topInset = self.view.safeAreaInsets.top;
+  }
 
   if ([self contentReachesFullScreen]) {
     topInset -= ((CGFloat)1.0 - transitionToTop) * topInset;

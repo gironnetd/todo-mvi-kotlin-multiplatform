@@ -16,8 +16,6 @@
 
 #import "MDCTabBarViewIndicatorContext.h"
 
-NS_ASSUME_NONNULL_BEGIN
-
 /// Concrete implementation of a tab indicator context.
 @interface MDCTabBarViewPrivateIndicatorContext : NSObject <MDCTabBarViewIndicatorContext>
 
@@ -29,5 +27,3 @@ NS_ASSUME_NONNULL_BEGIN
                         contentFrame:(CGRect)contentFrame NS_DESIGNATED_INITIALIZER;
 
 @end
-
-NS_ASSUME_NONNULL_END

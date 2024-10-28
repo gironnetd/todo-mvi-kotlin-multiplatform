@@ -18,20 +18,11 @@
 #import "private/MDCCollectionStringResources.h"
 #import "private/MDCCollectionViewEditor.h"
 #import "private/MDCCollectionViewStyler.h"
-#import "MDCCollectionViewCell.h"
-#import "MDCCollectionViewTextCell.h"
+#import "MaterialCollectionCells.h"
 #import "MDCCollectionViewEditing.h"
 #import "MDCCollectionViewEditingDelegate.h"
 #import "MDCCollectionViewFlowLayout.h"
-#import "MDCCollectionViewStyling.h"
-#import "MDCCollectionViewStylingDelegate.h"
 #import "MDCCollectionInfoBarViewDelegate.h"
-#import "MDCInkTouchController.h"
-#import "MDCInkTouchControllerDelegate.h"
-#import "MDCInkView.h"
-#import "MDCRippleTouchController.h"
-#import "MDCRippleTouchControllerDelegate.h"
-#import "MDCRippleView.h"
 
 #include <tgmath.h>
 
@@ -99,7 +90,9 @@ NSString *const MDCCollectionInfoBarKindFooter = @"MDCCollectionInfoBarKindFoote
 - (void)viewDidLoad {
   [super viewDidLoad];
 
-  self.collectionView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentAlways;
+  if (@available(iOS 11.0, *)) {
+    self.collectionView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentAlways;
+  }
 
   [self.collectionView setCollectionViewLayout:self.collectionViewLayout];
   self.collectionView.backgroundColor = [UIColor whiteColor];
@@ -141,9 +134,11 @@ NSString *const MDCCollectionInfoBarKindFooter = @"MDCCollectionInfoBarKindFoote
   // scroll view indicator (with a zPosition of 0) would be placed behind supplementary views.
   // We know that iOS keeps the scroll indicator as the top-most view in the hierarchy as a subview,
   // so we grab it and give it a better zPosition ourselves.
-  UIView *maybeScrollViewIndicator = self.collectionView.subviews.lastObject;
-  if ([maybeScrollViewIndicator isKindOfClass:[UIImageView class]]) {
-    maybeScrollViewIndicator.layer.zPosition = 2;
+  if (@available(iOS 11.0, *)) {
+    UIView *maybeScrollViewIndicator = self.collectionView.subviews.lastObject;
+    if ([maybeScrollViewIndicator isKindOfClass:[UIImageView class]]) {
+      maybeScrollViewIndicator.layer.zPosition = 2;
+    }
   }
 }
 
@@ -267,7 +262,9 @@ NSString *const MDCCollectionInfoBarKindFooter = @"MDCCollectionInfoBarKindFoote
                     collectionView:(UICollectionView *)collectionView {
   UIEdgeInsets contentInset = collectionView.contentInset;
   // On the iPhone X, we need to use the offset which might take into account the safe area.
-  contentInset = collectionView.adjustedContentInset;
+  if (@available(iOS 11.0, *)) {
+    contentInset = collectionView.adjustedContentInset;
+  }
 
   CGFloat bounds = CGRectGetWidth(UIEdgeInsetsInsetRect(collectionView.bounds, contentInset));
   UIEdgeInsets sectionInsets = [self collectionView:collectionView
@@ -278,8 +275,7 @@ NSString *const MDCCollectionInfoBarKindFooter = @"MDCCollectionInfoBarKindFoote
     CGFloat cellWidth = bounds - insets - (_styler.gridPadding * (_styler.gridColumnCount - 1));
     return cellWidth / _styler.gridColumnCount;
   }
-  // Make sure we don't return negative numbers, because will trigger exception
-  return MAX(0, bounds - insets);
+  return bounds - insets;
 }
 
 - (UIEdgeInsets)insetsAtSectionIndex:(NSInteger)section
@@ -297,10 +293,13 @@ NSString *const MDCCollectionInfoBarKindFooter = @"MDCCollectionInfoBarKindFoote
   if (isCardStyle) {
     insets.left = inset;
     insets.right = inset;
-    if (collectionView.contentInsetAdjustmentBehavior == UIScrollViewContentInsetAdjustmentAlways) {
-      // We don't need section insets if there are already safe area insets.
-      insets.left = MAX(0, insets.left - collectionView.safeAreaInsets.left);
-      insets.right = MAX(0, insets.right - collectionView.safeAreaInsets.right);
+    if (@available(iOS 11.0, *)) {
+      if (collectionView.contentInsetAdjustmentBehavior ==
+          UIScrollViewContentInsetAdjustmentAlways) {
+        // We don't need section insets if there are already safe area insets.
+        insets.left = MAX(0, insets.left - collectionView.safeAreaInsets.left);
+        insets.right = MAX(0, insets.right - collectionView.safeAreaInsets.right);
+      }
     }
   }
   // Set top/bottom insets.
@@ -372,7 +371,9 @@ NSString *const MDCCollectionInfoBarKindFooter = @"MDCCollectionInfoBarKindFoote
 - (CGFloat)cellWidthAtSectionIndex:(NSInteger)section {
   UIEdgeInsets contentInset = self.collectionView.contentInset;
   // On the iPhone X, we need to use the offset which might take into account the safe area.
-  contentInset = self.collectionView.adjustedContentInset;
+  if (@available(iOS 11.0, *)) {
+    contentInset = self.collectionView.adjustedContentInset;
+  }
   CGFloat bounds = CGRectGetWidth(UIEdgeInsetsInsetRect(self.collectionView.bounds, contentInset));
   UIEdgeInsets sectionInsets = [self collectionView:self.collectionView
                                              layout:self.collectionView.collectionViewLayout

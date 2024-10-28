@@ -14,11 +14,6 @@
 
 #import "MDCCollectionViewStyling.h"
 
-API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
-                     "Use branded UITableView or UICollectionView instead: go/material-ios-lists. "
-                     "This is go/material-ios-migrations#not-scriptable 🕘",
-                     ios(11, 12))
-
 /**
  The MDCCollectionViewStyler class provides a default implementation for a UICollectionView to set
  its style properties.
@@ -38,5 +33,3 @@ API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
     NS_DESIGNATED_INITIALIZER;
 
 @end
-
-API_DEPRECATED_END

@@ -14,12 +14,6 @@
 
 #import <UIKit/UIKit.h>
 
-API_DEPRECATED_BEGIN(
-    "🕘 Schedule time to migrate. "
-    "Use default system highlight behavior instead: go/material-ios-touch-response. "
-    "This is go/material-ios-migrations#not-scriptable 🕘",
-    ios(12, 12))
-
 @class MDCRippleView;
 
 /**
@@ -59,5 +53,3 @@ API_DEPRECATED_BEGIN(
 - (void)rippleTouchUpAnimationDidEnd:(nonnull MDCRippleView *)rippleView;
 
 @end
-
-API_DEPRECATED_END

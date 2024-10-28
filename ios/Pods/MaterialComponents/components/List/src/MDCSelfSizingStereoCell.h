@@ -17,11 +17,6 @@
 #import "MDCBaseCell.h"
 #import "MDCSelfSizingStereoCellImageViewVerticalPosition.h"
 
-API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
-                     "Use branded UITableView or UICollectionView instead: go/material-ios-lists. "
-                     "This is go/material-ios-migrations#not-scriptable 🕘",
-                     ios(12, 12))
-
 /**
  MDCSelfSizingStereoCell is intended to be an easy to use readymade implementation of a basic
  "Stereo" cell. A stereo cell can be thought of as a roughly symmetrical cell with image views on
@@ -41,8 +36,7 @@ API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
  The client is expected NOT to manually set the frames of the view themselves or manipulate the view
  hierarchy in any way.
  */
-__attribute__((objc_subclassing_restricted))
-@interface MDCSelfSizingStereoCell : MDCBaseCell
+__attribute__((objc_subclassing_restricted)) @interface MDCSelfSizingStereoCell : MDCBaseCell
 
 /**
  The UIImageView responsible for displaying the leading image.
@@ -88,6 +82,18 @@ __attribute__((objc_subclassing_restricted))
 @property(nonatomic, readwrite, setter=mdc_setAdjustsFontForContentSizeCategory:)
     BOOL mdc_adjustsFontForContentSizeCategory;
 
-@end
+/**
+ Affects the fallback behavior for when a scaled font is not provided.
 
-API_DEPRECATED_END
+ If enabled, the font size will adjust even if a scaled font has not been provided for
+ a given UIFont property on this component.
+
+ If disabled, the font size will only be adjusted if a scaled font has been provided.
+ This behavior most closely matches UIKit's.
+
+ Default value is YES, but this flag will eventually default to NO and then be deprecated
+ and deleted.
+ */
+@property(nonatomic, assign) BOOL adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable;
+
+@end

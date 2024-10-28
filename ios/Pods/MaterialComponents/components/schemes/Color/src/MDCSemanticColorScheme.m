@@ -14,7 +14,7 @@
 
 #import "MDCSemanticColorScheme.h"
 
-#import "UIColor+MaterialDynamic.h"
+#import "MaterialColor.h"
 
 static UIColor *ColorFromRGB(uint32_t colorValue) {
   return [UIColor colorWithRed:(CGFloat)(((colorValue >> 16) & 0xFF) / 255.0)
@@ -23,42 +23,50 @@ static UIColor *ColorFromRGB(uint32_t colorValue) {
                          alpha:1];
 }
 
+/**
+ Helper method to blend a color channel with a background color channel using alpha composition.
+ More info about Alpha compositing: https://en.wikipedia.org/wiki/Alpha_compositing
+
+ @params value is the value of color channel
+ @params bValue is the value of background color channel
+ @params alpha is the alpha of color channel
+ @params bAlpha is the alpha of background color channel
+ */
+
+static CGFloat blendColorChannel(CGFloat value, CGFloat bValue, CGFloat alpha, CGFloat bAlpha) {
+  return ((1 - alpha) * bValue * bAlpha + alpha * value) / (alpha + bAlpha * (1 - alpha));
+}
+
 @implementation MDCSemanticColorScheme
 
 - (instancetype)initWithDefaults:(MDCColorSchemeDefaults)defaults {
   self = [super init];
   if (self) {
-    UIColor *white = ColorFromRGB(0xFFFFFF);
-    UIColor *black = ColorFromRGB(0x000000);
-    UIColor *darkGrey = ColorFromRGB(0x121212);
-    UIColor *darkBlue = ColorFromRGB(0x3700B3);
-    UIColor *teal = ColorFromRGB(0x03DAC6);
-    UIColor *lightTeal = ColorFromRGB(0x66FFF9);
     switch (defaults) {
       case MDCColorSchemeDefaultsMaterial201804:
         _primaryColor = ColorFromRGB(0x6200EE);
-        _primaryColorVariant = darkBlue;
-        _secondaryColor = teal;
+        _primaryColorVariant = ColorFromRGB(0x3700B3);
+        _secondaryColor = ColorFromRGB(0x03DAC6);
         _errorColor = ColorFromRGB(0xB00020);
-        _surfaceColor = white;
-        _backgroundColor = white;
-        _onPrimaryColor = white;
-        _onSecondaryColor = black;
-        _onSurfaceColor = black;
-        _onBackgroundColor = black;
+        _surfaceColor = ColorFromRGB(0xFFFFFF);
+        _backgroundColor = ColorFromRGB(0xFFFFFF);
+        _onPrimaryColor = ColorFromRGB(0xFFFFFF);
+        _onSecondaryColor = ColorFromRGB(0x000000);
+        _onSurfaceColor = ColorFromRGB(0x000000);
+        _onBackgroundColor = ColorFromRGB(0x000000);
         _elevationOverlayEnabledForDarkMode = NO;
         break;
       case MDCColorSchemeDefaultsMaterialDark201907:
         _primaryColor = ColorFromRGB(0xBB86FC);
-        _primaryColorVariant = darkBlue;
-        _secondaryColor = teal;
+        _primaryColorVariant = ColorFromRGB(0x3700B3);
+        _secondaryColor = ColorFromRGB(0x03DAC6);
         _errorColor = ColorFromRGB(0xCF6679);
-        _surfaceColor = darkGrey;
-        _backgroundColor = darkGrey;
-        _onPrimaryColor = black;
-        _onSecondaryColor = black;
-        _onSurfaceColor = white;
-        _onBackgroundColor = white;
+        _surfaceColor = ColorFromRGB(0x121212);
+        _backgroundColor = ColorFromRGB(0x121212);
+        _onPrimaryColor = ColorFromRGB(0x000000);
+        _onSecondaryColor = ColorFromRGB(0x000000);
+        _onSurfaceColor = ColorFromRGB(0xFFFFFF);
+        _onBackgroundColor = ColorFromRGB(0xFFFFFF);
         _elevationOverlayEnabledForDarkMode = YES;
         break;
       case MDCColorSchemeDefaultsMaterial201907: {
@@ -71,13 +79,22 @@ static UIColor *ColorFromRGB(uint32_t colorValue) {
         _primaryColor = [UIColor colorWithUserInterfaceStyleDarkColor:primaryColorDark
                                                          defaultColor:primaryColorLight];
         UIColor *primaryColorVariantDark =
-            [UIColor colorWithAccessibilityContrastHigh:ColorFromRGB(0xBE9EFF) normal:darkBlue];
+            [UIColor colorWithAccessibilityContrastHigh:ColorFromRGB(0xBE9EFF)
+                                                 normal:ColorFromRGB(0x3700B3)];
         UIColor *primaryColorVariantLight =
-            [UIColor colorWithAccessibilityContrastHigh:ColorFromRGB(0x000088) normal:darkBlue];
+            [UIColor colorWithAccessibilityContrastHigh:ColorFromRGB(0x000088)
+                                                 normal:ColorFromRGB(0x3700B3)];
         _primaryColorVariant =
             [UIColor colorWithUserInterfaceStyleDarkColor:primaryColorVariantDark
                                              defaultColor:primaryColorVariantLight];
-        _secondaryColor = [UIColor colorWithAccessibilityContrastHigh:lightTeal normal:teal];
+        UIColor *secondaryColorLight =
+            [UIColor colorWithAccessibilityContrastHigh:ColorFromRGB(0x66FFF9)
+                                                 normal:ColorFromRGB(0x03DAC6)];
+        UIColor *secondaryColorDark =
+            [UIColor colorWithAccessibilityContrastHigh:ColorFromRGB(0x66FFF9)
+                                                 normal:ColorFromRGB(0x03DAC6)];
+        _secondaryColor = [UIColor colorWithUserInterfaceStyleDarkColor:secondaryColorDark
+                                                           defaultColor:secondaryColorLight];
         UIColor *errorColorVariantDark =
             [UIColor colorWithAccessibilityContrastHigh:ColorFromRGB(0x9B374D)
                                                  normal:ColorFromRGB(0xCF6679)];
@@ -86,18 +103,24 @@ static UIColor *ColorFromRGB(uint32_t colorValue) {
                                                  normal:ColorFromRGB(0xB00020)];
         _errorColor = [UIColor colorWithUserInterfaceStyleDarkColor:errorColorVariantDark
                                                        defaultColor:errorColorVariantLight];
-        UIColor *surfaceColorDark = [UIColor colorWithAccessibilityContrastHigh:black
-                                                                         normal:darkGrey];
+        UIColor *surfaceColorDark =
+            [UIColor colorWithAccessibilityContrastHigh:ColorFromRGB(0x000000)
+                                                 normal:ColorFromRGB(0x121212)];
         _surfaceColor = [UIColor colorWithUserInterfaceStyleDarkColor:surfaceColorDark
-                                                         defaultColor:white];
-        UIColor *backgroundColorDark = [UIColor colorWithAccessibilityContrastHigh:black
-                                                                            normal:darkGrey];
+                                                         defaultColor:ColorFromRGB(0xFFFFFF)];
+        UIColor *backgroundColorDark =
+            [UIColor colorWithAccessibilityContrastHigh:ColorFromRGB(0x000000)
+                                                 normal:ColorFromRGB(0x121212)];
         _backgroundColor = [UIColor colorWithUserInterfaceStyleDarkColor:backgroundColorDark
-                                                            defaultColor:white];
-        _onPrimaryColor = [UIColor colorWithUserInterfaceStyleDarkColor:black defaultColor:white];
-        _onSecondaryColor = black;
-        _onSurfaceColor = [UIColor colorWithUserInterfaceStyleDarkColor:white defaultColor:black];
-        _onBackgroundColor = _onSurfaceColor;
+                                                            defaultColor:ColorFromRGB(0xFFFFFF)];
+        _onPrimaryColor = [UIColor colorWithUserInterfaceStyleDarkColor:ColorFromRGB(0x000000)
+                                                           defaultColor:ColorFromRGB(0xFFFFFF)];
+        _onSecondaryColor = [UIColor colorWithUserInterfaceStyleDarkColor:ColorFromRGB(0x000000)
+                                                             defaultColor:ColorFromRGB(0x000000)];
+        _onSurfaceColor = [UIColor colorWithUserInterfaceStyleDarkColor:ColorFromRGB(0xFFFFFF)
+                                                           defaultColor:ColorFromRGB(0x000000)];
+        _onBackgroundColor = [UIColor colorWithUserInterfaceStyleDarkColor:ColorFromRGB(0xFFFFFF)
+                                                              defaultColor:ColorFromRGB(0x000000)];
         _elevationOverlayEnabledForDarkMode = YES;
         break;
       }
@@ -106,10 +129,23 @@ static UIColor *ColorFromRGB(uint32_t colorValue) {
   return self;
 }
 
++ (UIColor *)blendColor:(UIColor *)color withBackgroundColor:(UIColor *)backgroundColor {
+  CGFloat red = 0.0, green = 0.0, blue = 0.0, alpha = 0.0;
+  [color getRed:&red green:&green blue:&blue alpha:&alpha];
+  CGFloat bRed = 0.0, bGreen = 0.0, bBlue = 0.0, bAlpha = 0.0;
+  [backgroundColor getRed:&bRed green:&bGreen blue:&bBlue alpha:&bAlpha];
+
+  return [UIColor colorWithRed:blendColorChannel(red, bRed, alpha, bAlpha)
+                         green:blendColorChannel(green, bGreen, alpha, bAlpha)
+                          blue:blendColorChannel(blue, bBlue, alpha, bAlpha)
+                         alpha:alpha + bAlpha * (1 - alpha)];
+}
+
 #pragma mark - NSCopying
 
 - (id)copyWithZone:(NSZone *)zone {
-  MDCSemanticColorScheme *copy = [[MDCSemanticColorScheme alloc] init];
+  MDCSemanticColorScheme *copy =
+      [[MDCSemanticColorScheme alloc] initWithDefaults:MDCColorSchemeDefaultsMaterial201804];
   copy.primaryColor = self.primaryColor;
   copy.primaryColorVariant = self.primaryColorVariant;
   copy.secondaryColor = self.secondaryColor;
@@ -120,7 +156,7 @@ static UIColor *ColorFromRGB(uint32_t colorValue) {
   copy.onSecondaryColor = self.onSecondaryColor;
   copy.onSurfaceColor = self.onSurfaceColor;
   copy.onBackgroundColor = self.onBackgroundColor;
-  copy.elevationOverlayEnabledForDarkMode = self.elevationOverlayEnabledForDarkMode;
+
   return copy;
 }
 

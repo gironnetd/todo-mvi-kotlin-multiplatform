@@ -25,6 +25,7 @@
  While the actual implementation of UIFont's isEqual: is not known, it is believed that
  isSimplyEqual: is more 'shallow' than isEqual:.
  */
+
 - (BOOL)mdc_isSimplyEqual:(UIFont*)font;
 
 @end

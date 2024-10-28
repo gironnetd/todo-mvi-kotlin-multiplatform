@@ -127,8 +127,10 @@ static UIScrollView *MDCBottomSheetGetPrimaryScrollView(UIViewController *viewCo
   }
   CGRect sheetFrame = [self frameOfPresentedViewInContainerView];
   if (self.shouldPropagateSafeAreaInsetsToPresentedViewController) {
-    self.presentedViewController.additionalSafeAreaInsets =
-        self.presentingViewController.view.safeAreaInsets;
+    if (@available(iOS 11.0, *)) {
+      self.presentedViewController.additionalSafeAreaInsets =
+          self.presentingViewController.view.safeAreaInsets;
+    }
   }
   self.sheetView = [[MDCSheetContainerView alloc] initWithFrame:sheetFrame
                                                     contentView:self.presentedViewController.view

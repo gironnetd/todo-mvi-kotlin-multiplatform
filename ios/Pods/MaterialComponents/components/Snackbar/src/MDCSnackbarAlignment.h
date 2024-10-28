@@ -15,31 +15,16 @@
 #import <Foundation/Foundation.h>
 
 /**
- States used to configure Snackbar's horizontal alignment.
+ States used to configure Snackbar alignment.
  */
-typedef NS_ENUM(NSInteger, MDCSnackbarHorizontalAlignment) {
+typedef NS_ENUM(NSInteger, MDCSnackbarAlignment) {
   /**
-   Snackbar is positioned in the center of the screen horizontally.
+   Snackbar is positioned in the center of the screen.
    */
-  MDCSnackbarHorizontalAlignmentCenter = 0,
+  MDCSnackbarAlignmentCenter = 0,
 
   /**
-   Snackbar is positioned near the leading margin horizontally.
+   Snackbar is positioned near the leading margin.
    */
-  MDCSnackbarHorizontalAlignmentLeading = 1,
-};
-
-/**
- States used to configure Snackbar's vertical alignment.
- */
-typedef NS_ENUM(NSInteger, MDCSnackbarVerticalAlignment) {
-  /**
-   Snackbar is positioned on the bottom of the screen vertically.
-   */
-  MDCSnackbarVerticalAlignmentBottom = 0,
-
-  /**
-   Snackbar is positioned on the top of the screen vertically.
-   */
-  MDCSnackbarVerticalAlignmentTop = 1,
+  MDCSnackbarAlignmentLeading = 1,
 };

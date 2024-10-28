@@ -22,8 +22,6 @@
 @class MDCFlexibleHeaderTopSafeArea;
 @protocol MDCFlexibleHeaderMinMaxHeightDelegate;
 
-API_DEPRECATED_BEGIN("Use a branded UINavigationController instead.", ios(12, API_TO_BE_DEPRECATED))
-
 /**
  Manages the height behavior for MDCFlexibleHeaderView.
 
@@ -135,5 +133,3 @@ __attribute__((objc_subclassing_restricted)) @interface MDCFlexibleHeaderMinMaxH
     "Set minMaxHeightIncludesSafeArea to NO and use minimumHeight and maximumHeight instead.");
 
 @end
-
-API_DEPRECATED_END

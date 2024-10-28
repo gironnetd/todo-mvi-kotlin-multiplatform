@@ -12,32 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "MDCAlertController.h"
-#import <UIKit/UIKit.h>
 #import "MDCAlertController+Customize.h"
 
 #import "private/MDCAlertActionManager.h"
 #import "private/MDCAlertControllerView+Private.h"
 #import "private/MaterialDialogsStrings.h"
 #import "private/MaterialDialogsStrings_table.h"
-#import "MDCButton.h"
-#import "MDCAlertControllerDelegate.h"
-#import "MDCAlertControllerView.h"
-#import "MDCDialogPresentationController.h"
-#import "MDCDialogPresentationControllerDelegate.h"
-#import "MDCDialogTransitionController.h"
-#import "UIViewController+MaterialDialogs.h"
-#import "UIView+MaterialElevationResponding.h"
-#import "M3CButton.h"
-#import "MDCShadowElevations.h"
-#import "MDCMath.h"
-
-NS_ASSUME_NONNULL_BEGIN
-
-const int MAX_LAYOUT_PASSES = 10;
+#import "MaterialDialogs.h"
+#import "MaterialElevation.h"
+#import "MaterialShadowElevations.h"
+#import "MaterialMath.h"
 
 // The Bundle for string resources.
 static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
+
+@interface MDCAlertAction ()
+
+@property(nonatomic, nullable, copy) MDCActionHandler tapHandler;
+
+@end
 
 @implementation MDCAlertAction
 
@@ -67,7 +60,7 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
 
 #pragma mark - NSCopying
 
-- (id)copyWithZone:(__unused NSZone *_Nullable)zone {
+- (id)copyWithZone:(__unused NSZone *)zone {
   MDCAlertAction *action = [[self class] actionWithTitle:self.title
                                                 emphasis:self.emphasis
                                                  handler:self.tapHandler];
@@ -92,31 +85,14 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
       [self.title isEqualToString:anotherAction.title] && self.emphasis == anotherAction.emphasis;
 }
 
-- (NSUInteger)hash {
-  return self.title.hash ^ self.emphasis;
-}
-
 @end
 
 @interface MDCAlertController () <UITextViewDelegate>
 
-/**
- A flag to determine whether to use `M3CButton` in place of `MDCButton`.
-
- Defaults to NO, but we eventually want to default it to YES and remove this property altogether.
- */
-@property(nonatomic) BOOL enableM3CButton;
 @property(nonatomic, nullable, weak) MDCAlertControllerView *alertView;
 @property(nonatomic, strong) MDCDialogTransitionController *transitionController;
 @property(nonatomic, nonnull, strong) MDCAlertActionManager *actionManager;
 @property(nonatomic, nullable, strong) UIView *titleIconView;
-
-/**
- This counter caps the maximum number of layout passes that can be done in a single layout cycle.
-
- This variable is added as a direct fix for b/345505157.
- */
-@property(nonatomic) int layoutPassCounter;
 
 - (nonnull instancetype)initWithTitle:(nullable NSString *)title
                               message:(nullable NSString *)message;
@@ -128,6 +104,7 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
   // redefines title as well.
   NSString *_alertTitle;
   CGSize _previousLayoutSize;
+  BOOL _mdc_adjustsFontForContentSizeCategory;
   NSString *_imageAccessibilityLabel;
   BOOL _alignIconWithTitle;
 }
@@ -166,7 +143,6 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
                               message:(nullable NSString *)message {
   self = [self initWithTitle:title];
   if (self) {
-    _shouldPlaceAccessoryViewAboveMessage = NO;
     _message = [message copy];
   }
   return self;
@@ -186,7 +162,6 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
   if (self) {
     _transitionController = [[MDCDialogTransitionController alloc] init];
 
-    _layoutPassCounter = 0;
     _alertTitle = [title copy];
     _titleAlignment = NSTextAlignmentNatural;
     _messageAlignment = NSTextAlignmentNatural;
@@ -196,6 +171,7 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
     _actionsHorizontalAlignment = MDCContentHorizontalAlignmentTrailing;
     _actionsHorizontalAlignmentInVerticalLayout = MDCContentHorizontalAlignmentCenter;
     _actionManager = [[MDCAlertActionManager alloc] init];
+    _adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable = YES;
     _shadowColor = UIColor.blackColor;
     _mdc_overrideBaseElevation = -1;
     _shouldAutorotateOverride = super.shouldAutorotate;
@@ -203,10 +179,6 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
     _preferredInterfaceOrientationForPresentationOverride =
         super.preferredInterfaceOrientationForPresentation;
     _modalTransitionStyleOverride = super.modalTransitionStyle;
-    _titlePinsToTop = YES;
-
-    _M3CButtonEnabled = NO;
-    [_actionManager setM3CButtonEnabled:_M3CButtonEnabled];
 
     super.transitioningDelegate = _transitionController;
     super.modalPresentationStyle = UIModalPresentationCustom;
@@ -214,31 +186,21 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
   return self;
 }
 
-- (void)setM3CButtonEnabled:(BOOL)enable {
-  if (_M3CButtonEnabled == enable) {
-    return;
-  }
-  _M3CButtonEnabled = enable;
-  [self.actionManager setM3CButtonEnabled:_M3CButtonEnabled];
-  [self.alertView setM3CButtonEnabled:_M3CButtonEnabled];
-}
-
-- (void)traitCollectionDidChange:(nullable UITraitCollection *)previousTraitCollection {
+- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
   [super traitCollectionDidChange:previousTraitCollection];
   if (self.traitCollectionDidChangeBlock) {
     self.traitCollectionDidChangeBlock(self, previousTraitCollection);
   }
   if (![self.traitCollection.preferredContentSizeCategory
           isEqualToString:previousTraitCollection.preferredContentSizeCategory]) {
-    self.preferredContentSize =
-        [self.alertView calculatePreferredContentSizeForBounds:CGRectInfinite.size];
-    [self.view setNeedsLayout];
+    self.preferredContentSize = [self.alertView
+        calculatePreferredContentSizeForBounds:CGRectStandardize(self.view.bounds).size];
   }
 }
 
 /* Disable setter. Always use internal transition controller */
 - (void)setTransitioningDelegate:
-    (__unused __nullable id<UIViewControllerTransitioningDelegate>)transitioningDelegate {
+    (__unused id<UIViewControllerTransitioningDelegate>)transitioningDelegate {
   NSAssert(NO, @"MDCAlertController.transitioningDelegate cannot be changed.");
   return;
 }
@@ -249,7 +211,7 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
   return;
 }
 
-- (void)setTitle:(nullable NSString *)title {
+- (void)setTitle:(NSString *)title {
   _alertTitle = [title copy];
   if (self.alertView) {
     self.alertView.titleLabel.text = title;
@@ -258,39 +220,32 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
   }
 }
 
-- (nullable NSString *)title {
+- (NSString *)title {
   return _alertTitle;
 }
 
-- (void)setTitlePinsToTop:(BOOL)titlePinsToTop {
-  _titlePinsToTop = titlePinsToTop;
-  if (self.alertView) {
-    self.alertView.titlePinsToTop = titlePinsToTop;
-  }
-}
-
-- (void)setTitleAccessibilityLabel:(nullable NSString *)titleAccessibilityLabel {
+- (void)setTitleAccessibilityLabel:(NSString *)titleAccessibilityLabel {
   _titleAccessibilityLabel = [titleAccessibilityLabel copy];
   if (self.alertView && titleAccessibilityLabel) {
     self.alertView.titleLabel.accessibilityLabel = titleAccessibilityLabel;
   }
 }
 
-- (void)setMessage:(nullable NSString *)message {
+- (void)setMessage:(NSString *)message {
   _message = [message copy];
   if (self.alertView) {
     [self messageDidChange];
   }
 }
 
-- (void)setAttributedMessage:(nullable NSAttributedString *)attributedMessage {
+- (void)setAttributedMessage:(NSAttributedString *)attributedMessage {
   _attributedMessage = [attributedMessage copy];
   if (self.alertView) {
     [self messageDidChange];
   }
 }
 
-- (void)setAttributedLinkColor:(nullable UIColor *)attributedLinkColor {
+- (void)setAttributedLinkColor:(UIColor *)attributedLinkColor {
   if ([_attributedLinkColor isEqual:attributedLinkColor]) {
     return;
   }
@@ -310,14 +265,14 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
       [self.alertView calculatePreferredContentSizeForBounds:CGRectInfinite.size];
 }
 
-- (void)setMessageAccessibilityLabel:(nullable NSString *)messageAccessibilityLabel {
+- (void)setMessageAccessibilityLabel:(NSString *)messageAccessibilityLabel {
   _messageAccessibilityLabel = [messageAccessibilityLabel copy];
   if (self.alertView && messageAccessibilityLabel) {
     self.alertView.messageTextView.accessibilityLabel = messageAccessibilityLabel;
   }
 }
 
-- (void)setImageAccessibilityLabel:(nullable NSString *)imageAccessibilityLabel {
+- (void)setImageAccessibilityLabel:(NSString *)imageAccessibilityLabel {
   if ([_imageAccessibilityLabel isEqual:imageAccessibilityLabel]) {
     return;
   }
@@ -329,7 +284,7 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
   }
 }
 
-- (nullable NSString *)imageAccessibilityLabel {
+- (NSString *)imageAccessibilityLabel {
   if (_imageAccessibilityLabel) {
     return _imageAccessibilityLabel;
   }
@@ -341,7 +296,7 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
              : self.alertView.titleIconView.accessibilityLabel;
 }
 
-- (void)setAccessoryView:(nullable UIView *)accessoryView {
+- (void)setAccessoryView:(UIView *)accessoryView {
   if (_accessoryView == accessoryView) {
     return;
   }
@@ -351,13 +306,6 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
   if (self.alertView) {
     self.alertView.accessoryView = accessoryView;
     [self setAccessoryViewNeedsLayout];
-  }
-}
-
-- (void)setShouldPlaceAccessoryViewAboveMessage:(BOOL)shouldPlaceAccessoryViewAboveMessage {
-  if (_shouldPlaceAccessoryViewAboveMessage != shouldPlaceAccessoryViewAboveMessage) {
-    _shouldPlaceAccessoryViewAboveMessage = shouldPlaceAccessoryViewAboveMessage;
-    self.alertView.shouldPlaceAccessoryViewAboveMessage = shouldPlaceAccessoryViewAboveMessage;
   }
 }
 
@@ -392,14 +340,6 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
   return [self dialogTransitionController].dialogInitialScaleFactor;
 }
 
-- (void)setDialogEdgeInsets:(UIEdgeInsets)dialogEdgeInsets {
-  [self dialogTransitionController].dialogEdgeInsets = dialogEdgeInsets;
-}
-
-- (UIEdgeInsets)dialogEdgeInsets {
-  return [self dialogTransitionController].dialogEdgeInsets;
-}
-
 - (void)setPresentationInitialScaleFactor:(CGFloat)presentationInitialScaleFactor {
   [self dialogTransitionController].dialogInitialScaleFactor = presentationInitialScaleFactor;
 }
@@ -413,49 +353,21 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
   [self addButtonToAlertViewForAction:action];
 }
 
-- (void)addActions:(NSArray<MDCAlertAction *> *)actions {
-  for (MDCAlertAction *action in actions) {
-    [self addAction:action];
-  }
-}
-
 - (nullable MDCButton *)buttonForAction:(nonnull MDCAlertAction *)action {
-  UIButton *button = [self.actionManager buttonForAction:action];
-  if (!button && [self.actionManager hasAction:action] && !self.isM3CButtonEnabled) {
+  MDCButton *button = [self.actionManager buttonForAction:action];
+  if (!button && [self.actionManager hasAction:action]) {
     button = [self.actionManager createButtonForAction:action
                                                 target:self
                                               selector:@selector(actionButtonPressed:forEvent:)];
-    [MDCAlertControllerView styleAsTextButton:(MDCButton *)button];
+    [MDCAlertControllerView styleAsTextButton:button];
   }
-  if ([button isKindOfClass:[MDCButton class]]) {
-    return (MDCButton *)button;
-  }
-  return nil;
-}
-
-- (nullable M3CButton *)M3CButtonForAction:(nonnull MDCAlertAction *)action {
-  UIButton *button = [self.actionManager buttonForAction:action];
-  if (!button && [self.actionManager hasAction:action] && self.isM3CButtonEnabled) {
-    button = [self.actionManager createButtonForAction:action
-                                                target:self
-                                              selector:@selector(actionButtonPressed:forEvent:)];
-  }
-  if ([button isKindOfClass:[M3CButton class]]) {
-    return (M3CButton *)button;
-  }
-  return nil;
+  return button;
 }
 
 - (void)addButtonToAlertViewForAction:(MDCAlertAction *)action {
   if (self.alertView) {
-    UIButton *button;
-    if (!self.isM3CButtonEnabled) {
-      button = [self buttonForAction:action];
-    } else {
-      button = [self M3CButtonForAction:action];
-    }
+    MDCButton *button = [self buttonForAction:action];
     [self.alertView addActionButton:button];
-    [button setAccessibilityIdentifier:action.accessibilityIdentifier];
     self.preferredContentSize =
         [self.alertView calculatePreferredContentSizeForBounds:CGRectInfinite.size];
     [self.alertView setNeedsLayout];
@@ -486,28 +398,28 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
   self.alertView.orderVerticalActionsByEmphasis = orderVerticalActionsByEmphasis;
 }
 
-- (void)setTitleFont:(nullable UIFont *)titleFont {
+- (void)setTitleFont:(UIFont *)titleFont {
   _titleFont = titleFont;
   if (self.alertView) {
     self.alertView.titleFont = titleFont;
   }
 }
 
-- (void)setMessageFont:(nullable UIFont *)messageFont {
+- (void)setMessageFont:(UIFont *)messageFont {
   _messageFont = messageFont;
   if (self.alertView) {
     self.alertView.messageFont = messageFont;
   }
 }
 
-- (void)setTitleColor:(nullable UIColor *)titleColor {
+- (void)setTitleColor:(UIColor *)titleColor {
   _titleColor = titleColor;
   if (self.alertView) {
     self.alertView.titleColor = titleColor;
   }
 }
 
-- (void)setMessageColor:(nullable UIColor *)messageColor {
+- (void)setMessageColor:(UIColor *)messageColor {
   _messageColor = messageColor;
   if (self.alertView) {
     self.alertView.messageColor = messageColor;
@@ -515,7 +427,7 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
 }
 
 // b/117717380: Will be deprecated
-- (void)setButtonTitleColor:(nullable UIColor *)buttonColor {
+- (void)setButtonTitleColor:(UIColor *)buttonColor {
   _buttonTitleColor = buttonColor;
   if (self.alertView) {
     self.alertView.buttonColor = buttonColor;
@@ -542,7 +454,7 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
   }
 }
 
-- (void)setTitleIcon:(nullable UIImage *)titleIcon {
+- (void)setTitleIcon:(UIImage *)titleIcon {
   _titleIcon = titleIcon;
   if (self.alertView) {
     self.alertView.titleIcon = titleIcon;
@@ -551,7 +463,7 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
   }
 }
 
-- (void)setTitleIconView:(nullable UIView *)titleIconView {
+- (void)setTitleIconView:(UIView *)titleIconView {
   _titleIconView = titleIconView;
   if (self.alertView) {
     self.alertView.titleIconView = titleIconView;
@@ -560,14 +472,14 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
   }
 }
 
-- (void)setTitleIconTintColor:(nullable UIColor *)titleIconTintColor {
+- (void)setTitleIconTintColor:(UIColor *)titleIconTintColor {
   _titleIconTintColor = titleIconTintColor;
   if (self.alertView) {
     self.alertView.titleIconTintColor = titleIconTintColor;
   }
 }
 
-- (nullable UIImageView *)titleIconImageView {
+- (UIImageView *)titleIconImageView {
   return self.alertView.titleIconImageView;
 }
 
@@ -579,12 +491,12 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
   }
 }
 
-- (void)setScrimColor:(nullable UIColor *)scrimColor {
+- (void)setScrimColor:(UIColor *)scrimColor {
   _scrimColor = scrimColor;
   self.mdc_dialogPresentationController.scrimColor = scrimColor;
 }
 
-- (void)setBackgroundColor:(nullable UIColor *)backgroundColor {
+- (void)setBackgroundColor:(UIColor *)backgroundColor {
   _backgroundColor = backgroundColor;
   if (self.alertView) {
     self.alertView.backgroundColor = backgroundColor;
@@ -620,8 +532,34 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
 
 - (void)setAdjustsFontForContentSizeCategory:(BOOL)adjustsFontForContentSizeCategory {
   _adjustsFontForContentSizeCategory = adjustsFontForContentSizeCategory;
-  if (self.viewLoaded) {
-    self.alertView.adjustsFontForContentSizeCategory = adjustsFontForContentSizeCategory;
+  if (@available(iOS 11.0, *)) {
+    if (self.viewLoaded) {
+      self.alertView.titleLabel.adjustsFontForContentSizeCategory =
+          adjustsFontForContentSizeCategory;
+      // TODO(https://github.com/material-components/material-components-ios/issues/8673): Add
+      // Buttons
+      // TODO(https://github.com/material-components/material-components-ios/issues/8671): Add
+      // Message
+    }
+  }
+}
+
+- (void)mdc_setAdjustsFontForContentSizeCategory:(BOOL)adjusts {
+  _mdc_adjustsFontForContentSizeCategory = adjusts;
+
+  if (self.alertView) {
+    self.alertView.mdc_adjustsFontForContentSizeCategory = adjusts;
+    [self updateFontsForDynamicType];
+  }
+  if (_mdc_adjustsFontForContentSizeCategory) {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(contentSizeCategoryDidChange:)
+                                                 name:UIContentSizeCategoryDidChangeNotification
+                                               object:nil];
+  } else {
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:UIContentSizeCategoryDidChangeNotification
+                                                  object:nil];
   }
 }
 
@@ -641,6 +579,14 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
     self.preferredContentSize =
         [self.alertView calculatePreferredContentSizeForBounds:CGRectInfinite.size];
   }
+}
+
+- (void)setAdjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable:
+    (BOOL)adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable {
+  _adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable =
+      adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable;
+  self.alertView.adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable =
+      adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable;
 }
 
 - (void)actionButtonPressed:(id)button forEvent:(UIEvent *)event {
@@ -683,9 +629,6 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
 - (void)loadView {
   self.view = [[MDCAlertControllerView alloc] initWithFrame:CGRectZero];
   self.alertView = (MDCAlertControllerView *)self.view;
-  [self.alertView setM3CButtonEnabled:self.isM3CButtonEnabled];
-  [self.alertView
-      setShouldPlaceAccessoryViewAboveMessage:self.shouldPlaceAccessoryViewAboveMessage];
   // sharing MDCActionManager with with the alert view
   self.alertView.actionManager = self.actionManager;
 }
@@ -696,6 +639,8 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
   [self setupAlertView];
 
   _previousLayoutSize = CGSizeZero;
+  CGSize idealSize = [self.alertView calculatePreferredContentSizeForBounds:CGRectInfinite.size];
+  self.preferredContentSize = idealSize;
 
   self.preferredContentSize =
       [self.alertView calculatePreferredContentSizeForBounds:CGRectInfinite.size];
@@ -721,6 +666,7 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
   if ([self.delegate respondsToSelector:@selector(alertController:didAppear:)]) {
     [self.delegate alertController:self didAppear:animated];
   }
+  [self.alertView.titleScrollView flashScrollIndicators];
   [self.alertView.contentScrollView flashScrollIndicators];
   [self.alertView.actionsScrollView flashScrollIndicators];
 }
@@ -740,15 +686,6 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
 }
 
 - (void)viewDidLayoutSubviews {
-  [super viewDidLayoutSubviews];
-  // Increments the counter to account for an additional layout pass.
-  self.layoutPassCounter += 1;
-  // Abort if the layout pass counter is too high.
-  if (self.layoutPassCounter > MAX_LAYOUT_PASSES) {
-    // Resets counter.
-    self.layoutPassCounter = 0;
-    return;
-  }
   // Recalculate preferredContentSize and potentially the view frame.
   BOOL boundsSizeChanged =
       !CGSizeEqualToSize(CGRectStandardize(self.view.bounds).size, _previousLayoutSize);
@@ -800,8 +737,7 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
   [coordinator
       animateAlongsideTransition:^(
           __unused id<UIViewControllerTransitionCoordinatorContext> _Nonnull context) {
-        [self.alertView setNeedsLayout];
-        // Reset preferredContentSize on viewWillTransition to take advantage of additional width.
+        // Reset preferredContentSize on viewWIllTransition to take advantage of additional width
         self.preferredContentSize =
             [self.alertView calculatePreferredContentSizeForBounds:CGRectInfinite.size];
       }
@@ -849,7 +785,8 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
 
 - (void)setupAlertView {
   self.alertView.titleLabel.text = self.title;
-  self.alertView.adjustsFontForContentSizeCategory = self.adjustsFontForContentSizeCategory;
+  self.alertView.titleLabel.adjustsFontForContentSizeCategory =
+      self.adjustsFontForContentSizeCategory;
   if (self.attributedMessage.length > 0) {
     self.alertView.messageTextView.attributedText = self.attributedMessage;
   } else {
@@ -857,19 +794,12 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
   }
   self.alertView.titleLabel.accessibilityLabel = self.titleAccessibilityLabel ?: self.title;
   self.alertView.messageTextView.accessibilityLabel =
-      self.messageAccessibilityLabel ?: self.message;
+      self.messageAccessibilityLabel ?: self.message ?: self.attributedMessage.string;
   // Set messageTextView's accessibilityValue to the empty string to resolve b/158732017.
-  // For a plain string, the MessageTextView acts as a label and should not have an
-  // accessibilityValue. Setting the accessibilityValue to nil causes VoiceOver to use the default
-  // value, which is the text of the message, so the value must be set to the empty string instead.
-  // This is not the case for attributed strings as disabling the accessibilityValue will not call
-  // out attribute traits, e.g (embedded links).
-  if ([self shouldUseAttributedStringForMessageA11Y]) {
-    self.alertView.messageTextView.accessibilityLabel = self.attributedMessage.accessibilityLabel;
-  } else {
-    self.alertView.messageTextView.accessibilityValue = @"";
-  }
-
+  // MessageTextView acts as a label and should not have an accessibilityValue.
+  // Setting the accessibilityValue to nil causes VoiceOver to use the default value, which is the
+  // text of the message, so the value must be set to the empty string instead.
+  self.alertView.messageTextView.accessibilityValue = @"";
   self.alertView.messageTextView.delegate = self;
 
   self.alertView.titleIconImageView.accessibilityLabel = self.imageAccessibilityLabel;
@@ -891,6 +821,8 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
   } else {
     self.alertView.messageColor = self.messageColor ?: UIColor.blackColor;
   }
+  self.alertView.adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable =
+      self.adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable;
   if (self.backgroundColor) {
     // Avoid reset background color to transparent when self.backgroundColor is nil.
     self.alertView.backgroundColor = self.backgroundColor;
@@ -915,11 +847,16 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
   self.alertView.actionsHorizontalAlignment = self.actionsHorizontalAlignment;
   self.alertView.actionsHorizontalAlignmentInVerticalLayout =
       self.actionsHorizontalAlignmentInVerticalLayout;
-  self.alertView.titlePinsToTop = self.titlePinsToTop;
 
   // Create buttons for the actions (if not already created) and apply default styling
   for (MDCAlertAction *action in self.actions) {
     [self addButtonToAlertViewForAction:action];
+  }
+  // Explicitly overwrite the view default if true
+  // We set this last to make sure all other properties are set first and no overridden by setting
+  // this.
+  if (self.mdc_adjustsFontForContentSizeCategory) {
+    self.alertView.mdc_adjustsFontForContentSizeCategory = YES;
   }
 }
 
@@ -929,20 +866,6 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
   MDCDialogPresentationController *dialogPresentationController =
       self.mdc_dialogPresentationController;
   if (dialogPresentationController.dismissOnBackgroundTap) {
-    BOOL shouldDismiss = YES;
-    if ([dialogPresentationController.dialogPresentationControllerDelegate
-            respondsToSelector:@selector(dialogPresentationControllerShouldDismiss:)]) {
-      shouldDismiss = [dialogPresentationController.dialogPresentationControllerDelegate
-          dialogPresentationControllerShouldDismiss:dialogPresentationController];
-    }
-    if (!shouldDismiss) {
-      return NO;
-    }
-    if ([dialogPresentationController.dialogPresentationControllerDelegate
-            respondsToSelector:@selector(dialogPresentationControllerWillDismiss:)]) {
-      [dialogPresentationController.dialogPresentationControllerDelegate
-          dialogPresentationControllerWillDismiss:dialogPresentationController];
-    }
     void (^dismissalCompletion)(void) = ^{
       if ([dialogPresentationController.dialogPresentationControllerDelegate
               respondsToSelector:@selector(dialogPresentationControllerDidDismiss:)]) {
@@ -957,16 +880,4 @@ static NSString *const kMaterialDialogsBundle = @"MaterialDialogs.bundle";
   return NO;
 }
 
-#pragma mark - Private
-
-/// Returns YES if the attributed message should be used as an accessibility label of the alert
-/// message.
-/// This happens when the attributed message was explicitly provided without a custom accessibility
-/// label.
-- (BOOL)shouldUseAttributedStringForMessageA11Y {
-  return !(self.messageAccessibilityLabel || self.message) && self.attributedMessage;
-}
-
 @end
-
-NS_ASSUME_NONNULL_END

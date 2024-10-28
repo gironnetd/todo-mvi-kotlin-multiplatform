@@ -15,27 +15,17 @@
 #import "MDCBaseTextArea.h"
 
 #import <CoreGraphics/CoreGraphics.h>
+#import <MDFInternationalization/MDFInternationalization.h>
 #import <QuartzCore/QuartzCore.h>
 
+#import "private/MDCBaseTextAreaLayout.h"
+#import "private/MDCBaseTextAreaTextView.h"
 #import "MDCBaseTextAreaDelegate.h"
 #import "MDCTextControlLabelBehavior.h"
 #import "MDCTextControlState.h"
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wprivate-header"
-#import "MDCBaseTextAreaLayout.h"
-#import "MDCBaseTextAreaTextView.h"
-#import "MDCTextControlStyleBase.h"
-#import "MDCTextControl.h"
+#import "MaterialTextControlsPrivate+BaseStyle.h"
 #import "MDCTextControlAssistiveLabelDrawPriority.h"
-#import "MDCTextControlAssistiveLabelView.h"
-#import "MDCTextControlColorViewModel.h"
-#import "MDCTextControlGradientManager.h"
-#import "MDCTextControlHorizontalPositioning.h"
-#import "MDCTextControlHorizontalPositioningReference.h"
-#import "MDCTextControlLabelAnimation.h"
-#import "MDCTextControlLabelSupport.h"
-#import "MDCTextControlPlaceholderSupport.h"
-#pragma clang diagnostic pop
+#import "MaterialTextControlsPrivate+Shared.h"
 
 static char *const kKVOContextMDCBaseTextArea = "kKVOContextMDCBaseTextArea";
 
@@ -53,17 +43,8 @@ static const CGFloat kMDCBaseTextAreaDefaultMaximumNumberOfVisibleLines = (CGFlo
 @property(strong, nonatomic) MDCBaseTextAreaLayout *layout;
 @property(nonatomic, assign) MDCTextControlState textControlState;
 @property(nonatomic, assign) MDCTextControlLabelPosition labelPosition;
-@property(nonatomic, assign) CGRect normalLabelFrame;
-@property(nonatomic, assign) CGRect floatingLabelFrame;
+@property(nonatomic, assign) CGRect labelFrame;
 @property(nonatomic, assign) NSTimeInterval animationDuration;
-/**
- * This property is set in every layout cycle, in preLayoutSubviews, right after the current
- * labelPosition is determined . It's set to YES if the labelPosition changed and NO if it didn't.
- * It's referred to in animateLabel (called from postLayoutSubviews) when deciding on a label
- * animation duration. If it's NO, the label gets an animation duration of 0, to avoid buggy looking
- * frame/text animations. Otherwise, it uses the value in the animationDuration property.
- */
-@property(nonatomic, assign) BOOL labelPositionChanged;
 
 @property(nonatomic, strong)
     NSMutableDictionary<NSNumber *, MDCTextControlColorViewModel *> *colorViewModels;
@@ -112,7 +93,7 @@ static const CGFloat kMDCBaseTextAreaDefaultMaximumNumberOfVisibleLines = (CGFlo
   [self setUpTextView];
   [self setUpPlaceholderLabel];
   [self observeTextViewNotifications];
-  [self observeLabelKeyPaths];
+  [self observeAssistiveLabelKeyPaths];
 }
 
 - (void)dealloc {
@@ -215,9 +196,7 @@ static const CGFloat kMDCBaseTextAreaDefaultMaximumNumberOfVisibleLines = (CGFlo
 
 - (void)preLayoutSubviews {
   self.textControlState = [self determineCurrentTextControlState];
-  MDCTextControlLabelPosition previousLabelPosition = self.labelPosition;
   self.labelPosition = [self determineCurrentLabelPosition];
-  self.labelPositionChanged = previousLabelPosition != self.labelPosition;
   self.placeholderLabel.attributedText = [self determineAttributedPlaceholder];
   self.placeholderLabel.numberOfLines = (NSInteger)self.numberOfLinesOfVisibleText;
   MDCTextControlColorViewModel *colorViewModel =
@@ -225,8 +204,7 @@ static const CGFloat kMDCBaseTextAreaDefaultMaximumNumberOfVisibleLines = (CGFlo
   [self applyColorViewModel:colorViewModel withLabelPosition:self.labelPosition];
   CGSize fittingSize = CGSizeMake(CGRectGetWidth(self.frame), CGFLOAT_MAX);
   self.layout = [self calculateLayoutWithSize:fittingSize];
-  self.floatingLabelFrame = self.layout.labelFrameFloating;
-  self.normalLabelFrame = self.layout.labelFrameNormal;
+  self.labelFrame = [self.layout labelFrameWithLabelPosition:self.labelPosition];
 }
 
 - (void)postLayoutSubviews {
@@ -504,7 +482,6 @@ static const CGFloat kMDCBaseTextAreaDefaultMaximumNumberOfVisibleLines = (CGFlo
 #pragma mark Label
 
 - (void)animateLabel {
-  NSTimeInterval animationDuration = self.labelPositionChanged ? self.animationDuration : 0.0f;
   __weak MDCBaseTextArea *weakSelf = self;
   [MDCTextControlLabelAnimation animateLabel:self.label
                                        state:self.labelPosition
@@ -513,13 +490,12 @@ static const CGFloat kMDCBaseTextAreaDefaultMaximumNumberOfVisibleLines = (CGFlo
                                   normalFont:self.normalFont
                                 floatingFont:self.floatingFont
                     labelTruncationIsPresent:self.layout.labelTruncationIsPresent
-                           animationDuration:animationDuration
+                           animationDuration:self.animationDuration
                                   completion:^(BOOL finished) {
                                     if (finished) {
                                       // Ensure that the label position is correct in case of
                                       // competing animations.
-                                      weakSelf.label.frame = [weakSelf.layout
-                                          labelFrameWithLabelPosition:self.labelPosition];
+                                      weakSelf.label.frame = weakSelf.labelFrame;
                                     }
                                   }];
 }
@@ -571,7 +547,7 @@ static const CGFloat kMDCBaseTextAreaDefaultMaximumNumberOfVisibleLines = (CGFlo
   [self setNeedsLayout];
 }
 
-- (void)setTrailingView:(UIView *)trailingView {
+- (void)setTrailingview:(UIView *)trailingView {
   [_trailingView removeFromSuperview];
   _trailingView = trailingView;
   [self setNeedsLayout];
@@ -642,7 +618,8 @@ static const CGFloat kMDCBaseTextAreaDefaultMaximumNumberOfVisibleLines = (CGFlo
   } else if (self.semanticContentAttribute == UISemanticContentAttributeForceLeftToRight) {
     return NO;
   } else {
-    return self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft;
+    return self.mdf_effectiveUserInterfaceLayoutDirection ==
+           UIUserInterfaceLayoutDirectionRightToLeft;
   }
 }
 
@@ -770,8 +747,8 @@ static const CGFloat kMDCBaseTextAreaDefaultMaximumNumberOfVisibleLines = (CGFlo
 
 #pragma mark - Key-value observing
 
-- (void)observeLabelKeyPaths {
-  for (NSString *keyPath in [MDCBaseTextArea assistiveLabelKeyPaths]) {
+- (void)observeAssistiveLabelKeyPaths {
+  for (NSString *keyPath in [MDCBaseTextArea assistiveLabelKVOKeyPaths]) {
     [self.leadingAssistiveLabel addObserver:self
                                  forKeyPath:keyPath
                                     options:NSKeyValueObservingOptionNew
@@ -781,25 +758,16 @@ static const CGFloat kMDCBaseTextAreaDefaultMaximumNumberOfVisibleLines = (CGFlo
                                      options:NSKeyValueObservingOptionNew
                                      context:kKVOContextMDCBaseTextArea];
   }
-  for (NSString *keyPath in [MDCBaseTextArea labelKeyPaths]) {
-    [self.label addObserver:self
-                 forKeyPath:keyPath
-                    options:NSKeyValueObservingOptionNew
-                    context:kKVOContextMDCBaseTextArea];
-  }
 }
 
 - (void)removeObservers {
-  for (NSString *keyPath in [MDCBaseTextArea assistiveLabelKeyPaths]) {
+  for (NSString *keyPath in [MDCBaseTextArea assistiveLabelKVOKeyPaths]) {
     [self.leadingAssistiveLabel removeObserver:self
                                     forKeyPath:keyPath
                                        context:kKVOContextMDCBaseTextArea];
     [self.trailingAssistiveLabel removeObserver:self
                                      forKeyPath:keyPath
                                         context:kKVOContextMDCBaseTextArea];
-  }
-  for (NSString *keyPath in [MDCBaseTextArea labelKeyPaths]) {
-    [self.label removeObserver:self forKeyPath:keyPath context:kKVOContextMDCBaseTextArea];
   }
 }
 
@@ -808,41 +776,26 @@ static const CGFloat kMDCBaseTextAreaDefaultMaximumNumberOfVisibleLines = (CGFlo
                         change:(NSDictionary<NSKeyValueChangeKey, id> *)change
                        context:(void *)context {
   if (context == kKVOContextMDCBaseTextArea) {
-    if (object == self.leadingAssistiveLabel || object == self.trailingAssistiveLabel) {
-      for (NSString *labelKeyPath in [MDCBaseTextArea assistiveLabelKeyPaths]) {
-        if ([labelKeyPath isEqualToString:keyPath]) {
-          [self setNeedsLayout];
-          break;
-        }
+    if (object != self.leadingAssistiveLabel && object != self.trailingAssistiveLabel) {
+      return;
+    }
+
+    for (NSString *assistiveLabelKeyPath in [MDCBaseTextArea assistiveLabelKVOKeyPaths]) {
+      if ([assistiveLabelKeyPath isEqualToString:keyPath]) {
+        [self setNeedsLayout];
+        break;
       }
-    } else if (object == self.label)
-      for (NSString *labelKeyPath in [MDCBaseTextArea labelKeyPaths]) {
-        if ([labelKeyPath isEqualToString:keyPath]) {
-          [self setNeedsLayout];
-          break;
-        }
-      }
+    }
   }
 }
 
-+ (NSArray<NSString *> *)assistiveLabelKeyPaths {
++ (NSArray<NSString *> *)assistiveLabelKVOKeyPaths {
   static NSArray<NSString *> *keyPaths = nil;
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
     keyPaths = @[
       NSStringFromSelector(@selector(text)),
       NSStringFromSelector(@selector(font)),
-    ];
-  });
-  return keyPaths;
-}
-
-+ (NSArray<NSString *> *)labelKeyPaths {
-  static NSArray<NSString *> *keyPaths = nil;
-  static dispatch_once_t onceToken;
-  dispatch_once(&onceToken, ^{
-    keyPaths = @[
-      NSStringFromSelector(@selector(text)),
     ];
   });
   return keyPaths;

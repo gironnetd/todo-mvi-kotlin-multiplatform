@@ -14,20 +14,14 @@
 
 #import <UIKit/UIKit.h>
 
-NS_ASSUME_NONNULL_BEGIN
-
 /**
- An immutable shadow object that consists of shadow properties (color, opacity, radius, offset,
- spread).
+ An immutable shadow object that consists of shadow properties (opacity, radius, offset).
 
  To generate a shadow instance, please use the MDCShadowBuilder APIs.
  */
 __attribute__((objc_subclassing_restricted)) @interface MDCShadow : NSObject
 
 - (nonnull instancetype)init NS_UNAVAILABLE;
-
-/** The color value of shadow */
-@property(nonatomic, readonly) UIColor *color;
 
 /** CALayer.shadowOpacity */
 @property(nonatomic, readonly) CGFloat opacity;
@@ -38,18 +32,12 @@ __attribute__((objc_subclassing_restricted)) @interface MDCShadow : NSObject
 /** CALayer.shadowOffset */
 @property(nonatomic, readonly) CGSize offset;
 
-/** The spread value of shadow */
-@property(nonatomic, readonly) CGFloat spread;
-
 @end
 
 /**
  Mutable builder to construct immutable `MDCShadow` objects.
  */
 __attribute__((objc_subclassing_restricted)) @interface MDCShadowBuilder : NSObject
-
-/** The color value of shadow */
-@property(nonatomic) UIColor *color;
 
 /** CALayer.shadowOpacity */
 @property(nonatomic) CGFloat opacity;
@@ -60,25 +48,12 @@ __attribute__((objc_subclassing_restricted)) @interface MDCShadowBuilder : NSObj
 /** CALayer.shadowOffset */
 @property(nonatomic) CGSize offset;
 
-/** The spread value of shadow */
-@property(nonatomic) CGFloat spread;
-
 /** Returns an immutable value type containing a snapshot of the values in this object. */
 - (nonnull MDCShadow *)build;
 
-/** Returns a builder with the provided color, opacity, radius, and offset properties. */
-+ (nonnull MDCShadowBuilder *)builderWithColor:(UIColor *)color
-                                       opacity:(CGFloat)opacity
-                                        radius:(CGFloat)radius
-                                        offset:(CGSize)offset;
-
-/** Returns a builder with the provided color, opacity, radius, offset, and spread properties. */
-+ (nonnull MDCShadowBuilder *)builderWithColor:(UIColor *)color
-                                       opacity:(CGFloat)opacity
-                                        radius:(CGFloat)radius
-                                        offset:(CGSize)offset
-                                        spread:(CGFloat)spread;
+/** Returns a builder with the provided opacity, radius, and offset properties. */
++ (nonnull MDCShadowBuilder *)builderWithOpacity:(CGFloat)opacity
+                                          radius:(CGFloat)radius
+                                          offset:(CGSize)offset;
 
 @end
-
-NS_ASSUME_NONNULL_END

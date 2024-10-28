@@ -19,7 +19,7 @@
 static const CGFloat kCornerRadius = 10;
 static const CGFloat kMargins = 10;
 
-static UIVisualEffectView *MDCInitializeCompatibleBlurView(void) {
+static UIVisualEffectView *MDCInitializeCompatibleBlurView() {
   UIBlurEffect *blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleProminent];
   UIVisualEffectView *blurView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
   return blurView;

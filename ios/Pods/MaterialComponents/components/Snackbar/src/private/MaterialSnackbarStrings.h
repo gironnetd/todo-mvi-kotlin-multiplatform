@@ -19,5 +19,4 @@
 
 typedef enum {
   kStr_MaterialSnackbarMessageViewTitleA11yHint = 0,
-  kStr_MaterialSnackbarMessageViewDismissalLabel = 1,
 } MaterialSnackbarStringId;

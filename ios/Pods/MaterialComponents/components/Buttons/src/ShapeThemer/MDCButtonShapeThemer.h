@@ -17,11 +17,6 @@
 #import "MaterialButtons.h"
 #import "MaterialShapeScheme.h"
 
-API_DEPRECATED_BEGIN("🤖👀 Use branded M3CButton instead. "
-                     "See go/material-ios-buttons/gm2-migration for more details. "
-                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
-                     ios(12, 12))
-
 /**
  The Material Design shape system's themer for instances of MDCButton.
 
@@ -47,5 +42,3 @@ __deprecated_msg("Please use MDCButton+MaterialTheming instead. (Note: "
                 toButton:(nonnull MDCButton *)button;
 
 @end
-
-API_DEPRECATED_END

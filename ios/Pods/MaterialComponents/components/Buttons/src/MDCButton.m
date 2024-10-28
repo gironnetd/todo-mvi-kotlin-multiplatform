@@ -14,39 +14,24 @@
 
 #import "MDCButton.h"
 
-#import <UIKit/UIKit.h>
-
 #import "private/MDCButton+Subclassing.h"
-#import "UIView+MaterialElevationResponding.h"
-#import "MDCInkView.h"
-#import "MDCRippleView.h"
-#import "MDCStatefulRippleView.h"
-#import "M3CAnimationActions.h"
-#import "MDCShadow.h"
-#import "MDCShadowsCollection.h"
-#import "MDCShadowElevations.h"
-#import "MDCRoundedCornerTreatment.h"
-#import "MDCRectangleShapeGenerator.h"
-#import "MDCShapeMediator.h"
-#import "MDCShapedShadowLayer.h"
-#import "MDCFontTextStyle.h"
-#import "MDCTypography.h"
-#import "UIFont+MaterialScalable.h"
-#import "UIFont+MaterialTypography.h"
-#import "MDCMath.h"
-
-#if defined(TARGET_OS_VISION) && TARGET_OS_VISION
-// For code review, use the review queue listed in go/material-visionos-review.
-#define IS_VISIONOS 1
-#else
-#define IS_VISIONOS 0
-#endif
+#import "MaterialElevation.h"
+#import "MaterialInk.h"
+#import "MaterialRipple.h"
+#import "MaterialShadow.h"
+#import "MaterialShadowElevations.h"
+#import "MaterialShapeLibrary.h"
+#import "MaterialShapes.h"
+#import "MaterialTypography.h"
+#import "MaterialMath.h"
 
 // TODO(ajsecord): Animate title color when animating between enabled/disabled states.
 // Non-trivial: http://corecocoa.wordpress.com/2011/10/04/animatable-text-color-of-uilabel/
 
-static const CGFloat MDCButtonMinimumTouchTargetHeight = 44;
-static const CGFloat MDCButtonMinimumTouchTargetWidth = 44;
+// Specified in Material Guidelines
+// https://material.io/guidelines/layout/metrics-keylines.html#metrics-keylines-touch-target-size
+static const CGFloat MDCButtonMinimumTouchTargetHeight = 48;
+static const CGFloat MDCButtonMinimumTouchTargetWidth = 48;
 static const CGFloat MDCButtonDefaultCornerRadius = 2.0;
 static const CGFloat kDefaultRippleAlpha = (CGFloat)0.12;
 
@@ -145,13 +130,6 @@ static NSAttributedString *UppercaseAttributedString(NSAttributedString *string)
 @property(nonatomic) UIEdgeInsets hitAreaInsets;
 @property(nonatomic, assign) UIEdgeInsets currentVisibleAreaInsets;
 @property(nonatomic, assign) CGSize lastRecordedIntrinsicContentSize;
-
-// Used only when layoutTitleWithConstraints is enabled.
-@property(nonatomic, strong) NSLayoutConstraint *titleTopConstraint;
-@property(nonatomic, strong) NSLayoutConstraint *titleBottomConstraint;
-@property(nonatomic, strong) NSLayoutConstraint *titleLeadingConstraint;
-@property(nonatomic, strong) NSLayoutConstraint *titleTrailingConstraint;
-
 @end
 
 @implementation MDCButton
@@ -167,7 +145,7 @@ static BOOL gEnablePerformantShadow = NO;
 
 + (Class)layerClass {
   if (gEnablePerformantShadow) {
-    return [super layerClass];
+    return [super class];
   } else {
     return [MDCShapedShadowLayer class];
   }
@@ -227,6 +205,7 @@ static BOOL gEnablePerformantShadow = NO;
   _borderWidths = [NSMutableDictionary dictionary];
   _fonts = [NSMutableDictionary dictionary];
   _accessibilityTraitsIncludesButton = YES;
+  _adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable = YES;
   _mdc_overrideBaseElevation = -1;
   _currentElevation = 0;
 
@@ -238,7 +217,6 @@ static BOOL gEnablePerformantShadow = NO;
 
   // Disable default highlight state.
   self.adjustsImageWhenHighlighted = NO;
-  self.tintAdjustmentMode = UIViewTintAdjustmentModeNormal;
 
 #if (!defined(TARGET_OS_TV) || TARGET_OS_TV == 0)
   self.showsTouchWhenHighlighted = NO;
@@ -300,6 +278,31 @@ static BOOL gEnablePerformantShadow = NO;
   if (_uppercaseTitle) {
     [self updateTitleCase];
   }
+
+#ifdef __IPHONE_13_4
+#if !TARGET_OS_TV
+  if (@available(iOS 13.4, *)) {
+    if ([self respondsToSelector:@selector(pointerStyleProvider)]) {
+      __weak __typeof__(self) weakSelf = self;
+      UIButtonPointerStyleProvider buttonPointerStyleProvider = ^UIPointerStyle *(
+          UIButton *buttonToStyle, UIPointerEffect *proposedEffect, UIPointerShape *proposedShape) {
+        __typeof__(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+          return [UIPointerStyle styleWithEffect:proposedEffect shape:proposedShape];
+        }
+        CGPathRef boundingCGPath = [strongSelf boundingPath].CGPath;
+        UIBezierPath *boundingBezierPath = [UIBezierPath bezierPathWithCGPath:boundingCGPath];
+        UIPointerShape *shape = [UIPointerShape shapeWithPath:boundingBezierPath];
+        return [UIPointerStyle styleWithEffect:proposedEffect shape:shape];
+      };
+      self.pointerStyleProvider = buttonPointerStyleProvider;
+      // Setting the pointerStyleProvider to a non-nil value flips pointerInteractionEnabled to YES.
+      // To maintain parity with UIButton's default behavior, we want it to default to NO.
+      self.pointerInteractionEnabled = NO;
+    }
+  }
+#endif  // !TARGET_OS_TV
+#endif  // __IPHONE_13_4
 }
 
 - (void)dealloc {
@@ -380,14 +383,7 @@ static BOOL gEnablePerformantShadow = NO;
     _inkView.frame = bounds;
     self.rippleView.frame = bounds;
   }
-
-#if IS_VISIONOS
-  UITraitCollection *current = [UITraitCollection currentTraitCollection];
-  self.titleLabel.frame =
-      MDCRectAlignToScale(self.titleLabel.frame, current ? [current displayScale] : 1.0);
-#else
   self.titleLabel.frame = MDCRectAlignToScale(self.titleLabel.frame, [UIScreen mainScreen].scale);
-#endif
 
   if ([self shouldInferMinimumAndMaximumSize]) {
     [self inferMinimumAndMaximumSize];
@@ -819,15 +815,6 @@ static BOOL gEnablePerformantShadow = NO;
 
 #pragma mark - Image Tint Color
 
-- (void)setTintColor:(UIColor *)tintColor {
-  // Use of both tintColor and imageTintColor:forState: results in confusing results. We are using a
-  // last call wins stratgy to allow for both to still be used.
-  [_imageTintColors removeAllObjects];
-  [self updateImageTintColor];
-  _imageTintStatefulAPIEnabled = NO;
-  [super setTintColor:tintColor];
-}
-
 - (nullable UIColor *)imageTintColorForState:(UIControlState)state {
   return _imageTintColors[@(state)] ?: _imageTintColors[@(UIControlStateNormal)];
 }
@@ -883,23 +870,13 @@ static BOOL gEnablePerformantShadow = NO;
 
 - (void)updateShadow {
   if (_shapedLayer.shapeGenerator == nil) {
-    MDCShadow *shadow = [self.shadowsCollection shadowForElevation:self.mdc_currentElevation];
-    shadow = [[MDCShadowBuilder
-        builderWithColor:[self shadowColorForState:self.state] ?: MDCShadowColor()
-                 opacity:shadow.opacity
-                  radius:shadow.radius
-                  offset:shadow.offset
-                  spread:shadow.spread] build];
-    MDCConfigureShadowForView(self, shadow);
+    MDCConfigureShadowForView(self,
+                              [self.shadowsCollection shadowForElevation:self.mdc_currentElevation],
+                              [self shadowColorForState:self.state] ?: MDCShadowColor());
   } else {
-    MDCShadow *shadow = [self.shadowsCollection shadowForElevation:self.mdc_currentElevation];
-    shadow = [[MDCShadowBuilder
-        builderWithColor:[self shadowColorForState:self.state] ?: MDCShadowColor()
-                 opacity:shadow.opacity
-                  radius:shadow.radius
-                  offset:shadow.offset
-                  spread:shadow.spread] build];
-    MDCConfigureShadowForViewWithPath(self, shadow, self.layer.shadowPath);
+    MDCConfigureShadowForViewWithPath(
+        self, [self.shadowsCollection shadowForElevation:self.mdc_currentElevation],
+        [self shadowColorForState:self.state] ?: MDCShadowColor(), self.layer.shadowPath);
   }
 }
 
@@ -971,7 +948,7 @@ static BOOL gEnablePerformantShadow = NO;
 
 #pragma mark - Title Font
 
-- (nonnull UIFont *)titleFontForState:(UIControlState)state {
+- (nullable UIFont *)titleFontForState:(UIControlState)state {
   // If the `.highlighted` flag is set, turn off the `.disabled` flag
   if ((state & UIControlStateHighlighted) == UIControlStateHighlighted) {
     state = state & ~UIControlStateDisabled;
@@ -989,8 +966,10 @@ static BOOL gEnablePerformantShadow = NO;
     if (font.mdc_scalingCurve) {
       font = [font mdc_scaledFontForTraitEnvironment:self];
     } else {
-      font = [font mdc_fontSizedForMaterialTextStyle:MDCFontTextStyleButton
-                                scaledForDynamicType:YES];
+      if (self.adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable) {
+        font = [font mdc_fontSizedForMaterialTextStyle:MDCFontTextStyleButton
+                                  scaledForDynamicType:YES];
+      }
     }
   }
   return font;
@@ -1076,10 +1055,7 @@ static BOOL gEnablePerformantShadow = NO;
 }
 
 - (UIBezierPath *)boundingPath {
-  CGSize cornerRadii = CGSizeMake(self.layer.cornerRadius, self.layer.cornerRadius);
-  return [UIBezierPath bezierPathWithRoundedRect:self.bounds
-                               byRoundingCorners:(UIRectCorner)self.layer.maskedCorners
-                                     cornerRadii:cornerRadii];
+  return [UIBezierPath bezierPathWithRoundedRect:self.bounds cornerRadius:self.layer.cornerRadius];
 }
 
 - (UIEdgeInsets)defaultContentEdgeInsets {
@@ -1180,14 +1156,9 @@ static BOOL gEnablePerformantShadow = NO;
     self.layer.shadowPath = nil;
   } else {
     if (gEnablePerformantShadow) {
-      MDCShadow *shadow = [self.shadowsCollection shadowForElevation:self.mdc_currentElevation];
-      shadow = [[MDCShadowBuilder
-          builderWithColor:[self shadowColorForState:self.state] ?: MDCShadowColor()
-                   opacity:shadow.opacity
-                    radius:shadow.radius
-                    offset:shadow.offset
-                    spread:shadow.spread] build];
-      MDCConfigureShadowForView(self, shadow);
+      MDCConfigureShadowForView(
+          self, [self.shadowsCollection shadowForElevation:self.mdc_currentElevation],
+          [self shadowColorForState:self.state] ?: MDCShadowColor());
     } else {
       self.layer.shadowPath = [self boundingPath].CGPath;
     }
@@ -1347,14 +1318,7 @@ static BOOL gEnablePerformantShadow = NO;
 
   UIEdgeInsets visibleAreaInsets = UIEdgeInsetsZero;
   if (self.centerVisibleArea) {
-    CGSize visibleAreaSize;
-    if (self.layoutTitleWithConstraints) {
-      visibleAreaSize =
-          [self systemLayoutSizeFittingSize:CGSizeMake(self.bounds.size.width,
-                                                       UILayoutFittingCompressedSize.height)];
-    } else {
-      visibleAreaSize = [self sizeThatFits:CGSizeMake(CGFLOAT_MAX, CGFLOAT_MAX)];
-    }
+    CGSize visibleAreaSize = [self sizeThatFits:CGSizeMake(CGFLOAT_MAX, CGFLOAT_MAX)];
     CGFloat additionalRequiredHeight =
         MAX(0, CGRectGetHeight(self.bounds) - visibleAreaSize.height);
     CGFloat additionalRequiredWidth = MAX(0, CGRectGetWidth(self.bounds) - visibleAreaSize.width);
@@ -1475,61 +1439,6 @@ static BOOL gEnablePerformantShadow = NO;
   }
 }
 
-#pragma mark - Enabling multi-line layout
-
-- (void)setLayoutTitleWithConstraints:(BOOL)layoutTitleWithConstraints {
-  if (_layoutTitleWithConstraints == layoutTitleWithConstraints) {
-    return;
-  }
-
-  _layoutTitleWithConstraints = layoutTitleWithConstraints;
-
-  if (_layoutTitleWithConstraints) {
-    self.titleTopConstraint = [self.titleLabel.topAnchor constraintEqualToAnchor:self.topAnchor];
-    self.titleBottomConstraint =
-        [self.titleLabel.bottomAnchor constraintEqualToAnchor:self.bottomAnchor];
-    self.titleLeadingConstraint =
-        [self.titleLabel.leadingAnchor constraintEqualToAnchor:self.leadingAnchor];
-    self.titleTrailingConstraint =
-        [self.titleLabel.trailingAnchor constraintEqualToAnchor:self.trailingAnchor];
-    self.titleTopConstraint.active = YES;
-    self.titleBottomConstraint.active = YES;
-    self.titleLeadingConstraint.active = YES;
-    self.titleTrailingConstraint.active = YES;
-
-    [self.titleLabel setContentHuggingPriority:UILayoutPriorityRequired
-                                       forAxis:UILayoutConstraintAxisHorizontal];
-    [self.titleLabel setContentHuggingPriority:UILayoutPriorityRequired
-                                       forAxis:UILayoutConstraintAxisVertical];
-
-    [self updateTitleLabelConstraint];
-  } else {
-    self.titleTopConstraint.active = NO;
-    self.titleBottomConstraint.active = NO;
-    self.titleLeadingConstraint.active = NO;
-    self.titleTrailingConstraint.active = NO;
-    self.titleTopConstraint = nil;
-    self.titleBottomConstraint = nil;
-    self.titleLeadingConstraint = nil;
-    self.titleTrailingConstraint = nil;
-  }
-}
-
-- (void)updateTitleLabelConstraint {
-  self.titleTopConstraint.constant = self.contentEdgeInsets.top;
-  self.titleBottomConstraint.constant = -self.contentEdgeInsets.bottom;
-  self.titleLeadingConstraint.constant = self.contentEdgeInsets.left;
-  self.titleTrailingConstraint.constant = -self.contentEdgeInsets.right;
-}
-
-- (void)setContentEdgeInsets:(UIEdgeInsets)contentEdgeInsets {
-  [super setContentEdgeInsets:contentEdgeInsets];
-
-  if (self.layoutTitleWithConstraints) {
-    [self updateTitleLabelConstraint];
-  }
-}
-
 #pragma mark - Performant Shadow Toggle
 
 + (void)setEnablePerformantShadow:(BOOL)enable {
@@ -1538,16 +1447,6 @@ static BOOL gEnablePerformantShadow = NO;
 
 + (BOOL)enablePerformantShadow {
   return gEnablePerformantShadow;
-}
-
-#pragma mark - CALayerDelegate
-
-- (id<CAAction>)actionForLayer:(CALayer *)layer forKey:(NSString *)key {
-  if (gEnablePerformantShadow && layer == self.layer && M3CIsMDCShadowPathKey(key)) {
-    return M3CShadowPathActionForLayer(layer);
-  }
-
-  return [super actionForLayer:layer forKey:key];
 }
 
 @end

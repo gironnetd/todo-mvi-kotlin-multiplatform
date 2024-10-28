@@ -14,7 +14,6 @@
 
 #import "MDCInkGestureRecognizer.h"
 
-#import <CoreGraphics/CoreGraphics.h>
 #import <UIKit/UIGestureRecognizerSubclass.h>
 
 static const CGFloat kInkGestureDefaultDragCancelDistance = 20;

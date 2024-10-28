@@ -1,7 +1,7 @@
 package com.todo.mvi.kotlin.multiplatform.android.tasks
 
 import com.todo.mvi.kotlin.multiplatform.android.mvibase.MviAction
-import comtodomvikotlinmultiplatform.Task
+import com.todo.mvi.kotlin.multiplatform.data.Task
 
 sealed class TasksAction : MviAction {
   data class LoadTasksAction(

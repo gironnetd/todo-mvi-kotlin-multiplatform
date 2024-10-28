@@ -71,6 +71,7 @@ static const CGFloat kDetailColorOpacity = (CGFloat)0.6;
 
 - (void)commonMDCSelfSizingStereoCellInit {
   self.cachedLayouts = [[NSMutableDictionary alloc] init];
+  _adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable = YES;
   [self createSubviews];
 }
 
@@ -116,7 +117,7 @@ static const CGFloat kDetailColorOpacity = (CGFloat)0.6;
   self.detailLabel.frame = layout.detailLabelFrame;
   self.leadingImageView.frame = layout.leadingImageViewFrame;
   self.trailingImageView.frame = layout.trailingImageViewFrame;
-  if (self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+  if (self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
     self.leadingImageView.frame =
         MDFRectFlippedHorizontally(self.leadingImageView.frame, layout.cellWidth);
     self.trailingImageView.frame =
@@ -215,6 +216,13 @@ static const CGFloat kDetailColorOpacity = (CGFloat)0.6;
   [self adjustFontsForDynamicType];
 }
 
+- (void)setAdjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable:
+    (BOOL)adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable {
+  _adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable =
+      adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable;
+  [self adjustFontsForDynamicType];
+}
+
 // Handles UIContentSizeCategoryDidChangeNotifications
 - (void)contentSizeCategoryDidChange:(__unused NSNotification *)notification {
   [self adjustFontsForDynamicType];
@@ -226,7 +234,7 @@ static const CGFloat kDetailColorOpacity = (CGFloat)0.6;
   if (self.mdc_adjustsFontForContentSizeCategory) {
     if (titleFont.mdc_scalingCurve) {
       titleFont = [titleFont mdc_scaledFontForTraitEnvironment:self];
-    } else {
+    } else if (self.adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable) {
       titleFont =
           [titleFont mdc_fontSizedForMaterialTextStyle:MDCFontTextStyleTitle
                                   scaledForDynamicType:self.mdc_adjustsFontForContentSizeCategory];
@@ -234,7 +242,7 @@ static const CGFloat kDetailColorOpacity = (CGFloat)0.6;
 
     if (detailFont.mdc_scalingCurve) {
       detailFont = [detailFont mdc_scaledFontForTraitEnvironment:self];
-    } else {
+    } else if (self.adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable) {
       detailFont =
           [detailFont mdc_fontSizedForMaterialTextStyle:MDCFontTextStyleCaption
                                    scaledForDynamicType:self.mdc_adjustsFontForContentSizeCategory];

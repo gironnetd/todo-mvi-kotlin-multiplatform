@@ -13,9 +13,8 @@
 // limitations under the License.
 
 #import "MDCSnackbarMessage.h"
-#import "private/MDCSnackbarMessageInternal.h"
-#import "MDCAvailability.h"
 #import "MDCSnackbarMessageView.h"
+#import "private/MDCSnackbarMessageInternal.h"
 
 static const NSTimeInterval kDefaultDuration = 4;
 
@@ -77,7 +76,6 @@ static BOOL _usesLegacySnackbar = NO;
   copy.automaticallyDismisses = self.automaticallyDismisses;
   copy.presentationHostViewOverride = self.presentationHostViewOverride;
   copy.shouldDismissOnOverlayTap = self.shouldDismissOnOverlayTap;
-  copy.usesLegacyDismissalBehavior = self.usesLegacyDismissalBehavior;
 
   // Unfortunately there's not really a concept of 'copying' a block (in the same way you would copy
   // a string, for example). A block's pointer is immutable once it is created and copied to the
@@ -107,37 +105,14 @@ static BOOL _usesLegacySnackbar = NO;
   return [description copy];
 }
 
-#pragma mark - Text
+#pragma mark Text
 
 - (void)setText:(NSString *)text {
-  NSDictionary *attributes = @{};
-
-  // TODO(b/298435271): Remove the #if check below once all users are building with Xcode 15.
-#if MDC_AVAILABLE_SDK_IOS(17_0)
-  if (@available(iOS 17.0, *)) {
-    // Default to low-priority announcements.
-    attributes = @{UIAccessibilitySpeechAttributeAnnouncementPriority : UIAccessibilityPriorityLow};
-  }
-#endif
-  self.attributedText = [[NSAttributedString alloc] initWithString:[text copy]
-                                                        attributes:attributes];
+  self.attributedText = [[NSAttributedString alloc] initWithString:[text copy]];
 }
 
 - (NSString *)text {
   return [self.attributedText string];
-}
-
-#pragma mark - Action
-
-- (void)setAction:(MDCSnackbarMessageAction *)action {
-  if (action) {
-    NSAssert(action.title.length > 0, @"Snackbar actions must have a non-empty title.");
-  }
-  if (action.title.length == 0) {
-    _action = nil;
-  } else {
-    _action = action;
-  }
 }
 
 #pragma mark - Duration
@@ -151,34 +126,11 @@ static BOOL _usesLegacySnackbar = NO;
 
 #pragma mark - A11y
 
-- (void)setAccessibilityLabel:(NSString *)accessibilityLabel {
-  if (accessibilityLabel == nil) {
-    self.attributedAccessibilityLabel = nil;
+- (NSString *)voiceNotificationText {
+  if ([self.accessibilityLabel length]) {
+    return self.accessibilityLabel;
   } else {
-    NSDictionary *attributes = @{};
-
-    // TODO(b/298435271): Remove the #if check below once all users are building with Xcode 15.
-#if MDC_AVAILABLE_SDK_IOS(17_0)
-    if (@available(iOS 17.0, *)) {
-      // Default to low-priority announcements.
-      attributes =
-          @{UIAccessibilitySpeechAttributeAnnouncementPriority : UIAccessibilityPriorityLow};
-    }
-#endif
-    self.attributedAccessibilityLabel =
-        [[NSAttributedString alloc] initWithString:[accessibilityLabel copy] attributes:attributes];
-  }
-}
-
-- (NSString *)accessibilityLabel {
-  return [self.attributedAccessibilityLabel string];
-}
-
-- (NSAttributedString *)voiceNotificationText {
-  if (self.attributedAccessibilityLabel) {
-    return self.attributedAccessibilityLabel;
-  } else {
-    return self.attributedText;
+    return self.text;
   }
 }
 
@@ -248,12 +200,6 @@ static BOOL _usesLegacySnackbar = NO;
   copy.accessibilityHint = self.accessibilityHint;
 
   return copy;
-}
-
-- (void)setTitle:(NSString *)title {
-  if (title.length > 0) {
-    _title = title;
-  }
 }
 
 @end

@@ -14,12 +14,7 @@
 
 #import <UIKit/UIKit.h>
 
-#import "MDCCollectionViewStyling.h"  // IWYU pragma: keep
-
-API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
-                     "Use branded UITableView or UICollectionView instead: go/material-ios-lists. "
-                     "This is go/material-ios-migrations#not-scriptable 🕘",
-                     ios(11, 12))
+#import "MDCCollectionViewStyling.h"  // IWYU pragma: export
 
 @class MDCInkTouchController;
 @class MDCInkView;
@@ -201,5 +196,3 @@ API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
                     rippleViewAtIndexPath:(nonnull NSIndexPath *)indexPath;
 
 @end
-
-API_DEPRECATED_END

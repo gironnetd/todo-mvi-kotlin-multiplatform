@@ -14,11 +14,6 @@
 
 #import <Foundation/Foundation.h>
 
-API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
-                     "Use branded UITableView or UICollectionView instead: go/material-ios-lists. "
-                     "This is go/material-ios-migrations#not-scriptable 🕘",
-                     ios(11, 12))
-
 /**
  A delegate protocol that provides editing notifications for three types of collection view
  gestural interations:
@@ -348,5 +343,3 @@ API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
     didCancelSwipeToDismissSection:(NSInteger)section;
 
 @end
-
-API_DEPRECATED_END

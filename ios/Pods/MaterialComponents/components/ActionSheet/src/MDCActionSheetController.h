@@ -12,24 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "MDCMinimumOS.h"  // IWYU pragma: keep
-
 #import <UIKit/UIKit.h>
 
 #import "MDCActionSheetAction.h"
-#import "MDCBottomSheetTransitionControllerDelegate.h"
 #import "MaterialBottomSheet.h"
 #import "MaterialElevation.h"
 
 @class MDCActionSheetAction;
 @class MDCActionSheetController;
 @protocol MDCActionSheetControllerDelegate;
-
-API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
-                     "Follow go/material-ios-menus to use UIMenu instead."
-                     "Use UIAlertController in action sheet style for destructive confirmations. "
-                     "This is go/material-ios-migrations#not-scriptable 🕘",
-                     ios(12, 12))
 
 /**
  MDCActionSheetController displays an alert message to the user, similar to
@@ -51,10 +42,8 @@ API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
  in a sheet from the bottom.
 
  */
-__attribute__((objc_subclassing_restricted))
-@interface MDCActionSheetController
-    : UIViewController<MDCElevatable, MDCElevationOverriding, UIContentSizeCategoryAdjusting,
-                       MDCBottomSheetTransitionControllerDelegate>
+__attribute__((objc_subclassing_restricted)) @interface MDCActionSheetController
+    : UIViewController<MDCElevatable, MDCElevationOverriding>
 
 /**
  Designated initializer to create and return a view controller for displaying an alert to the user.
@@ -146,6 +135,20 @@ __attribute__((objc_subclassing_restricted))
 @property(nonatomic, copy, nullable) void (^traitCollectionDidChangeBlock)
     (MDCActionSheetController *_Nonnull actionSheet,
      UITraitCollection *_Nullable previousTraitCollection);
+
+/**
+ Indicates whether the button should automatically update its font when the device’s
+ UIContentSizeCategory is changed.
+
+ This property is modeled after the adjustsFontForContentSizeCategory property in the
+ UIContentSizeCategoryAdjusting protocol added by Apple in iOS 10.0.
+
+ If set to YES, this button will base its text font on MDCFontTextStyleButton.
+
+ Defaults value is NO.
+ */
+@property(nonatomic, setter=mdc_setAdjustsFontForContentSizeCategory:)
+    BOOL mdc_adjustsFontForContentSizeCategory;
 
 /**
   The font applied to the title of the action sheet controller.
@@ -250,5 +253,3 @@ __attribute__((objc_subclassing_restricted))
 - (void)setModalPresentationStyle:(UIModalPresentationStyle)modalPresentationStyle NS_UNAVAILABLE;
 
 @end
-
-API_DEPRECATED_END

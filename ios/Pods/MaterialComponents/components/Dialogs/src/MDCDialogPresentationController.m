@@ -13,14 +13,11 @@
 // limitations under the License.
 
 #import "MDCDialogPresentationController.h"
-#import <UIKit/UIKit.h>
 
 #import "private/MDCDialogShadowedView.h"
 #import "MDCDialogPresentationControllerDelegate.h"
 #import "MaterialShadowElevations.h"
 #import "MaterialKeyboardWatcher.h"
-
-NS_ASSUME_NONNULL_BEGIN
 
 static const CGFloat MDCDialogMinimumWidth = 280;
 // TODO: Spec indicates 40 side margins and 280 minimum width.
@@ -41,7 +38,6 @@ static const UIEdgeInsets MDCDialogEdgeInsets = {24, 20, 24, 20};
 
 @implementation MDCDialogPresentationController {
   UITapGestureRecognizer *_dismissGestureRecognizer;
-  UIEdgeInsets _dialogEdgeInsets;
   BOOL useDialogCornerRadius;
   CGFloat previousPresentedViewCornerRadius;
 }
@@ -69,11 +65,11 @@ static const UIEdgeInsets MDCDialogEdgeInsets = {24, 20, 24, 20};
   return _trackingView.layer.cornerRadius;
 }
 
-- (void)setScrimColor:(UIColor *_Nullable)scrimColor {
+- (void)setScrimColor:(UIColor *)scrimColor {
   self.dimmingView.backgroundColor = scrimColor;
 }
 
-- (UIColor *_Nullable)scrimColor {
+- (UIColor *)scrimColor {
   return self.dimmingView.backgroundColor;
 }
 
@@ -93,17 +89,8 @@ static const UIEdgeInsets MDCDialogEdgeInsets = {24, 20, 24, 20};
   return self.trackingView.shadowColor;
 }
 
-- (void)setDialogEdgeInsets:(UIEdgeInsets)dialogEdgeInsets {
-  _dialogEdgeInsets = dialogEdgeInsets;
-}
-
-- (UIEdgeInsets)dialogEdgeInsets {
-  return _dialogEdgeInsets;
-}
-
 - (instancetype)initWithPresentedViewController:(UIViewController *)presentedViewController
-                       presentingViewController:
-                           (nullable UIViewController *)presentingViewController {
+                       presentingViewController:(UIViewController *)presentingViewController {
   self = [super initWithPresentedViewController:presentedViewController
                        presentingViewController:presentingViewController];
   if (self) {
@@ -118,7 +105,6 @@ static const UIEdgeInsets MDCDialogEdgeInsets = {24, 20, 24, 20};
 
     _trackingView = [[MDCDialogShadowedView alloc] init];
     _trackingView.shadowColor = UIColor.blackColor;
-    _dialogEdgeInsets = MDCDialogEdgeInsets;
 
     [self registerKeyboardNotifications];
   }
@@ -130,7 +116,7 @@ static const UIEdgeInsets MDCDialogEdgeInsets = {24, 20, 24, 20};
   [self unregisterKeyboardNotifications];
 }
 
-- (void)traitCollectionDidChange:(nullable UITraitCollection *)previousTraitCollection {
+- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
   [super traitCollectionDidChange:previousTraitCollection];
   if (self.traitCollectionDidChangeBlock) {
     self.traitCollectionDidChangeBlock(self, previousTraitCollection);
@@ -142,21 +128,15 @@ static const UIEdgeInsets MDCDialogEdgeInsets = {24, 20, 24, 20};
 
   // For pre iOS 11 devices, we are assuming a safeAreaInset of UIEdgeInsetsZero
   UIEdgeInsets containerSafeAreaInsets = UIEdgeInsetsZero;
-  containerSafeAreaInsets = self.containerView.safeAreaInsets;
+  if (@available(iOS 11.0, *)) {
+    containerSafeAreaInsets = self.containerView.safeAreaInsets;
+  }
 
   // Take the larger of the Safe Area insets and the Material specified insets.
-  containerSafeAreaInsets.top = MAX(containerSafeAreaInsets.top, _dialogEdgeInsets.top);
-  containerSafeAreaInsets.left = MAX(containerSafeAreaInsets.left, _dialogEdgeInsets.left);
-  containerSafeAreaInsets.right = MAX(containerSafeAreaInsets.right, _dialogEdgeInsets.right);
-  containerSafeAreaInsets.bottom = MAX(containerSafeAreaInsets.bottom, _dialogEdgeInsets.bottom);
-
-  // Take into account that the insets may make the dialog less than the minimum width
-  if (MDCDialogMinimumWidth >
-      containerBounds.size.width - (containerSafeAreaInsets.left + containerSafeAreaInsets.right)) {
-    CGFloat horizontalInsets = (containerBounds.size.width - MDCDialogMinimumWidth) / 2;
-    containerSafeAreaInsets.left = horizontalInsets;
-    containerSafeAreaInsets.right = horizontalInsets;
-  }
+  containerSafeAreaInsets.top = MAX(containerSafeAreaInsets.top, MDCDialogEdgeInsets.top);
+  containerSafeAreaInsets.left = MAX(containerSafeAreaInsets.left, MDCDialogEdgeInsets.left);
+  containerSafeAreaInsets.right = MAX(containerSafeAreaInsets.right, MDCDialogEdgeInsets.right);
+  containerSafeAreaInsets.bottom = MAX(containerSafeAreaInsets.bottom, MDCDialogEdgeInsets.bottom);
 
   // Take into account a visible keyboard
   CGFloat keyboardHeight = [MDCKeyboardWatcher sharedKeyboardWatcher].visibleKeyboardHeight;
@@ -371,19 +351,6 @@ static const UIEdgeInsets MDCDialogEdgeInsets = {24, 20, 24, 20};
 
 - (void)dismiss:(UIGestureRecognizer *)gesture {
   if (gesture.state == UIGestureRecognizerStateRecognized) {
-    BOOL shouldDismiss = YES;
-    if ([self.dialogPresentationControllerDelegate
-            respondsToSelector:@selector(dialogPresentationControllerShouldDismiss:)]) {
-      shouldDismiss = [self.dialogPresentationControllerDelegate
-          dialogPresentationControllerShouldDismiss:self];
-    }
-    if (!shouldDismiss) {
-      return;
-    }
-    if ([self.dialogPresentationControllerDelegate
-            respondsToSelector:@selector(dialogPresentationControllerWillDismiss:)]) {
-      [self.dialogPresentationControllerDelegate dialogPresentationControllerWillDismiss:self];
-    }
     [self.presentingViewController
         dismissViewControllerAnimated:YES
                            completion:^{
@@ -455,5 +422,3 @@ static const UIEdgeInsets MDCDialogEdgeInsets = {24, 20, 24, 20};
 }
 
 @end
-
-NS_ASSUME_NONNULL_END

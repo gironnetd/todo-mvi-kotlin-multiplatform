@@ -14,13 +14,9 @@
 
 #import <UIKit/UIKit.h>
 
-API_DEPRECATED_BEGIN(
-    "🕘 Schedule time to migrate. "
-    "Use branded UITextField or UITextView instead: go/material-ios-text-fields/gm2-migration. "
-    "This is go/material-ios-migrations#not-scriptable 🕘",
-    ios(12, 12))
-
-@interface MDCTextInputBorderView : UIView <NSCopying>
+__deprecated_msg(
+    "MDCTextField and its associated classes are deprecated. Please use TextControls instead.")
+    @interface MDCTextInputBorderView : UIView<NSCopying>
 
 /**
  The color of the area inside the border.
@@ -50,5 +46,3 @@ API_DEPRECATED_BEGIN(
 @property(nonatomic, nullable, strong) UIColor *borderStrokeColor UI_APPEARANCE_SELECTOR;
 
 @end
-
-API_DEPRECATED_END

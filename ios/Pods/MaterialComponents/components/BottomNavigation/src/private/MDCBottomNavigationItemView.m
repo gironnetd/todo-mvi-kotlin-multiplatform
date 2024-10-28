@@ -11,27 +11,22 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 #import <CoreGraphics/CoreGraphics.h>
 
 #import "MDCBottomNavigationItemView.h"
 
-#import "MDCBadgeAppearance.h"
-#import "MDCBadgeView.h"
-#import "MDCBottomNavigationBar.h"
-#import "MDCRippleTouchController.h"
-#import "MDCRippleView.h"
+#import "MaterialInk.h"
+#import "MaterialRipple.h"
+#import <MDFInternationalization/MDFInternationalization.h>
 
-NS_ASSUME_NONNULL_BEGIN
+#import "MDCBottomNavigationBar.h"
+#import "MDCBottomNavigationItemBadge.h"
 
 // A number large enough to be larger than any reasonable screen dimension but small enough that
 // CGFloat doesn't lose precision.
 static const CGFloat kMaxSizeDimension = 1000000;
-static const CGFloat MDCBottomNavigationItemViewRippleOpacity = (CGFloat)0.150;
+static const CGFloat MDCBottomNavigationItemViewInkOpacity = (CGFloat)0.150;
 static const CGFloat MDCBottomNavigationItemViewTitleFontSize = 12;
-
-// Selection indicator animation details.
-static const CGFloat kSelectionIndicatorTransformAnimationDuration = 0.17;
 
 /** The default value for @c numberOfLines for the title label. */
 static const NSInteger kDefaultTitleNumberOfLines = 1;
@@ -43,18 +38,6 @@ static const CGFloat kBadgeXOffsetFromIconEdgeWithTextLTR = -8;
 // However, when the badge has no visible text, its horizontal center should be 1 point inset from
 // the edge of the image.
 static const CGFloat kBadgeXOffsetFromIconEdgeEmptyLTR = -1;
-
-// Offsets used for anchored layout
-static const CGFloat kAnchorVerticalOffsetWithLabel = -25.0;
-static const CGFloat kAnchorVerticalOffsetWithoutLabel = -16.0;
-static const CGFloat kBadgeVerticalOffset = 2.0f;
-static const CGFloat kIconVerticalOffset = 1.0;
-static const CGFloat kLabelVerticalOffset = 7.0;
-static const CGFloat kLabelPadding = 5;
-static const CGFloat kSelectionIndicatorVerticalOffset = 1.0;
-
-// Used in horizontal layout only. Offset between label and adjacent image.
-static const CGFloat kLabelHorizontalOffset = 8.0;
 
 // The duration of the (de)selection transition animation.
 static const NSTimeInterval kMDCBottomNavigationItemViewSelectionAnimationDuration = 0.100f;
@@ -68,37 +51,119 @@ static const NSTimeInterval kMDCBottomNavigationItemViewLabelFadeOutAnimationDur
 // These values were chosen to achieve visual parity with UITabBar's highlight effect.
 const CGSize MDCButtonNavigationItemViewPointerEffectHighlightRectInset = {-24, -12};
 
-static const CGFloat kLabelYPosAdjustmentInVerticalLayout = 4;
-
-#if TARGET_IPHONE_SIMULATOR
-UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coefficient.
-#endif
-
 @interface MDCBottomNavigationItemView ()
 
+@property(nonatomic, strong) MDCBottomNavigationItemBadge *badge;
+@property(nonatomic, strong) UIImageView *iconImageView;
 @property(nonatomic, strong) UILabel *label;
 - (CGPoint)badgeCenterFromIconFrame:(CGRect)iconFrame isRTL:(BOOL)isRTL;
+
 @end
 
-@implementation MDCBottomNavigationItemView {
-  MDCBadgeView *_Nonnull _badge;
-  UIView *_Nullable _selectionIndicator;
-}
-
-@synthesize badgeAppearance = _badgeAppearance;
+@implementation MDCBottomNavigationItemView
 
 - (instancetype)initWithFrame:(CGRect)frame {
   self = [super initWithFrame:frame];
   if (self) {
-    _displayTitleInVerticalLayout = NO;
-    _enableVerticalLayout = NO;
     _titleBelowIcon = YES;
-    _truncatesTitle = YES;
-    _titleNumberOfLines = kDefaultTitleNumberOfLines;
-    _selectedItemTintColor = [UIColor blackColor];
-    _unselectedItemTintColor = [UIColor grayColor];
-    _selectedItemTitleColor = _selectedItemTintColor;
+    [self commonMDCBottomNavigationItemViewInit];
+  }
+  return self;
+}
 
+- (instancetype)initWithCoder:(NSCoder *)aDecoder {
+  self = [super initWithCoder:aDecoder];
+  if (self) {
+    _titleBelowIcon = YES;
+
+    NSUInteger totalViewsProcessed = 0;
+    for (UIView *view in self.subviews) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+      if ([view isKindOfClass:[MDCInkView class]]) {
+        _inkView = (MDCInkView *)view;
+#pragma clang diagnostic pop
+        ++totalViewsProcessed;
+      } else if ([view isKindOfClass:[UIImageView class]]) {
+        _iconImageView = (UIImageView *)view;
+        _image = _iconImageView.image;
+        ++totalViewsProcessed;
+      } else if ([view isKindOfClass:[UILabel class]]) {
+        _label = (UILabel *)view;
+        ++totalViewsProcessed;
+      } else if ([view isKindOfClass:[MDCBottomNavigationItemBadge class]]) {
+        _badge = (MDCBottomNavigationItemBadge *)view;
+        ++totalViewsProcessed;
+      } else if ([view isKindOfClass:[UIButton class]]) {
+        _button = (UIButton *)view;
+        ++totalViewsProcessed;
+      }
+    }
+    NSAssert(totalViewsProcessed == self.subviews.count,
+             @"Unexpected number of subviews. Expected %lu but restored %lu. Unarchiving may fail.",
+             (unsigned long)self.subviews.count, (unsigned long)totalViewsProcessed);
+
+    [self commonMDCBottomNavigationItemViewInit];
+  }
+  return self;
+}
+
+- (void)commonMDCBottomNavigationItemViewInit {
+  _truncatesTitle = YES;
+  _titleNumberOfLines = kDefaultTitleNumberOfLines;
+  if (!_selectedItemTintColor) {
+    _selectedItemTintColor = [UIColor blackColor];
+  }
+  if (!_unselectedItemTintColor) {
+    _unselectedItemTintColor = [UIColor grayColor];
+  }
+  _selectedItemTitleColor = _selectedItemTintColor;
+
+  if (!_iconImageView) {
+    _iconImageView = [[UIImageView alloc] initWithFrame:CGRectZero];
+    _iconImageView.isAccessibilityElement = NO;
+    [self addSubview:_iconImageView];
+  }
+
+  if (!_label) {
+    _label = [[UILabel alloc] initWithFrame:CGRectZero];
+    _label.text = _title;
+    _label.font = [UIFont systemFontOfSize:MDCBottomNavigationItemViewTitleFontSize];
+    _label.textAlignment = NSTextAlignmentCenter;
+    _label.textColor = _selectedItemTitleColor;
+    _label.isAccessibilityElement = NO;
+    [self addSubview:_label];
+  }
+  _label.numberOfLines = kDefaultTitleNumberOfLines;
+
+  if (!_badge) {
+    _badge = [[MDCBottomNavigationItemBadge alloc] initWithFrame:CGRectZero];
+    _badge.isAccessibilityElement = NO;
+    [self addSubview:_badge];
+  }
+
+  if (!_badge.badgeValue) {
+    _badge.hidden = YES;
+  }
+
+  if (!_inkView) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    _inkView = [[MDCInkView alloc] initWithFrame:self.bounds];
+#pragma clang diagnostic pop
+    _inkView.autoresizingMask =
+        (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight);
+    _inkView.usesLegacyInkRipple = NO;
+    _inkView.clipsToBounds = NO;
+    [self addSubview:_inkView];
+  }
+
+  if (!_rippleTouchController) {
+    _rippleTouchController = [[MDCRippleTouchController alloc] initWithView:self];
+    _rippleTouchController.rippleView.rippleStyle = MDCRippleStyleUnbounded;
+  }
+
+  if (!_button) {
     _button = [[UIButton alloc] initWithFrame:self.bounds];
     _button.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight);
     _button.accessibilityLabel = [self accessibilityLabelWithTitle:_title];
@@ -108,45 +173,6 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
       _button.accessibilityTraits |= UIAccessibilityTraitButton;
     }
     [self addSubview:_button];
-
-    _iconImageView = [[UIImageView alloc] initWithFrame:CGRectZero];
-    _iconImageView.isAccessibilityElement = NO;
-    _iconImageView.tintAdjustmentMode = UIViewTintAdjustmentModeNormal;
-
-    _label = [[UILabel alloc] initWithFrame:CGRectZero];
-    _label.text = _title;
-    _label.font = [UIFont systemFontOfSize:MDCBottomNavigationItemViewTitleFontSize];
-    _label.textAlignment = NSTextAlignmentCenter;
-    _label.textColor = _selectedItemTitleColor;
-    _label.lineBreakMode = NSLineBreakByTruncatingTail;
-    _label.isAccessibilityElement = NO;
-    _label.numberOfLines = kDefaultTitleNumberOfLines;
-
-    // We store a local copy of the badge appearance so that we can consistently override with the
-    // UITabBarItem badgeColor property.
-    _badgeAppearance = [[MDCBadgeAppearance alloc] init];
-
-    _badge = [[MDCBadgeView alloc] initWithFrame:CGRectZero];
-    _badge.isAccessibilityElement = NO;
-
-    [_button addSubview:_iconImageView];
-    [_button addSubview:_label];
-    [_button addSubview:_badge];
-    _badge.hidden = YES;
-
-    _rippleTouchController = [[MDCRippleTouchController alloc] initWithView:self];
-    _rippleTouchController.rippleView.rippleStyle = MDCRippleStyleUnbounded;
-  }
-  return self;
-}
-
-- (void)traitCollectionDidChange:(nullable UITraitCollection *)previousTraitCollection {
-  [super traitCollectionDidChange:previousTraitCollection];
-
-  if (self.traitCollection.legibilityWeight != previousTraitCollection.legibilityWeight) {
-    // Layout subviews when bold text setting changes so the label size is recalculated to
-    // fit the text.
-    [self setNeedsLayout];
   }
 }
 
@@ -158,27 +184,22 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
   }
 }
 
-- (BOOL)isTitleHiddenInLegacyLayout {
+- (BOOL)isTitleHidden {
   return self.titleVisibility == MDCBottomNavigationBarTitleVisibilityNever ||
          (self.titleVisibility == MDCBottomNavigationBarTitleVisibilitySelected && !self.selected);
 }
 
 - (CGSize)sizeThatFitsForVerticalLayout {
-  // TODO(b/244765238): Remove branching layout logic after GM3 migrations
-  if ([self showsSelectionIndicator]) {
-    return [self sizeThatFitsForVerticalAnchoredLayout];
-  }
-
   CGSize maxSize = CGSizeMake(kMaxSizeDimension, kMaxSizeDimension);
   CGSize iconSize = [self.iconImageView sizeThatFits:maxSize];
   CGRect iconFrame = CGRectMake(0, 0, iconSize.width, iconSize.height);
-  CGSize badgeSize = [_badge sizeThatFits:maxSize];
+  CGSize badgeSize = [self.badge sizeThatFits:maxSize];
   CGPoint badgeCenter = [self badgeCenterFromIconFrame:iconFrame isRTL:NO];
   CGRect badgeFrame =
       CGRectMake(floor(badgeCenter.x - badgeSize.width / 2),
                  floor(badgeCenter.y - badgeSize.height / 2), badgeSize.width, badgeSize.height);
   CGRect labelFrame = CGRectZero;
-  if (![self isTitleHiddenInLegacyLayout]) {
+  if (![self isTitleHidden]) {
     CGSize labelSize = [self.label sizeThatFits:maxSize];
     labelFrame = CGRectMake(floor(CGRectGetMidX(iconFrame) - labelSize.width / 2),
                             CGRectGetMaxY(iconFrame) + self.contentVerticalMargin, labelSize.width,
@@ -188,15 +209,10 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
 }
 
 - (CGSize)sizeThatFitsForHorizontalLayout {
-  // TODO(b/244765238): Remove branching layout logic after GM3 migrations
-  if ([self showsSelectionIndicator]) {
-    return [self sizeThatFitsForHorizontalAnchoredLayout];
-  }
-
   CGSize maxSize = CGSizeMake(kMaxSizeDimension, kMaxSizeDimension);
   CGSize iconSize = [self.iconImageView sizeThatFits:maxSize];
   CGRect iconFrame = CGRectMake(0, 0, iconSize.width, iconSize.height);
-  CGSize badgeSize = [_badge sizeThatFits:maxSize];
+  CGSize badgeSize = [self.badge sizeThatFits:maxSize];
   CGPoint badgeCenter = [self badgeCenterFromIconFrame:iconFrame isRTL:NO];
   CGRect badgeFrame =
       CGRectMake(floor(badgeCenter.x - badgeSize.width / 2),
@@ -212,26 +228,16 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
   [super layoutSubviews];
 
   [self.label sizeToFit];
-  [self.iconImageView sizeToFit];
-  [_badge sizeToFit];
-  [self invalidatePointerInteractions];
-
-  // TODO(b/244765238): Remove branching layout logic after GM3 migrations
-  if ([self showsSelectionIndicator]) {
-    _selectionIndicator.frame = [self selectionIndicatorFrame];
-    _selectionIndicator.layer.cornerRadius = _selectionIndicator.bounds.size.height / 2;
-    _selectionIndicator.hidden = !_showsSelectionIndicator;
-  }
+  [self.badge sizeToFit];
+  self.inkView.maxRippleRadius =
+      (CGFloat)(hypot(CGRectGetHeight(self.bounds), CGRectGetWidth(self.bounds)) / 2);
   [self centerLayoutAnimated:NO];
+  [self invalidatePointerInteractions];
 }
 
 - (void)calculateVerticalLayoutInBounds:(CGRect)contentBounds
                           forLabelFrame:(CGRect *)outLabelFrame
                      iconImageViewFrame:(CGRect *)outIconFrame {
-  if ([self showsSelectionIndicator]) {
-    return [self centerAnchoredLayout];
-  }
-
   // Determine the intrinsic size of the label, icon, and combined content
   CGRect contentBoundingRect = CGRectStandardize(contentBounds);
   CGSize iconImageViewSize = [self.iconImageView sizeThatFits:contentBoundingRect.size];
@@ -239,7 +245,7 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
   CGFloat iconHeight = iconImageViewSize.height;
   CGFloat labelHeight = labelSize.height;
   CGFloat totalContentHeight = iconHeight;
-  if (![self isTitleHiddenInLegacyLayout]) {
+  if (![self isTitleHidden]) {
     totalContentHeight += labelHeight + self.contentVerticalMargin;
   }
 
@@ -254,7 +260,7 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
   CGPoint iconImageViewCenter = CGPointMake(centerX, iconImageViewCenterY);
   // Ignore the horizontal titlePositionAdjustment in a vertical layout to match UITabBar behavior.
   CGFloat centerY;
-  if ([self isTitleHiddenInLegacyLayout]) {
+  if ([self isTitleHidden]) {
     centerY = iconImageViewCenter.y + iconHeight / 2 + self.titlePositionAdjustment.vertical +
               self.contentVerticalMargin / 2;
   } else {
@@ -284,10 +290,6 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
 - (void)calculateHorizontalLayoutInBounds:(CGRect)contentBounds
                             forLabelFrame:(CGRect *)outLabelFrame
                        iconImageViewFrame:(CGRect *)outIconFrame {
-  // TODO(b/244765238): Remove branching layout logic after GM3 migrations
-  if ([self showsSelectionIndicator]) {
-    return [self centerAnchoredLayout];
-  }
   // Determine the intrinsic size of the label and icon
   CGRect contentBoundingRect = CGRectStandardize(contentBounds);
   CGSize iconImageViewSize = [self.iconImageView sizeThatFits:contentBoundingRect.size];
@@ -311,7 +313,7 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
 
   // Account for RTL
   BOOL isRTL =
-      self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft;
+      self.mdf_effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft;
   NSInteger rtlCoefficient = isRTL ? -1 : 1;
   CGFloat layoutStartingPoint =
       isRTL ? CGRectGetMaxX(contentBoundingRect) : CGRectGetMinX(contentBoundingRect);
@@ -343,11 +345,6 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
 }
 
 - (void)centerLayoutAnimated:(BOOL)animated {
-  // TODO(b/244765238): Remove branching layout logic after GM3 migrations
-  if ([self showsSelectionIndicator]) {
-    return [self centerAnchoredLayout];
-  }
-
   CGRect labelFrame = CGRectZero;
   CGRect iconImageViewFrame = CGRectZero;
 
@@ -366,7 +363,7 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
   self.label.center = CGPointMake(CGRectGetMidX(labelFrame), CGRectGetMidY(labelFrame));
   self.label.bounds = CGRectMake(0, 0, CGRectGetWidth(labelFrame), CGRectGetHeight(labelFrame));
 
-  UIUserInterfaceLayoutDirection layoutDirection = self.effectiveUserInterfaceLayoutDirection;
+  UIUserInterfaceLayoutDirection layoutDirection = self.mdf_effectiveUserInterfaceLayoutDirection;
   BOOL isRTL = layoutDirection == UIUserInterfaceLayoutDirectionRightToLeft;
 
   if (self.titleBelowIcon) {
@@ -374,14 +371,14 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
       [UIView animateWithDuration:kMDCBottomNavigationItemViewSelectionAnimationDuration
                        animations:^(void) {
                          self.iconImageView.center = iconImageViewCenter;
-                         _badge.center =
+                         self.badge.center =
                              [self badgeCenterFromIconFrame:CGRectStandardize(iconImageViewFrame)
                                                       isRTL:isRTL];
                        }];
     } else {
       self.iconImageView.center = iconImageViewCenter;
-      _badge.center = [self badgeCenterFromIconFrame:CGRectStandardize(iconImageViewFrame)
-                                               isRTL:isRTL];
+      self.badge.center = [self badgeCenterFromIconFrame:CGRectStandardize(iconImageViewFrame)
+                                                   isRTL:isRTL];
     }
     self.label.textAlignment = NSTextAlignmentCenter;
   } else {
@@ -391,8 +388,8 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
       self.label.textAlignment = NSTextAlignmentRight;
     }
     self.iconImageView.center = iconImageViewCenter;
-    _badge.center = [self badgeCenterFromIconFrame:CGRectStandardize(iconImageViewFrame)
-                                             isRTL:isRTL];
+    self.badge.center = [self badgeCenterFromIconFrame:CGRectStandardize(iconImageViewFrame)
+                                                 isRTL:isRTL];
   }
 }
 
@@ -460,7 +457,7 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
 }
 
 - (CGPoint)badgeCenterFromIconFrame:(CGRect)iconFrame isRTL:(BOOL)isRTL {
-  CGSize badgeSize = [_badge sizeThatFits:CGSizeMake(CGFLOAT_MAX, CGFLOAT_MAX)];
+  CGSize badgeSize = [self.badge sizeThatFits:CGSizeMake(CGFLOAT_MAX, CGFLOAT_MAX)];
 
   // There are no specifications for badge layout, so this is based on the Material Guidelines
   // article for Bottom Navigation which includes an image showing badge positions.
@@ -471,17 +468,17 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
   CGFloat badgeCenterY = CGRectGetMinY(iconFrame) + (badgeSize.height / 2);
 
   CGFloat badgeCenterXOffset = kBadgeXOffsetFromIconEdgeWithTextLTR + badgeSize.width / 2;
-  if (self.badgeText.length == 0) {
+  if (self.badgeValue.length == 0) {
     badgeCenterXOffset = kBadgeXOffsetFromIconEdgeEmptyLTR;
   }
   CGFloat badgeCenterX = isRTL ? CGRectGetMinX(iconFrame) - badgeCenterXOffset
                                : CGRectGetMaxX(iconFrame) + badgeCenterXOffset;
 
-  // Account for the badge's outer border width.
-  badgeCenterX -= _badge.appearance.borderWidth / 2;
-  badgeCenterY -= _badge.appearance.borderWidth / 2;
-
   return CGPointMake(badgeCenterX, badgeCenterY);
+}
+
+- (NSString *)badgeValue {
+  return self.badge.badgeValue;
 }
 
 - (CGRect)pointerEffectHighlightRect {
@@ -492,8 +489,8 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
   if (!self.label.hidden) {
     [visibleViews addObject:self.label];
   }
-  if (!_badge.hidden) {
-    [visibleViews addObject:_badge];
+  if (!self.badge.hidden) {
+    [visibleViews addObject:self.badge];
   }
 
   // If we don't have any visible views, there is no content to frame
@@ -543,68 +540,36 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
 
 - (void)setSelected:(BOOL)selected animated:(BOOL)animated {
   _selected = selected;
-
-  _selectionIndicator.hidden = !selected;
-
   if (selected) {
     self.label.textColor = self.selectedItemTitleColor;
+    self.iconImageView.tintColor = self.selectedItemTintColor;
     self.button.accessibilityTraits |= UIAccessibilityTraitSelected;
+    self.iconImageView.image = (self.selectedImage) ? self.selectedImage : self.image;
     [self updateLabelVisibility:animated];
   } else {
     self.label.textColor = self.unselectedItemTintColor;
+    self.iconImageView.tintColor = self.unselectedItemTintColor;
     self.button.accessibilityTraits &= ~UIAccessibilityTraitSelected;
+    self.iconImageView.image = self.image;
     [self updateLabelVisibility:animated];
   }
-
-  void (^selectionIndicatorAnimations)(void) = ^{
-    [self commitSelectionIndicatorState];
-    [self centerLayoutAnimated:animated];
-  };
-
-  void (^imageAdjustments)(void) = ^{
-    if (selected) {
-      self.iconImageView.tintColor = self.selectedItemTintColor;
-      self.iconImageView.image = (self.selectedImage) ? self.selectedImage : self.image;
-    } else {
-      self.iconImageView.tintColor = self.unselectedItemTintColor;
-      self.iconImageView.image = self.image;
-    }
-  };
-
-  // We only animate items that are newly selected so as to avoid creating unnecessary motion
-  // noise on the unselected item.
-  if (selected && animated && _showsSelectionIndicator) {
-    [UIView animateWithDuration:kSelectionIndicatorTransformAnimationDuration
-                          delay:0
-                        options:UIViewAnimationOptionCurveEaseOut
-                     animations:selectionIndicatorAnimations
-                     completion:nil];
-
-    imageAdjustments();
-  } else {
-    selectionIndicatorAnimations();
-    imageAdjustments();
-  }
+  [self centerLayoutAnimated:animated];
 }
 
-- (void)setSelectedItemTintColor:(nullable UIColor *)selectedItemTintColor {
+- (void)setSelectedItemTintColor:(UIColor *)selectedItemTintColor {
   _selectedItemTintColor = selectedItemTintColor;
   _selectedItemTitleColor = selectedItemTintColor;
   if (self.selected) {
     self.iconImageView.tintColor = self.selectedItemTintColor;
     self.label.textColor = self.selectedItemTitleColor;
   }
-  if (!_rippleColor) {
-    UIColor *rippleColor = [self.selectedItemTintColor
-        colorWithAlphaComponent:MDCBottomNavigationItemViewRippleOpacity];
-    if (!rippleColor) {
-      rippleColor = [UIColor clearColor];
-    }
-    self.rippleTouchController.rippleView.rippleColor = rippleColor;
-  }
+  UIColor *rippleColor =
+      [self.selectedItemTintColor colorWithAlphaComponent:MDCBottomNavigationItemViewInkOpacity];
+  self.inkView.inkColor = rippleColor;
+  self.rippleTouchController.rippleView.rippleColor = rippleColor;
 }
 
-- (void)setUnselectedItemTintColor:(nullable UIColor *)unselectedItemTintColor {
+- (void)setUnselectedItemTintColor:(UIColor *)unselectedItemTintColor {
   _unselectedItemTintColor = unselectedItemTintColor;
   if (!self.selected) {
     self.iconImageView.tintColor = self.unselectedItemTintColor;
@@ -612,14 +577,41 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
   }
 }
 
-- (void)setSelectedItemTitleColor:(nullable UIColor *)selectedItemTitleColor {
+- (void)setSelectedItemTitleColor:(UIColor *)selectedItemTitleColor {
   _selectedItemTitleColor = selectedItemTitleColor;
   if (self.selected) {
     self.label.textColor = self.selectedItemTitleColor;
   }
 }
 
-- (void)setImage:(nullable UIImage *)image {
+- (void)setBadgeColor:(UIColor *)badgeColor {
+  _badgeColor = badgeColor;
+  self.badge.badgeColor = badgeColor;
+}
+
+- (void)setBadgeTextColor:(UIColor *)badgeTextColor {
+  _badgeTextColor = badgeTextColor;
+  self.badge.badgeValueLabel.textColor = badgeTextColor;
+}
+
+- (void)setBadgeValue:(NSString *)badgeValue {
+  // Due to KVO, badgeValue may be of type NSNull.
+  if ([badgeValue isKindOfClass:[NSNull class]]) {
+    badgeValue = nil;
+  }
+  self.badge.badgeValue = badgeValue;
+  if ([super accessibilityValue] == nil || [self accessibilityValue].length == 0) {
+    self.button.accessibilityValue = badgeValue;
+  }
+  if (badgeValue == nil) {
+    self.badge.hidden = YES;
+  } else {
+    self.badge.hidden = NO;
+  }
+  [self setNeedsLayout];
+}
+
+- (void)setImage:(UIImage *)image {
   _image = [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
 
   // _image updates unselected state
@@ -628,11 +620,12 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
     self.iconImageView.image = _image;
     self.iconImageView.tintColor =
         (self.selected) ? self.selectedItemTintColor : self.unselectedItemTintColor;
+    [self.iconImageView sizeToFit];
     [self setNeedsLayout];
   }
 }
 
-- (void)setSelectedImage:(nullable UIImage *)selectedImage {
+- (void)setSelectedImage:(UIImage *)selectedImage {
   _selectedImage = [selectedImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
   if (self.selected) {
     self.iconImageView.image = _selectedImage;
@@ -642,7 +635,7 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
   }
 }
 
-- (void)setTitle:(nullable NSString *)title {
+- (void)setTitle:(NSString *)title {
   _title = [title copy];
   self.label.text = _title;
   self.button.accessibilityLabel = [self accessibilityLabelWithTitle:_title];
@@ -654,40 +647,35 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
   [self updateLabelVisibility:NO];
 }
 
-- (void)setItemTitleFont:(nullable UIFont *)itemTitleFont {
+- (void)setItemTitleFont:(UIFont *)itemTitleFont {
   _itemTitleFont = itemTitleFont;
   self.label.font = itemTitleFont;
   [self setNeedsLayout];
 }
 
-- (void)setAccessibilityValue:(nullable NSString *)accessibilityValue {
+- (void)setAccessibilityValue:(NSString *)accessibilityValue {
   [super setAccessibilityValue:accessibilityValue];
   self.button.accessibilityValue = accessibilityValue;
 }
 
-- (nullable NSString *)accessibilityValue {
+- (NSString *)accessibilityValue {
   return self.button.accessibilityValue;
 }
 
-- (void)setAccessibilityHint:(nullable NSString *)accessibilityHint {
+- (void)setAccessibilityHint:(NSString *)accessibilityHint {
   [super setAccessibilityHint:accessibilityHint];
   self.button.accessibilityHint = accessibilityHint;
 }
 
-- (nullable NSString *)accessibilityHint {
+- (NSString *)accessibilityHint {
   return self.button.accessibilityHint;
 }
 
-- (void)setAccessibilityElementIdentifier:(nullable NSString *)accessibilityElementIdentifier {
+- (void)setAccessibilityElementIdentifier:(NSString *)accessibilityElementIdentifier {
   self.button.accessibilityIdentifier = accessibilityElementIdentifier;
 }
 
-- (void)setBadgeHorizontalOffset:(CGFloat)badgeHorizontalOffset {
-  _badgeHorizontalOffset = badgeHorizontalOffset;
-  [self setNeedsLayout];
-}
-
-- (nullable NSString *)accessibilityElementIdentifier {
+- (NSString *)accessibilityElementIdentifier {
   return self.button.accessibilityIdentifier;
 }
 
@@ -710,138 +698,6 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
 - (void)setTitleBelowIcon:(BOOL)titleBelowIcon {
   _titleBelowIcon = titleBelowIcon;
   self.label.numberOfLines = [self renderedTitleNumberOfLines];
-  [self setNeedsLayout];
-}
-
-#pragma mark - Configuring the selection appearance
-
-- (void)commitSelectionIndicatorState {
-  if (_selected) {
-    _selectionIndicator.transform = CGAffineTransformIdentity;
-    _selectionIndicator.alpha = 1.0;
-  } else {
-    _selectionIndicator.transform = CGAffineTransformMakeScale(0.25, 1);
-    _selectionIndicator.alpha = 0;
-  }
-}
-
-- (void)setShowsSelectionIndicator:(BOOL)showsSelectionIndicator {
-  if (_showsSelectionIndicator == showsSelectionIndicator) {
-    return;
-  }
-  _showsSelectionIndicator = showsSelectionIndicator;
-
-  if (_showsSelectionIndicator) {
-    _selectionIndicator = [[UIView alloc] init];
-    _selectionIndicator.userInteractionEnabled = NO;
-    _selectionIndicator.backgroundColor = _selectionIndicatorColor;
-    _selectionIndicator.hidden = !_selected;
-    [self commitSelectionIndicatorState];
-    [self.button insertSubview:_selectionIndicator belowSubview:_iconImageView];
-  } else {
-    [_selectionIndicator removeFromSuperview];
-    _selectionIndicator = nil;
-  }
-  [self setNeedsLayout];
-}
-
-- (void)setSelectionIndicatorSize:(CGSize)selectionIndicatorSize {
-  if (CGSizeEqualToSize(selectionIndicatorSize, _selectionIndicatorSize)) {
-    return;
-  }
-  _selectionIndicatorSize = selectionIndicatorSize;
-  if (_showsSelectionIndicator) {
-    [self setNeedsLayout];
-  }
-}
-
-- (void)setSelectionIndicatorColor:(UIColor *)selectionIndicatorColor {
-  _selectionIndicatorColor = selectionIndicatorColor;
-
-  _selectionIndicator.backgroundColor = selectionIndicatorColor;
-}
-
-#pragma mark - Configuring the ripple appearance
-
-- (void)setRippleColor:(nullable UIColor *)rippleColor {
-  _rippleColor = rippleColor;
-
-  if (!rippleColor) {
-    rippleColor = [UIColor clearColor];
-  }
-  self.rippleTouchController.rippleView.rippleColor = rippleColor;
-}
-
-#pragma mark - Displaying a value in the badge
-
-- (void)setBadgeText:(nullable NSString *)badgeText {
-  _badge.text = badgeText;
-  if ([super accessibilityValue] == nil || [self accessibilityValue].length == 0) {
-    self.button.accessibilityValue = badgeText;
-  }
-  if (badgeText == nil) {
-    _badge.hidden = YES;
-  } else {
-    _badge.hidden = NO;
-  }
-  [self setNeedsLayout];
-}
-
-- (nullable NSString *)badgeText {
-  return _badge.text;
-}
-
-#pragma mark - Configuring the badge's visual appearance
-
-- (void)commitBadgeAppearance {
-  _badge.appearance = [_badgeAppearance copy];
-}
-
-- (void)setBadgeAppearance:(MDCBadgeAppearance *)badgeAppearance {
-  _badgeAppearance = [badgeAppearance copy];
-
-  [self commitBadgeAppearance];
-}
-
-- (void)setBadgeColor:(nullable UIColor *)badgeColor {
-  _badgeAppearance.backgroundColor = badgeColor;
-
-  [self commitBadgeAppearance];
-}
-
-- (nullable UIColor *)badgeColor {
-  return _badgeAppearance.backgroundColor;
-}
-
-- (void)setBadgeTextColor:(nullable UIColor *)badgeTextColor {
-  _badgeAppearance.textColor = badgeTextColor;
-
-  [self commitBadgeAppearance];
-}
-
-- (nonnull UIColor *)badgeTextColor {
-  return _badgeAppearance.textColor;
-}
-
-- (void)setBadgeFont:(nullable UIFont *)badgeFont {
-  _badgeAppearance.font = badgeFont;
-
-  [self commitBadgeAppearance];
-}
-
-- (nonnull UIFont *)badgeFont {
-  return _badgeAppearance.font;
-}
-
-- (void)setEnableVerticalLayout:(BOOL)enableVerticalLayout {
-  _enableVerticalLayout = enableVerticalLayout;
-  [self setNeedsLayout];
-}
-
-- (void)setDisplayTitleInVerticalLayout:(BOOL)displayTitleInVerticalLayout {
-  _displayTitleInVerticalLayout = displayTitleInVerticalLayout;
-  [self setNeedsLayout];
-  [self layoutIfNeeded];
 }
 
 #pragma mark - UILargeContentViewerItem
@@ -850,7 +706,7 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
   return YES;
 }
 
-- (nullable NSString *)largeContentTitle {
+- (NSString *)largeContentTitle {
   if (_largeContentTitle) {
     return _largeContentTitle;
   }
@@ -858,7 +714,7 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
   return self.title;
 }
 
-- (nullable UIImage *)largeContentImage {
+- (UIImage *)largeContentImage {
   if (_largeContentImage) {
     return _largeContentImage;
   }
@@ -870,310 +726,4 @@ UIKIT_EXTERN float UIAnimationDragCoefficient(void);  // UIKit private drag coef
   return _largeContentImage == nil;
 }
 
-#pragma mark - Anchored layout
-
-// midPoint is the main point around which the item view's content is centered.
-// In a labelless layout, it is the center point of the item view (0.5x, 0.5y).
-// In a labeled layout, it is also the center point of the item view.
-// In a labeled, it has a slight negative-Y offset (0.5x, 0.5y - yOffset). This
-// shifts it upwards, to account for the label. The selection indicator serves as the main point of
-// reference for all other views. The iconView and badge are enclosed within it. When labels are
-// enabled, the label is adjacent to the indicator.
-
-// (note: these views are all siblings of each other, as well as direct subviews of the ItemView)
-// selectionIndicator: Positioned based on midPoint.
-// IconView: Positioned based on midPoint and selectionIndicator.
-// Badge: Positioned based on selectionIndicator and iconView.
-// Label: Positioned based on selectionIndicator and midPoint, depending on current layout
-// label is hidden in horizontal layout
-// States: (horizontal || vertical) && (LTR || RTL)
-
-//        labelless                      labeled
-//  ---------------------         ---------------------
-// |                     |       |                     |
-// |                     |       |                     |
-// |                     |       |        -----        |
-// |        -----        |       |       |  o  |       |
-// |       |  o  |       |       |        -----        |
-// |        -----        |       |       <label>       |
-// |                     |       |                     |
-// |                     |       |                     |
-// |                     |       |                     |
-//  ---------------------         ---------------------
-
-//         LTR badge                    RTL badge
-//  ---------------------         ---------------------
-// |                     |       |                     |
-// |                     |       |                     |
-// |                     |       |                     |
-// |        -----        |       |        -----        |
-// |       |  o* |       |       |       | *o  |       |
-// |        -----        |       |        -----        |
-// |                     |       |                     |
-// |                     |       |                     |
-// |                     |       |                     |
-//  ---------------------         ---------------------
-
-- (CGPoint)midPoint {
-  CGFloat x = floor(CGRectGetMidX(self.bounds));
-  CGFloat y;
-
-  // Layout is centered when title labels are not visible
-
-  if ([self isTitleHiddenInAnchoredLayout]) {
-    y = floor(CGRectGetMidY(self.bounds)) + kAnchorVerticalOffsetWithoutLabel;
-  } else {
-    y = floor(CGRectGetMidY(self.bounds)) + kAnchorVerticalOffsetWithLabel;
-  }
-  return CGPointMake(x, y);
-}
-
-#pragma mark - Anchored Selection Indicator
-- (CGRect)selectionIndicatorFrame {
-  CGPoint midPoint = [self midPoint];
-  CGSize selectionIndicatorSize = _selectionIndicatorSize;
-
-  return CGRectMake(midPoint.x - selectionIndicatorSize.width * 0.5,
-                    midPoint.y + kSelectionIndicatorVerticalOffset, selectionIndicatorSize.width,
-                    selectionIndicatorSize.height);
-}
-
-#pragma mark - Anchored Badge
-- (CGPoint)badgePositionForRTLState:(BOOL)isRTL {
-  CGPoint iconPosition = [self iconPosition];
-  CGRect indicatorFrame = [self selectionIndicatorFrame];
-  CGFloat iconX = iconPosition.x;
-
-  CGFloat badgeX;
-  if (isRTL) {
-    badgeX = iconX + floor([self iconSize].width * 0.5) - floor([self badgeSize].width) -
-             _badgeHorizontalOffset;
-  } else {
-    badgeX = iconX + floor([self iconSize].width * 0.5) + _badgeHorizontalOffset;
-  }
-
-  CGFloat badgeY = CGRectGetMinY(indicatorFrame) + kBadgeVerticalOffset;
-
-  return CGPointMake(badgeX, badgeY);
-}
-
-- (CGSize)badgeSize {
-  CGSize maxSize = CGSizeMake(kMaxSizeDimension, kMaxSizeDimension);
-  return [_badge sizeThatFits:maxSize];
-}
-
-#pragma mark - Anchored Icon
-- (CGPoint)iconPosition {
-  CGPoint midPoint = [self midPoint];
-  CGFloat indicatorMidX = CGRectGetMidX(_selectionIndicator.frame);
-
-  CGFloat iconX = indicatorMidX - CGRectGetMidX(_iconImageView.bounds);
-  CGFloat iconY = midPoint.y + (_selectionIndicatorSize.height * 0.5) -
-                  CGRectGetMidY(_iconImageView.bounds) + kIconVerticalOffset;
-
-  return CGPointMake(iconX, iconY);
-}
-
-- (CGSize)iconSize {
-  CGSize maxSize = CGSizeMake(kMaxSizeDimension, kMaxSizeDimension);
-  return [_iconImageView sizeThatFits:maxSize];
-}
-
-#pragma mark - Anchored Label
-- (CGSize)labelSize {
-  if ([self isTitleHiddenInAnchoredLayout]) {
-    return CGSizeZero;
-  } else {
-    CGFloat adjustedWidth = CGRectGetWidth(self.bounds) - (2 * kLabelPadding);
-    CGSize maxSize = CGSizeMake(kMaxSizeDimension, kMaxSizeDimension);
-    CGSize sizeThatFitsLabel = [_label sizeThatFits:maxSize];
-    CGSize adjustedSize =
-        CGSizeMake(MIN(sizeThatFitsLabel.width, adjustedWidth), sizeThatFitsLabel.height);
-    return adjustedSize;
-  }
-}
-
-- (CGFloat)labelXForRTLState:(BOOL)isRTL isHorizontalLayout:(BOOL)isHorizontalLayout {
-  if (isHorizontalLayout) {
-    return [self labelXForHorizontalLayoutWithRTLState:isRTL];
-  } else {
-    return [self labelXForVerticalLayoutForRect:_label.bounds];
-  }
-}
-
-// Label is anchored based on the frame provided for the active indicator
-// (Not the current frame of the active indicator itself, since there may not be an indicator
-// present) This frame can be calculated and referenced even if the indicator is disabled
-- (CGFloat)labelYForHorizontalLayoutState:(BOOL)isHorizontalLayout {
-  if (isHorizontalLayout) {
-    return [self labelYForHorizontalLayout];
-  } else {
-    return [self labelYForVerticalLayout];
-  }
-}
-
-// Vertical Label (x,y)
-- (CGFloat)labelXForVerticalLayoutForRect:(CGRect)labelBounds {
-  CGPoint midPoint = [self midPoint];
-  return midPoint.x - CGRectGetMidX(labelBounds);
-}
-
-- (CGFloat)labelYForVerticalLayout {
-  CGPoint midPoint = [self midPoint];
-
-  return midPoint.y + floor(_selectionIndicatorSize.height) + kLabelVerticalOffset;
-}
-
-// Horizontal Label (x, y)
-- (CGFloat)labelXForHorizontalLayoutWithRTLState:(BOOL)isRTL {
-  CGPoint midPoint = [self midPoint];
-  CGRect selectionIndicatorFrame = [self selectionIndicatorFrame];
-  CGSize labelSize = [self labelSize];
-
-  if (isRTL) {
-    return CGRectGetMinX(selectionIndicatorFrame) - labelSize.width - kLabelHorizontalOffset;
-  } else {
-    return midPoint.x + floor(_selectionIndicatorSize.width * 0.5) + kLabelHorizontalOffset;
-  }
-}
-
-- (CGFloat)labelYForHorizontalLayout {
-  CGPoint midPoint = [self midPoint];
-  return midPoint.y + CGRectGetMidY(_iconImageView.bounds);
-}
-
-#pragma mark - Branched anchored layout methods
-// Note that layoutSubviews is branched in its implementation, despite not having a branching method
-// here.
-
-- (CGSize)sizeThatFitsForVerticalAnchoredLayout {
-  MDCBadgeView *badge = _badge;
-
-  CGSize iconSize = [self iconSize];
-  CGRect iconFrame = CGRectIntegral(CGRectMake(0, 0, iconSize.width, iconSize.height));
-
-  BOOL isRTL =
-      self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft;
-  CGPoint badgePosition = [self badgePositionForRTLState:isRTL];
-  CGFloat badgeX = badgePosition.x;
-  CGFloat badgeY = badgePosition.y;
-  CGRect normalizedBadgeFrame =
-      CGRectIntegral(CGRectMake(badgeX, badgeY, badge.bounds.size.width, badge.bounds.size.height));
-  CGRect labelFrame = CGRectZero;
-  if (![self isTitleHiddenInAnchoredLayout]) {
-    CGSize labelSize = [self labelSize];
-    labelFrame = CGRectIntegral(CGRectMake([self labelXForRTLState:isRTL isHorizontalLayout:NO],
-                                           [self labelYForHorizontalLayoutState:NO],
-                                           labelSize.width, labelSize.height));
-  }
-  return CGRectStandardize(CGRectUnion(labelFrame, CGRectUnion(iconFrame, normalizedBadgeFrame)))
-      .size;
-}
-
-- (void)centerAnchoredLayout {
-  if ([self isTitleHiddenInAnchoredLayout]) {
-    [self centerAnchoredLayoutHorizontal];
-  } else {
-    [self centerAnchoredLayoutVertical];
-  }
-}
-
-- (void)centerAnchoredLayoutVertical {
-  BOOL isRTL =
-      self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft;
-
-  CGPoint badgePosition = [self badgePositionForRTLState:isRTL];
-  CGFloat badgeX = badgePosition.x;
-  CGFloat badgeY = badgePosition.y;
-  CGSize badgeSize = [self badgeSize];
-  CGRect badgeFrame = CGRectIntegral(CGRectMake(badgeX, badgeY, badgeSize.width, badgeSize.height));
-  _badge.frame = badgeFrame;
-
-  CGPoint iconPosition = [self iconPosition];
-  CGFloat iconX = iconPosition.x;
-  CGFloat iconY = iconPosition.y;
-  CGSize iconSize = [self iconSize];
-  CGRect iconFrame = (CGRectMake(iconX, iconY, iconSize.width, iconSize.height));
-  _iconImageView.frame = iconFrame;
-
-  CGSize labelSize = [self labelSize];
-  CGRect adjustedLabelBounds = CGRectMake(0, 0, labelSize.width, labelSize.height);
-  CGFloat labelX = [self labelXForVerticalLayoutForRect:adjustedLabelBounds];
-  CGFloat labelY = [self labelYForHorizontalLayoutState:NO];
-  if (self.enableVerticalLayout) {
-    labelY -= kLabelYPosAdjustmentInVerticalLayout;
-  }
-  CGRect labelFrame = CGRectIntegral(CGRectMake(labelX, labelY, labelSize.width, labelSize.height));
-  _label.frame = labelFrame;
-}
-
-- (void)centerAnchoredLayoutHorizontal {
-  BOOL isRTL =
-      self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft;
-
-  CGPoint badgePosition = [self badgePositionForRTLState:isRTL];
-  CGFloat badgeX = badgePosition.x;
-  CGFloat badgeY = badgePosition.y;
-  CGSize badgeSize = [self badgeSize];
-  CGRect badgeFrame = CGRectIntegral(CGRectMake(badgeX, badgeY, badgeSize.width, badgeSize.height));
-  _badge.frame = badgeFrame;
-
-  CGPoint iconPosition = [self iconPosition];
-  CGFloat iconX = iconPosition.x;
-  CGFloat iconY = iconPosition.y;
-  CGSize iconSize = [self iconSize];
-  CGRect iconFrame = CGRectIntegral(CGRectMake(iconX, iconY, iconSize.width, iconSize.height));
-  _iconImageView.frame = iconFrame;
-
-  CGFloat labelX = [self labelXForHorizontalLayoutWithRTLState:isRTL];
-  CGFloat labelY = [self labelYForHorizontalLayout];
-  if (self.enableVerticalLayout) {
-    labelY -= kLabelYPosAdjustmentInVerticalLayout;
-  }
-  CGSize labelSize = [self labelSize];
-  CGRect labelFrame = CGRectIntegral(CGRectMake(labelX, labelY, labelSize.width, labelSize.height));
-  _label.frame = labelFrame;
-}
-
-- (CGSize)sizeThatFitsForHorizontalAnchoredLayout {
-  MDCBadgeView *badge = _badge;
-  BOOL isRTL =
-      self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft;
-
-  CGSize iconSize = [self iconSize];
-  CGRect iconFrame = CGRectMake(0, 0, iconSize.width, iconSize.height);
-
-  CGPoint badgePosition = [self badgePositionForRTLState:isRTL];
-  CGFloat badgeX = badgePosition.x;
-  CGFloat badgeY = badgePosition.y;
-
-  CGRect normalizedBadgeFrame =
-      CGRectIntegral(CGRectMake(badgeX, badgeY, badge.bounds.size.width, badge.bounds.size.height));
-  CGSize labelSize = [self labelSize];
-  CGRect labelFrame = CGRectMake(CGRectGetMaxX(iconFrame) + self.contentHorizontalMargin,
-                                 floor(CGRectGetMidY(iconFrame) - labelSize.height / 2),
-                                 labelSize.width, labelSize.height);
-  return CGRectStandardize(CGRectUnion(labelFrame, CGRectUnion(iconFrame, normalizedBadgeFrame)))
-      .size;
-}
-
-#pragma mark - traitCollection
-
-// MDCBottomNavigationBarTitleVisibilitySelected is not available in GM3.
-// In any given state, all labels are visible, OR all labels are hidden.
-
-// (self.titleVisibility == MDCBottomNavigationBarTitleVisibilitySelected && !self.selected) is not
-// checked because selection state is not a condition for label visibility in GM3.
-- (BOOL)isTitleHiddenInAnchoredLayout {
-  UITraitCollection *traitCollection = self.traitCollection;
-  if (self.enableVerticalLayout) {
-    return !self.displayTitleInVerticalLayout;
-  }
-
-  return (traitCollection.verticalSizeClass == UIUserInterfaceSizeClassCompact ||
-          _titleVisibility == MDCBottomNavigationBarTitleVisibilityNever);
-}
-
 @end
-
-NS_ASSUME_NONNULL_END

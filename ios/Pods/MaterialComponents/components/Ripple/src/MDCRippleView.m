@@ -15,11 +15,8 @@
 #import "MDCRippleView.h"
 #import "private/MDCRippleLayer.h"
 
-#import <CoreGraphics/CoreGraphics.h>
-
-#import "MDCAvailability.h"
+#import "MaterialAvailability.h"
 #import "MDCRippleViewDelegate.h"
-#import "MDCRippleLayerDelegate.h"
 
 @interface MDCRippleView () <CALayerDelegate, MDCRippleLayerDelegate>
 

@@ -14,13 +14,8 @@
 
 #import <UIKit/UIKit.h>
 
-#import "MaterialInk.h"  // IWYU pragma: keep
-#import "MaterialRipple.h"  // IWYU pragma: keep
-
-API_DEPRECATED_BEGIN("🕘 Schedule time to migrate. "
-                     "Use branded UITableView or UICollectionView instead: go/material-ios-lists. "
-                     "This is go/material-ios-migrations#not-scriptable 🕘",
-                     ios(12, 12))
+#import "MaterialInk.h"  // IWYU pragma: export
+#import "MaterialRipple.h"  // IWYU pragma: export
 
 /** The available cell accessory view types. Based on UITableViewCellAccessoryType. */
 typedef NS_ENUM(NSUInteger, MDCCollectionViewCellAccessoryType) {
@@ -130,5 +125,3 @@ view, and can be used by setting `enableRippleBehavior` to YES.
 @property(nonatomic, strong, nullable) MDCRippleView *rippleView;
 
 @end
-
-API_DEPRECATED_END

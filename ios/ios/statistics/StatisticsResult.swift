@@ -17,7 +17,7 @@ enum EnumStatisticsResult: MviResult, RawRepresentable {
         case let rawValue as StatisticsResult.LoadStatisticsResult :
             switch rawValue.rawValue {
             case let rawValue as StatisticsResult.LoadStatisticsResult.RawValue.Success:
-                self = .LoadStatisticsResult(.Success(.Success(activeCount: rawValue.activeCount, completedCount: rawValue.completedCount))!)
+                self = .LoadStatisticsResult(.Success(.Success(activeCount: rawValue.activeCount, completedCount: rawValue.completedCount)))
             case let rawValue as StatisticsResult.LoadStatisticsResult.RawValue.Failure:
                 self = .LoadStatisticsResult(.Failure(.Failure(error: rawValue.error)))
             case is StatisticsResult.LoadStatisticsResult.RawValue.InFlight:

@@ -15,7 +15,6 @@
 #import "MDCTextInputControllerBase.h"
 #import "private/MDCTextInputControllerBase+Subclassing.h"
 
-#import "MDCPalettes.h"
 #import "MDCMultilineTextField.h"
 #import "MDCTextField.h"
 #import "MDCTextInput.h"
@@ -25,13 +24,10 @@
 #import "MDCTextInputControllerFloatingPlaceholder.h"
 #import "MDCTextInputUnderlineView.h"
 
-#import "MDCFontTextStyle.h"
-#import "UIFont+MaterialSimpleEquality.h"
-#import "UIFont+MaterialTypography.h"
-#import "MDCMath.h"
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-implementations"
+#import "MaterialAnimationTiming.h"
+#import "MaterialMath.h"
+#import "MaterialPalettes.h"
+#import "MaterialTypography.h"
 
 #pragma mark - Constants
 
@@ -47,25 +43,26 @@ static const NSTimeInterval
     MDCTextInputControllerBaseDefaultFloatingPlaceholderUpAnimationDuration = (CGFloat)0.3;
 static const NSTimeInterval kDefaultErrorAnnouncementDelay = (CGFloat)0.050;
 
-static inline UIColor *MDCTextInputControllerBaseDefaultInlinePlaceholderTextColorDefault(void) {
+static inline UIColor *MDCTextInputControllerBaseDefaultInlinePlaceholderTextColorDefault() {
   return [UIColor colorWithWhite:0 alpha:MDCTextInputControllerBaseDefaultHintTextOpacity];
 }
 
-static inline UIColor *MDCTextInputControllerBaseDefaultActiveColorDefault(void) {
+static inline UIColor *MDCTextInputControllerBaseDefaultActiveColorDefault() {
   return [MDCPalette bluePalette].accent700;
 }
 
-static inline UIColor *MDCTextInputControllerBaseDefaultNormalUnderlineColorDefault(void) {
+static inline UIColor *MDCTextInputControllerBaseDefaultNormalUnderlineColorDefault() {
   return [UIColor lightGrayColor];
 }
 
-static inline UIColor *MDCTextInputControllerBaseDefaultTextErrorColorDefault(void) {
+static inline UIColor *MDCTextInputControllerBaseDefaultTextErrorColorDefault() {
   return [MDCPalette redPalette].accent400;
 }
 
 #pragma mark - Class Properties
 
 static BOOL _floatingEnabledDefault = YES;
+static BOOL _mdc_adjustsFontForContentSizeCategoryDefault = NO;
 
 static CGFloat _floatingPlaceholderScaleDefault =
     MDCTextInputControllerBaseDefaultFloatingPlaceholderScaleDefault;
@@ -252,7 +249,9 @@ static UITextFieldViewMode _underlineViewModeDefault = UITextFieldViewModeWhileE
   }
 
   // This controller will handle Dynamic Type and all fonts for the text input
-  _mdc_adjustsFontForContentSizeCategory = _textInput.mdc_adjustsFontForContentSizeCategory || NO;
+  _mdc_adjustsFontForContentSizeCategory =
+      _textInput.mdc_adjustsFontForContentSizeCategory ||
+      [self class].mdc_adjustsFontForContentSizeCategoryDefault;
   _textInput.underline.disabledColor = self.disabledColor;
   _textInput.mdc_adjustsFontForContentSizeCategory = NO;
   _textInput.positioningDelegate = self;
@@ -1539,7 +1538,7 @@ static UITextFieldViewMode _underlineViewModeDefault = UITextFieldViewModeWhileE
       setAnimationDuration:MDCTextInputControllerBaseDefaultFloatingPlaceholderUpAnimationDuration];
   [CATransaction
       setAnimationTimingFunction:[CAMediaTimingFunction
-                                     functionWithName:kCAMediaTimingFunctionEaseInEaseOut]];
+                                     mdc_functionWithType:MDCAnimationTimingFunctionEaseInOut]];
 
   [self updateLayout];
 
@@ -1600,7 +1599,7 @@ static UITextFieldViewMode _underlineViewModeDefault = UITextFieldViewModeWhileE
                      MDCTextInputControllerBaseDefaultFloatingPlaceholderDownAnimationDuration];
   [CATransaction
       setAnimationTimingFunction:[CAMediaTimingFunction
-                                     functionWithName:kCAMediaTimingFunctionEaseInEaseOut]];
+                                     mdc_functionWithType:MDCAnimationTimingFunctionEaseInOut]];
 
   [self updateLayout];
 
@@ -1709,10 +1708,17 @@ static UITextFieldViewMode _underlineViewModeDefault = UITextFieldViewModeWhileE
   }
 }
 
++ (BOOL)mdc_adjustsFontForContentSizeCategoryDefault {
+  return _mdc_adjustsFontForContentSizeCategoryDefault;
+}
+
++ (void)setMdc_adjustsFontForContentSizeCategoryDefault:
+    (BOOL)mdc_adjustsFontForContentSizeCategoryDefault {
+  _mdc_adjustsFontForContentSizeCategoryDefault = mdc_adjustsFontForContentSizeCategoryDefault;
+}
+
 - (void)contentSizeCategoryDidChange:(__unused NSNotification *)notification {
   [self updateLayout];
 }
 
 @end
-
-#pragma clang diagnostic pop

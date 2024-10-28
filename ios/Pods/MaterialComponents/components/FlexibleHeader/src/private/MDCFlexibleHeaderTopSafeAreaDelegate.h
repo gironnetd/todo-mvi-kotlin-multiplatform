@@ -16,8 +16,6 @@
 
 @class MDCFlexibleHeaderTopSafeArea;
 
-API_DEPRECATED_BEGIN("Use a branded UINavigationController instead.", ios(12, API_TO_BE_DEPRECATED))
-
 /**
  The delegate protocol through which MDCFlexibleHeaderTopSafeArea communicates changes in the top
  safe area inset.
@@ -43,5 +41,3 @@ API_DEPRECATED_BEGIN("Use a branded UINavigationController instead.", ios(12, AP
     (nonnull MDCFlexibleHeaderTopSafeArea *)safeAreas;
 
 @end
-
-API_DEPRECATED_END

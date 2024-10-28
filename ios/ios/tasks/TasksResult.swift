@@ -18,7 +18,7 @@ enum EnumTasksResult: MviResult, RawRepresentable {
         case let rawValue as TasksResult.LoadTasksResult :
             switch rawValue.rawValue {
             case let rawValue as TasksResult.LoadTasksResult.RawValue.Success:
-                self = .LoadTasksResult(.Success(.Success(tasks: rawValue.tasks, filterType: rawValue.filterType))!)
+                self = .LoadTasksResult(.Success(.Success(tasks: rawValue.tasks, filterType: rawValue.filterType)))
             case let rawValue as TasksResult.LoadTasksResult.RawValue.Failure:
                 self = .LoadTasksResult(.Failure(.Failure(error: rawValue.error)))
             case is TasksResult.LoadTasksResult.RawValue.InFlight:

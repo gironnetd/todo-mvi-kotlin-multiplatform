@@ -14,8 +14,6 @@
 
 #import "MDCFlexibleHeaderView.h"
 
-API_DEPRECATED_BEGIN("Use a branded UINavigationController instead.", ios(12, API_TO_BE_DEPRECATED))
-
 @interface MDCFlexibleHeaderView ()
 
 /*
@@ -63,5 +61,3 @@ API_DEPRECATED_BEGIN("Use a branded UINavigationController instead.", ios(12, AP
 @property(nonatomic) BOOL useAdditionalSafeAreaInsetsForWebKitScrollViews;
 
 @end
-
-API_DEPRECATED_END

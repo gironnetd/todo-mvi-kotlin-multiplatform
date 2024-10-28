@@ -1,7 +1,6 @@
 package com.todo.mvi.kotlin.multiplatform.data
 
 import com.todo.mvi.kotlin.multiplatform.util.isNotNullNorEmpty
-import comtodomvikotlinmultiplatform.Task
 
 val Task.titleForList : String
         get() {

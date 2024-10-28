@@ -16,11 +16,8 @@
 #import <UIKit/UIKit.h>
 
 #import "MaterialElevation.h"
-#import "MaterialShadow.h"
 #import "MaterialShadowElevations.h"
 #import "MaterialShapes.h"
-
-NS_ASSUME_NONNULL_BEGIN
 
 /*
  A Material chip.
@@ -128,6 +125,20 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @property(nonatomic) CGFloat cornerRadius;
 
+/*
+ Indicates whether the chip should automatically update its font when the device’s
+ UIContentSizeCategory is changed.
+
+ This property is modeled after the adjustsFontForContentSizeCategory property in the
+ UIContentSizeCategoryAdjusting protocol added by Apple in iOS 10.0.
+
+ If set to YES, this button will base its text font on MDCFontTextStyleButton.
+
+ Default value is NO.
+ */
+@property(nonatomic, readwrite, setter=mdc_setAdjustsFontForContentSizeCategory:)
+    BOOL mdc_adjustsFontForContentSizeCategory UI_APPEARANCE_SELECTOR;
+
 /**
  The minimum dimensions of the Chip. A non-positive value for either height or width is equivalent
  to no minimum for that dimension.
@@ -167,13 +178,6 @@ When @c centerVisibleArea is @c NO, this value is @c UIEdgeInsetsZero.
  */
 @property(nonatomic, copy, nullable) void (^traitCollectionDidChangeBlock)
     (MDCChipView *_Nonnull chip, UITraitCollection *_Nullable previousTraitCollection);
-
-/**
- Determines if the chip provides touch feedback in the form of Ripple or Ink.
-
- The default value is @c NO.
-*/
-@property(nonatomic, assign) BOOL disableInkAndRippleBehavior;
 
 /*
  A color used as the chip's @c backgroundColor for @c state.
@@ -311,20 +315,11 @@ When @c centerVisibleArea is @c NO, this value is @c UIEdgeInsetsZero.
 /*
  Sets the shadow color for a particular control state.
 
- @param shadowColor The shadow color.
+ @param elevation The shadow color.
  @param state The control state.
  */
 - (void)setShadowColor:(nullable UIColor *)shadowColor
               forState:(UIControlState)state UI_APPEARANCE_SELECTOR;
-
-/*
- Sets the tint color for a particular control state.
-
- @param titleColor The tint color.
- @param state The control state.
- */
-- (void)setTintColor:(nullable UIColor *)tintColor
-            forState:(UIControlState)state UI_APPEARANCE_SELECTOR;
 
 /*
  Returns the title color for a particular control state.
@@ -358,29 +353,18 @@ When @c centerVisibleArea is @c NO, this value is @c UIEdgeInsetsZero.
  */
 @property(nonatomic, assign) BOOL enableRippleBehavior;
 
-@end
+/**
+ Affects the fallback behavior for when a scaled font is not provided.
 
-@interface MDCChipView (Deprecated)
+ If enabled, the font size will adjust even if a scaled font has not been provided for
+ a given UIFont property on this component.
 
-/*
- Indicates whether the chip should automatically update its font when the device’s
- UIContentSizeCategory is changed.
+ If disabled, the font size will only be adjusted if a scaled font has been provided.
+ This behavior most closely matches UIKit's.
 
- This property is modeled after the adjustsFontForContentSizeCategory property in the
- UIContentSizeCategoryAdjusting protocol added by Apple in iOS 10.0.
-
- If set to YES, this button will base its text font on MDCFontTextStyleButton.
-
- Default value is NO.
-
- This property will be deprecateds and deleted. Instead, please use
- titleLabel.adjustsFontForContentSizeCategory and make sure the title font is a
- scalable font.
+ Default value is YES, but this flag will eventually default to NO and then be deprecated
+ and deleted.
  */
-@property(nonatomic, readwrite, setter=mdc_setAdjustsFontForContentSizeCategory:)
-    BOOL mdc_adjustsFontForContentSizeCategory UI_APPEARANCE_SELECTOR __deprecated_msg(
-        "Use titleLabel.adjustsFontForContentSizeCategory");
+@property(nonatomic, assign) BOOL adjustsFontForContentSizeCategoryWhenScaledFontIsUnavailable;
 
 @end
-
-NS_ASSUME_NONNULL_END

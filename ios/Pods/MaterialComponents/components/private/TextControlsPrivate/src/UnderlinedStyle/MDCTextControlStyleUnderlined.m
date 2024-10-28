@@ -74,7 +74,12 @@ static const CGFloat kUnderlinedHorizontalEdgePaddingDefault = 2;
 
 - (void)setUpUnderlineColors {
   self.underlineColors = [[NSMutableDictionary alloc] init];
-  UIColor *underlineColor = UIColor.labelColor;
+  UIColor *underlineColor = UIColor.blackColor;
+#if MDC_AVAILABLE_SDK_IOS(13_0)
+  if (@available(iOS 13.0, *)) {
+    underlineColor = UIColor.labelColor;
+  }
+#endif  // MDC_AVAILABLE_SDK_IOS(13_0)
   self.underlineColors[@(MDCTextControlStateNormal)] = underlineColor;
   self.underlineColors[@(MDCTextControlStateEditing)] = underlineColor;
   self.underlineColors[@(MDCTextControlStateDisabled)] = underlineColor;

@@ -18,8 +18,9 @@
 #import "MDCTextInput.h"
 #import "MDCTextInputControllerFullWidth.h"
 
+#import "MaterialTypography.h"
+
 static const CGFloat MDCTextInputControllerLegacyFullWidthClearButtonImageSquareWidthHeight = 24;
-static const CGFloat kButtonFontOpacity = 0.54f;
 
 @interface MDCTextInputControllerFullWidth ()
 - (void)setupInput;
@@ -36,7 +37,8 @@ static const CGFloat kButtonFontOpacity = 0.54f;
 }
 
 - (void)setupClearButton {
-  UIImage *image = [self drawnClearButtonImage:[UIColor colorWithWhite:0 alpha:kButtonFontOpacity]];
+  UIImage *image = [self
+      drawnClearButtonImage:[UIColor colorWithWhite:0 alpha:[MDCTypography captionFontOpacity]]];
   [self.textInput.clearButton setImage:image forState:UIControlStateNormal];
 }
 

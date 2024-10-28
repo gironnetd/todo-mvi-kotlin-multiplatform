@@ -13,22 +13,16 @@
 // limitations under the License.
 
 #import "MDCDialogTransitionController.h"
-#import <UIKit/UIKit.h>
 
 #import "MDCDialogPresentationController.h"
 
-NS_ASSUME_NONNULL_BEGIN
-
 @implementation MDCDialogTransitionController
-
-// The default edge insets of the dialog.
-static const UIEdgeInsets MDCDialogEdgeInsets = {24, 20, 24, 20};
 
 // The default duration of the dialog fade-in or fade-out animation
 static const NSTimeInterval kDefaultOpacityTransitionDuration = 0.2;
 
 // The default duration of the dialog scale-up or scale-down animation
-static const NSTimeInterval kDefaultScaleTransitionDuration = 0.2;
+static const NSTimeInterval kDefaultScaleTransitionDuration = 0;
 
 // The default starting X and Y scale of the presented dialog
 static const CGFloat kDefaultInitialScaleFactor = 1.0;
@@ -39,7 +33,6 @@ static const CGFloat kDefaultInitialScaleFactor = 1.0;
     _opacityAnimationDuration = kDefaultOpacityTransitionDuration;
     _scaleAnimationDuration = kDefaultScaleTransitionDuration;
     _dialogInitialScaleFactor = kDefaultInitialScaleFactor;
-    _dialogEdgeInsets = MDCDialogEdgeInsets;
   }
   return self;
 }
@@ -47,7 +40,7 @@ static const CGFloat kDefaultInitialScaleFactor = 1.0;
 #pragma mark - UIViewControllerAnimatedTransitioning
 
 - (NSTimeInterval)transitionDuration:
-    (__unused __nullable id<UIViewControllerContextTransitioning>)transitionContext {
+    (__unused id<UIViewControllerContextTransitioning>)transitionContext {
   return MAX(self.opacityAnimationDuration, self.scaleAnimationDuration);
 }
 
@@ -119,21 +112,15 @@ static const CGFloat kDefaultInitialScaleFactor = 1.0;
     presentationController =
         (MDCDialogPresentationController *)animatingViewController.presentationController;
   }
-  presentationController.dialogEdgeInsets = self.dialogEdgeInsets;
 
   CGAffineTransform startingTransform =
       presenting
           ? CGAffineTransformMakeScale(self.dialogInitialScaleFactor, self.dialogInitialScaleFactor)
           : CGAffineTransformIdentity;
-  CGAffineTransform endingTransform =
-      presenting ? CGAffineTransformIdentity
-                 : CGAffineTransformMakeScale(self.dialogInitialScaleFactor,
-                                              self.dialogInitialScaleFactor);
+  CGAffineTransform endingTransform = CGAffineTransformIdentity;
   dialogView.transform = startingTransform;
   presentationController.dialogTransform = startingTransform;
-  UIViewAnimationOptions defaultAnimationOptions =
-      presenting ? UIViewAnimationOptionCurveEaseOut : UIViewAnimationOptionCurveLinear;
-  UIViewAnimationOptions scaleAnimationOptions = options | defaultAnimationOptions;
+  UIViewAnimationOptions scaleAnimationOptions = options | UIViewAnimationOptionCurveEaseOut;
   [UIView animateWithDuration:self.scaleAnimationDuration
                         delay:0
                       options:scaleAnimationOptions
@@ -148,26 +135,24 @@ static const CGFloat kDefaultInitialScaleFactor = 1.0;
 
 #pragma mark - UIViewControllerTransitioningDelegate
 
-- (nullable UIPresentationController *)
+- (UIPresentationController *)
     presentationControllerForPresentedViewController:(UIViewController *)presented
-                            presentingViewController:(nullable UIViewController *)presenting
+                            presentingViewController:(UIViewController *)presenting
                                 sourceViewController:(__unused UIViewController *)source {
   return [[MDCDialogPresentationController alloc] initWithPresentedViewController:presented
                                                          presentingViewController:presenting];
 }
 
-- (nullable id<UIViewControllerAnimatedTransitioning>)
+- (id<UIViewControllerAnimatedTransitioning>)
     animationControllerForPresentedController:(__unused UIViewController *)presented
                          presentingController:(__unused UIViewController *)presenting
                              sourceController:(__unused UIViewController *)source {
   return self;
 }
 
-- (nullable id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:
+- (id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:
     (__unused UIViewController *)dismissed {
   return self;
 }
 
 @end
-
-NS_ASSUME_NONNULL_END

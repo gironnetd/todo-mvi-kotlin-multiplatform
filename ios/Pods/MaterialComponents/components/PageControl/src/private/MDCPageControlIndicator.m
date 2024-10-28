@@ -14,8 +14,6 @@
 
 #import "MDCPageControlIndicator.h"
 
-#import <CoreGraphics/CoreGraphics.h>
-
 static const NSTimeInterval kPageControlIndicatorAnimationDuration = 0.3;
 static NSString *const kPageControlIndicatorAnimationKey = @"fadeInScaleUp";
 

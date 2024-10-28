@@ -1,7 +1,7 @@
 package com.todo.mvi.kotlin.multiplatform.android.taskdetail
 
 import com.todo.mvi.kotlin.multiplatform.android.mvibase.MviResult
-import comtodomvikotlinmultiplatform.Task
+import com.todo.mvi.kotlin.multiplatform.data.Task
 
 sealed class TaskDetailResult : MviResult {
 

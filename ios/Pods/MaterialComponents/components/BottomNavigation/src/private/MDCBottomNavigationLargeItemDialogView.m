@@ -28,7 +28,9 @@ static const CGFloat kImageHeight = 75;
  */
 static UIImage *_Nullable MDCImageForItem(UITabBarItem *_Nonnull item) {
   UIImage *image;
-  image = item.largeContentSizeImage;
+  if (@available(iOS 11, *)) {
+    image = item.largeContentSizeImage;
+  }
 
   return image ?: item.image;
 }

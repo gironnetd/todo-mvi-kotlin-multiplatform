@@ -1,27 +1,25 @@
 plugins {
-    id("com.android.application")
-    kotlin("android")
-    kotlin("kapt")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
 }
 
 dependencies {
     implementation(project(":shared"))
-    implementation(Dependencies.AndroidX.constraintLayout)
-    implementation (Dependencies.AndroidX.appCompat)
-    implementation (Dependencies.AndroidX.cardView)
-    implementation (Dependencies.Com.Google.Android.material)
-    implementation (Dependencies.AndroidX.recyclerView)
-    implementation (Dependencies.AndroidX.legacy)
-    implementation(Dependencies.AndroidX.Test.Espresso.idlingResource)
-    implementation(Dependencies.Io.ReactiveX.RxJava2.rxJava)
-    implementation(Dependencies.Io.ReactiveX.RxJava2.rxAndroid)
-    implementation(Dependencies.Com.JakeWharton.RxBinding2.rxBinding)
-    implementation(Dependencies.AndroidX.LifeCycle.runtime)
-    implementation(Dependencies.AndroidX.LifeCycle.extensions)
-    implementation(Dependencies.Io.ReactiveX.RxJava2.rxKotlin)
-    implementation(Dependencies.Com.Badoo.Reaktive.rxjava2_interop)
-    implementation(Dependencies.Com.Badoo.Reaktive.reaktive)
-    kapt(Dependencies.AndroidX.LifeCycle.compiler)
+    implementation(libs.androidx.constraint.layout)
+    implementation(libs.androidx.app.compat)
+    implementation(libs.androidx.card.view)
+    implementation(libs.google.material)
+    implementation(libs.androidx.recycler.view)
+    implementation(libs.androidx.legacy.support.v4)
+    implementation(libs.androidx.test.espresso)
+    implementation(libs.reactivex.rxjava2.rxjava)
+    implementation(libs.reactivex.rxjava2.rxandroid)
+    implementation(libs.jakewharton.rxbinding2.rxbinding.support.v4)
+    implementation(libs.androidx.lifecycle.runtime)
+    implementation(libs.androidx.lifecycle.extensions)
+    implementation(libs.reactivex.rxjava2.rxkotlin)
+    implementation(libs.badoo.reaktive.rxjava2.interop)
+    implementation(libs.badoo.reaktive.reaktive)
 }
 
 android {
@@ -29,7 +27,7 @@ android {
     defaultConfig {
         applicationId = "com.todo.mvi.kotlin.multiplatform.android"
         minSdk = 21
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
     }
@@ -41,7 +39,11 @@ android {
     namespace = "com.todo.mvi.kotlin.multiplatform.android"
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+
+    lint {
+        baseline = file("lint-baseline.xml")
     }
 }

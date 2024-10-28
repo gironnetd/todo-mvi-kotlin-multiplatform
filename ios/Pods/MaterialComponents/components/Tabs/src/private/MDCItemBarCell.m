@@ -15,14 +15,14 @@
 #import "MDCItemBarCell.h"
 #import "MDCItemBarCell+Private.h"
 
-#import "MDCInkTouchController.h"
-#import "MDCInkView.h"
-#import "MDCRippleTouchController.h"
-#import "MDCRippleView.h"
+#import <MDFInternationalization/MDFInternationalization.h>
+
 #import "MDCItemBarBadge.h"
 #import "MDCItemBarStyle.h"
-#import "MDCTypography.h"
-#import "MDCMath.h"
+#import "MaterialAnimationTiming.h"
+#import "MaterialInk.h"
+#import "MaterialMath.h"
+#import "MaterialTypography.h"
 
 /// Size of image in points.
 static const CGSize kImageSize = {24, 24};
@@ -272,7 +272,8 @@ static const NSTimeInterval kSelectionAnimationDuration = 0.3;
   // Determine badge center
   if (_style.shouldDisplayBadge) {
     CGFloat badgeOffset = (imageBounds.size.width / 2) + (badgeSize.width / 2);
-    if (self.effectiveUserInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+    if (self.mdf_effectiveUserInterfaceLayoutDirection ==
+        UIUserInterfaceLayoutDirectionRightToLeft) {
       badgeOffset *= -1;
     }
 
@@ -544,7 +545,7 @@ static const NSTimeInterval kSelectionAnimationDuration = 0.3;
   if (animated) {
     [CATransaction begin];
     CAMediaTimingFunction *translateTimingFunction =
-        [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+        [CAMediaTimingFunction mdc_functionWithType:MDCAnimationTimingFunctionTranslate];
     [CATransaction setAnimationTimingFunction:translateTimingFunction];
     [UIView animateWithDuration:kSelectionAnimationDuration
                           delay:0

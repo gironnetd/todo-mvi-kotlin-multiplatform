@@ -7,7 +7,8 @@
 
 import Foundation
 import UIKit
-import MaterialComponents.MaterialBottomNavigation
+import MaterialComponents
+//import MaterialComponents.MaterialBottomNavigation
 
 protocol MenuContentViewClickListener {
     func onClickLinstener(indexPath: IndexPath)

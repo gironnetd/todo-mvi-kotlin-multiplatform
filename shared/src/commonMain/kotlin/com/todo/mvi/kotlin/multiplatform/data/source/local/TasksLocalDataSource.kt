@@ -9,7 +9,7 @@ import com.badoo.reaktive.single.singleOf
 import com.badoo.reaktive.single.wrap
 import com.todo.mvi.kotlin.multiplatform.TasksDatabase
 import com.todo.mvi.kotlin.multiplatform.data.source.TasksDataSource
-import comtodomvikotlinmultiplatform.Task
+import com.todo.mvi.kotlin.multiplatform.data.Task
 
 class TasksLocalDataSource(databaseDriverFactory : DatabaseDriverFactory): TasksDataSource {
 

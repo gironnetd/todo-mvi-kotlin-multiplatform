@@ -12,27 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "MDCMinimumOS.h"  // IWYU pragma: keep
-
 #import <UIKit/UIKit.h>
 
 @class MDCAppBar;
 @class MDCAppBarNavigationController;
 
-API_DEPRECATED_BEGIN(
-    "🕘 Schedule time to migrate. "
-    "Use branded UINavigationController instead: go/material-ios-top-app-bars/gm2-migration. "
-    "This is go/material-ios-migrations#not-scriptable 🕘",
-    ios(11, 12))
-
 /**
  Defines delegate methods that will be deprecated.
  */
-API_DEPRECATED(
-    "🕘 Schedule time to migrate. "
-    "Use branded UINavigationController instead: go/material-ios-top-app-bars/gm2-migration. "
-    "This is go/material-ios-migrations#not-scriptable 🕘",
-    ios(11, 12))
 @protocol MDCAppBarNavigationControllerToBeDeprecatedDelegate <NSObject>
 @optional
 
@@ -59,5 +46,3 @@ API_DEPRECATED(
            asChildOfViewController:(nonnull UIViewController *)viewController;
 
 @end
-
-API_DEPRECATED_END

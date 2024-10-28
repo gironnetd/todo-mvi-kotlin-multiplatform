@@ -14,8 +14,6 @@
 
 #import <UIKit/UIKit.h>
 
-@protocol MDCBottomSheetTransitionControllerDelegate;
-
 /**
  MDCBottomSheetTransitionController is be used to setup a custom transition and animationed
  presentation and dismissal for material-styled bottom-sheet presentation.
@@ -82,11 +80,6 @@ Defaults to @c YES.
  The default value is @c NO.
  */
 @property(nonatomic) BOOL ignoreKeyboardHeight;
-
-/**
- The object that manages lifecycle events.
- */
-@property(nonatomic, weak, nullable) id<MDCBottomSheetTransitionControllerDelegate> delegate;
 
 @end
 

@@ -14,12 +14,6 @@
 
 #import "MaterialButtons.h"
 
-API_DEPRECATED_BEGIN(
-    "🕘 Schedule time to migrate. "
-    "Use branded UINavigationController instead: go/material-ios-top-app-bars/gm2-migration. "
-    "This is go/material-ios-migrations#not-scriptable 🕘",
-    ios(12, 12))
-
 /**
  The MDCButtonBarButton class is used by MDCButtonBar.
  */
@@ -50,5 +44,3 @@ API_DEPRECATED_BEGIN(
 @property(nonatomic, nullable) UIImage *largeContentImage NS_AVAILABLE_IOS(13_0);
 
 @end
-
-API_DEPRECATED_END

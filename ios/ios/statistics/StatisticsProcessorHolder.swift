@@ -18,8 +18,6 @@ class StatisticsActionProcessorHolder {
     private lazy var loadStatisticsProcessor:
         ObservableTransformer<StatisticsAction.LoadStatisticsAction, StatisticsResult.LoadStatisticsResult> = { actions in
             return actions.flatMap { action in
-                return self.tasksRepository
-                
                 return RxSwift.Single.from(self.tasksRepository.getTasks())
                     .asObservable()
                     .map { tasks  in

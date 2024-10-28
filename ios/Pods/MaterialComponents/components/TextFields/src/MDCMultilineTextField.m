@@ -31,8 +31,6 @@ static NSString *const kClearButtonKey = @"MaterialTextFieldClearButtonAccessibi
 static NSString *const kAccessibilityLocalizationStringsTableName = @"MaterialTextField";
 // The Bundle for string resources.
 static NSString *const kBundle = @"MaterialTextFields.bundle";
-// The font opacity to be used for the caption.
-static const CGFloat kButtonFontOpacity = 0.54f;
 
 @interface MDCMultilineTextField () {
   UIColor *_cursorColor;
@@ -130,7 +128,7 @@ static const CGFloat kButtonFontOpacity = 0.54f;
   self.textColor = _fundament.textColor;
   // TODO: (#4331) This needs to be converted to the new text scheme.
   self.font = [UIFont mdc_standardFontForMaterialTextStyle:MDCFontTextStyleBody1];
-  self.clearButton.tintColor = [UIColor colorWithWhite:0 alpha:kButtonFontOpacity];
+  self.clearButton.tintColor = [UIColor colorWithWhite:0 alpha:[MDCTypography captionFontOpacity]];
   NSBundle *bundle = [[self class] bundle];
   NSString *accessibilityLabel =
       [bundle localizedStringForKey:kClearButtonKey
@@ -795,14 +793,6 @@ static const CGFloat kButtonFontOpacity = 0.54f;
 
 #pragma mark - Accessibility
 
-- (NSInteger)accessibilityElementCount {
-  if (self.isAccessibilityElement) {
-    return [super accessibilityElementCount];
-  } else {
-    return [self accessibilityElements].count;
-  }
-}
-
 - (NSString *)accessibilityValue {
   NSString *value = [self.text length] ? self.text : self.placeholder;
 
@@ -815,56 +805,20 @@ static const CGFloat kButtonFontOpacity = 0.54f;
 }
 
 - (NSString *)accessibilityLabel {
-  if (self.isAccessibilityElement) {
-    NSMutableArray *accessibilityStrings = [[NSMutableArray alloc] init];
-    if ([super accessibilityLabel].length > 0) {
-      [accessibilityStrings addObject:[super accessibilityLabel]];
-    } else if (self.placeholderLabel.accessibilityLabel.length > 0) {
-      [accessibilityStrings addObject:self.placeholderLabel.accessibilityLabel];
-    }
-    if (self.leadingUnderlineLabel.accessibilityLabel.length > 0) {
-      [accessibilityStrings addObject:self.leadingUnderlineLabel.accessibilityLabel];
-    }
-    if (self.trailingUnderlineLabel.accessibilityLabel.length > 0) {
-      [accessibilityStrings addObject:self.trailingUnderlineLabel.accessibilityLabel];
-    }
-    return accessibilityStrings.count > 0 ? [accessibilityStrings componentsJoinedByString:@", "]
-                                          : nil;
-  } else {
-    return [super accessibilityLabel];
+  NSMutableArray *accessibilityStrings = [[NSMutableArray alloc] init];
+  if ([super accessibilityLabel].length > 0) {
+    [accessibilityStrings addObject:[super accessibilityLabel]];
+  } else if (self.placeholderLabel.accessibilityLabel.length > 0) {
+    [accessibilityStrings addObject:self.placeholderLabel.accessibilityLabel];
   }
-}
-
-- (NSArray *)accessibilityElements {
-  if (self.isAccessibilityElement) {
-    return [super accessibilityElements];
-  } else {
-    NSMutableArray *mutableElements = [super accessibilityElements] == nil
-                                          ? [[NSMutableArray alloc] init]
-                                          : [[super accessibilityElements] mutableCopy];
-
-    if (self.placeholderLabel.isAccessibilityElement) {
-      [mutableElements insertObject:self.placeholderLabel atIndex:0];
-    }
-
-    if (self.textView.isAccessibilityElement) {
-      [mutableElements addObject:self.textView];
-    }
-
-    if (self.leadingUnderlineLabel.isAccessibilityElement) {
-      [mutableElements addObject:self.leadingUnderlineLabel];
-    }
-
-    if (self.clearButton.isAccessibilityElement && self.isEditing) {
-      [mutableElements addObject:self.clearButton];
-    }
-
-    if (self.trailingUnderlineLabel.isAccessibilityElement) {
-      [mutableElements addObject:self.trailingUnderlineLabel];
-    }
-
-    return [mutableElements copy];
+  if (self.leadingUnderlineLabel.accessibilityLabel.length > 0) {
+    [accessibilityStrings addObject:self.leadingUnderlineLabel.accessibilityLabel];
   }
+  if (self.trailingUnderlineLabel.accessibilityLabel.length > 0) {
+    [accessibilityStrings addObject:self.trailingUnderlineLabel.accessibilityLabel];
+  }
+  return accessibilityStrings.count > 0 ? [accessibilityStrings componentsJoinedByString:@", "]
+                                        : nil;
 }
 
 - (BOOL)mdc_adjustsFontForContentSizeCategory {

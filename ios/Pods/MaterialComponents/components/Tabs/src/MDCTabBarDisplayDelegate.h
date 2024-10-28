@@ -15,16 +15,13 @@
 #import <Foundation/Foundation.h>
 #import "MDCTabBar.h"
 
-API_DEPRECATED_BEGIN("🤖👀 Use a branded MDCTabBarView instead. "
-                     "See go/material-ios-tabs and go/material-ios-tabbar-migration for more info. "
-                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
-                     ios(12, 12))
-
 /**
  An additional delegate protocol for MDCTabBar that provides information about when UITabBarItems
  are about to be displayed and when they stop being displayed.
  */
-@protocol MDCTabBarDisplayDelegate
+__deprecated_msg(
+    "Use MDCTabBarViewDelegate instead. See go/material-ios-tabbar-migration for more details.")
+    @protocol MDCTabBarDisplayDelegate
 
 /**
  This method is called sometime before the tab's view is displayed.
@@ -49,5 +46,3 @@ API_DEPRECATED_BEGIN("🤖👀 Use a branded MDCTabBarView instead. "
 @property(nonatomic, weak, nullable) NSObject<MDCTabBarDisplayDelegate> *displayDelegate;
 
 @end
-
-API_DEPRECATED_END

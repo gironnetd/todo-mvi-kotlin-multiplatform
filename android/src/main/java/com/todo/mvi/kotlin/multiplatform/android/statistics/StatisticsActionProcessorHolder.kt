@@ -10,7 +10,7 @@ import com.todo.mvi.kotlin.multiplatform.android.statistics.StatisticsResult.Loa
 import com.todo.mvi.kotlin.multiplatform.android.util.flatMapIterable
 import com.todo.mvi.kotlin.multiplatform.android.util.schedulers.BaseSchedulerProvider
 import com.todo.mvi.kotlin.multiplatform.data.active
-import comtodomvikotlinmultiplatform.Task
+import com.todo.mvi.kotlin.multiplatform.data.Task
 import io.reactivex.Observable
 import io.reactivex.ObservableTransformer
 import io.reactivex.Single

@@ -14,13 +14,13 @@
 
 #import "MDCTextInputControllerOutlined.h"
 
+#import <MDFInternationalization/MDFInternationalization.h>
+
 #import "MDCTextInput.h"
 #import "MDCTextInputBorderView.h"
 #import "MDCTextInputUnderlineView.h"
 #import "private/MDCTextInputControllerBase+Subclassing.h"
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-implementations"
 
 #pragma mark - Class Properties
 
@@ -80,7 +80,7 @@ static UIRectCorner _roundedCornersDefault = UIRectCornerAllCorners;
 
 - (CGRect)leadingViewRectForBounds:(CGRect)bounds defaultRect:(CGRect)defaultRect {
   CGRect leadingViewRect = defaultRect;
-  CGFloat xOffset = (self.textInput.effectiveUserInterfaceLayoutDirection ==
+  CGFloat xOffset = (self.textInput.mdf_effectiveUserInterfaceLayoutDirection ==
                      UIUserInterfaceLayoutDirectionRightToLeft)
                         ? -1 * MDCTextInputOutlinedTextFieldFullPadding
                         : MDCTextInputOutlinedTextFieldFullPadding;
@@ -100,7 +100,7 @@ static UIRectCorner _roundedCornersDefault = UIRectCornerAllCorners;
 
 - (CGRect)trailingViewRectForBounds:(CGRect)bounds defaultRect:(CGRect)defaultRect {
   CGRect trailingViewRect = defaultRect;
-  CGFloat xOffset = (self.textInput.effectiveUserInterfaceLayoutDirection ==
+  CGFloat xOffset = (self.textInput.mdf_effectiveUserInterfaceLayoutDirection ==
                      UIUserInterfaceLayoutDirectionRightToLeft)
                         ? MDCTextInputOutlinedTextFieldThreeQuartersPadding
                         : -1 * MDCTextInputOutlinedTextFieldThreeQuartersPadding;
@@ -227,7 +227,7 @@ static UIRectCorner _roundedCornersDefault = UIRectCornerAllCorners;
 
   // Draw the path
   [path moveToPoint:CGPointMake(radius + xOffset, yOffset)];
-  if (self.textInput.effectiveUserInterfaceLayoutDirection ==
+  if (self.textInput.mdf_effectiveUserInterfaceLayoutDirection ==
       UIUserInterfaceLayoutDirectionLeftToRight) {
     [path addLineToPoint:CGPointMake(offset + xOffset, yOffset)];
     [path moveToPoint:CGPointMake(textSpace + offset + xOffset, yOffset)];
@@ -324,5 +324,3 @@ static UIRectCorner _roundedCornersDefault = UIRectCornerAllCorners;
 }
 
 @end
-
-#pragma clang diagnostic pop

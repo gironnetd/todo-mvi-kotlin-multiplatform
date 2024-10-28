@@ -10,7 +10,7 @@ import android.widget.CheckBox
 import android.widget.TextView
 import com.todo.mvi.kotlin.multiplatform.android.R
 import com.todo.mvi.kotlin.multiplatform.data.titleForList
-import comtodomvikotlinmultiplatform.Task
+import com.todo.mvi.kotlin.multiplatform.data.Task
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
 

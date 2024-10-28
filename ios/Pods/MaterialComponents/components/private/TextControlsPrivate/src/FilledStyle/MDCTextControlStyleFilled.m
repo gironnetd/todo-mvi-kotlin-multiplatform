@@ -52,7 +52,13 @@ static const CGFloat kDefaultFilledStyleTopCornerRadius = (CGFloat)4.0;
 
 - (void)setUpFilledBackgroundColors {
   self.filledBackgroundColors = [NSMutableDictionary new];
-  UIColor *filledBackgroundColor = [UIColor secondarySystemBackgroundColor];
+  UIColor *filledBackgroundColor = [UIColor blackColor];
+  filledBackgroundColor = [filledBackgroundColor colorWithAlphaComponent:(CGFloat)0.05];
+#if MDC_AVAILABLE_SDK_IOS(13_0)
+  if (@available(iOS 13.0, *)) {
+    filledBackgroundColor = [UIColor secondarySystemBackgroundColor];
+  }
+#endif  // MDC_AVAILABLE_SDK_IOS(13_0)
 
   self.filledBackgroundColors[@(MDCTextControlStateNormal)] = filledBackgroundColor;
   self.filledBackgroundColors[@(MDCTextControlStateEditing)] = filledBackgroundColor;

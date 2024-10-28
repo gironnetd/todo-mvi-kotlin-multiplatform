@@ -17,11 +17,6 @@
 
 #import <Foundation/Foundation.h>
 
-API_DEPRECATED_BEGIN("🤖👀 Use branded M3CButton instead. "
-                     "See go/material-ios-buttons/gm2-migration for more details. "
-                     "This has go/material-ios-migrations#scriptable-potential 🤖👀.",
-                     ios(12, 12))
-
 /**
  The Material Design color system's floating button themer for instances of MDCFloatingButton.
 
@@ -29,7 +24,9 @@ API_DEPRECATED_BEGIN("🤖👀 Use branded M3CButton instead. "
  `MDCFloatingButton`'s `-applySecondaryThemeWithScheme:`
  Learn more at docs/theming.md#migration-guide-themers-to-theming-extensions
  */
-@interface MDCFloatingButtonColorThemer : NSObject
+__deprecated_msg("Please use [MDCFloatingButton applySecondaryThemeWithScheme:] instead. (Note: "
+                 "Color theming is no longer available as an independent API.)")
+    @interface MDCFloatingButtonColorThemer : NSObject
 
 /**
  Applies a color scheme's properties to an MDCFloatingButton using the floating button style.
@@ -45,5 +42,3 @@ API_DEPRECATED_BEGIN("🤖👀 Use branded M3CButton instead. "
                         toButton:(nonnull MDCFloatingButton *)button;
 
 @end
-
-API_DEPRECATED_END

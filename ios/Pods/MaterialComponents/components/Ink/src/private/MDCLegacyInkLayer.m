@@ -15,10 +15,9 @@
 #import "MDCLegacyInkLayer.h"
 #import "MDCLegacyInkLayer+Private.h"
 
-#import <CoreGraphics/CoreGraphics.h>
 #import <UIKit/UIKit.h>
 
-#import "MDCAvailability.h"
+#import "MaterialAvailability.h"
 #import "MDCLegacyInkLayerDelegate.h"
 #import "MDCLegacyInkLayerRippleDelegate.h"
 
@@ -55,7 +54,7 @@ static inline CGFloat MDCLegacyInkLayerRadiusBounds(CGFloat maxRippleRadius,
   }
 }
 
-static inline CGFloat MDCLegacyInkLayerRandom(void) {
+static inline CGFloat MDCLegacyInkLayerRandom() {
   const uint32_t max_value = 10000;
   return (CGFloat)arc4random_uniform(max_value + 1) / max_value;
 }
@@ -641,7 +640,7 @@ static NSString *const kInkLayerBackgroundOpacityAnim = @"backgroundOpacityAnim"
 }
 
 - (void)animationDidStop:(__unused CAAnimation *)anim
-              shapeLayer:(nullable CAShapeLayer *)layerRipple
+              shapeLayer:(MDCLegacyInkLayerRipple *)layerRipple
                 finished:(__unused BOOL)finished {
   // Even when the ripple is "exited" without animation, we need to remove it from compositeRipple
   [layerRipple removeFromSuperlayer];

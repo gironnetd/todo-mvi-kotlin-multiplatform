@@ -23,8 +23,6 @@
 
 @protocol MDCFlexibleHeaderTopSafeAreaDelegate;
 
-API_DEPRECATED_BEGIN("Use a branded UINavigationController instead.", ios(12, API_TO_BE_DEPRECATED))
-
 /**
  Extracts the top safe area for a given view controller.
 
@@ -88,5 +86,3 @@ __attribute__((objc_subclassing_restricted)) @interface MDCFlexibleHeaderTopSafe
 @property(nonatomic, weak, nullable) id<MDCFlexibleHeaderTopSafeAreaDelegate> topSafeAreaDelegate;
 
 @end
-
-API_DEPRECATED_END

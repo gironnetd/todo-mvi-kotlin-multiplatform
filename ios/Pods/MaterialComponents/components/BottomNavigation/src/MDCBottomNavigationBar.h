@@ -15,12 +15,10 @@
 #import <UIKit/UIKit.h>
 
 #import "MaterialAvailability.h"
-#import "MDCBadgeAppearance.h"
 // TODO(b/151929968): Delete import of MDCBottomNavigationBarDelegate.h when client code has been
 // migrated to no longer import MDCBottomNavigationBarDelegate as a transitive dependency.
 #import "MDCBottomNavigationBarDelegate.h"
 #import "MaterialElevation.h"
-#import "MDCMinimumOS.h"  // IWYU pragma: keep
 #import "MaterialShadow.h"
 #import "MaterialShadowElevations.h"
 
@@ -37,19 +35,6 @@ typedef NS_ENUM(NSInteger, MDCBottomNavigationBarTitleVisibility) {
 
   // Item titles are never visible.
   MDCBottomNavigationBarTitleVisibilityNever = 2
-};
-
-/** Alignment mode of items in vertical layout mode.  */
-typedef NS_ENUM(NSInteger, MDCNavigationBarItemsVerticalAlignment) {
-
-  // Default behavior is to have the items align to the center.
-  MDCNavigationBarItemsVerticalAlignmentCenter = 0,
-
-  // Items are aligned to the top of the bar.
-  MDCNavigationBarItemsVerticalAlignmentTop = 1,
-
-  // Items are aligned to the bottom of the bar.
-  MDCNavigationBarItemsVerticalAlignmentBottom = 2
 };
 
 /**
@@ -92,25 +77,9 @@ typedef NS_ENUM(NSInteger, MDCBottomNavigationBarAlignment) {
 
 /**
  Configures item space distribution and title orientation in landscape mode.
- Default is MDCBottomNavigationBarAlignmentJustified.
+ Default is MDCBottomNavigationBarDistributionEqual.
  */
 @property(nonatomic, assign) MDCBottomNavigationBarAlignment alignment UI_APPEARANCE_SELECTOR;
-
-/**
- Configures whether the navigation bar will be in vertical layout.
-
- @note To configure the items spacing in vertical layout see @c itemsAlignmentInVerticalMode below.
-
- Defaults to @c NO.
- */
-@property(nonatomic, assign) BOOL enableVerticalLayout;
-
-/**
- Configures whether the navigation bar will show titles in vertical layout mode.
-
- Defaults to @c NO.
- */
-@property(nonatomic, assign) BOOL displayItemTitlesInVerticalLayout;
 
 /**
  An array of UITabBarItems that is used to populate bottom navigation bar content. It is strongly
@@ -132,16 +101,20 @@ typedef NS_ENUM(NSInteger, MDCBottomNavigationBarAlignment) {
 @property(nonatomic, strong, nonnull) UIFont *itemTitleFont UI_APPEARANCE_SELECTOR;
 
 /**
+ Background color for badges. Default is a red color. Only applies if the @c UITabBarItem
+ @c badgeColor is `nil`.
+ */
+@property(nonatomic, copy, nullable) UIColor *itemBadgeBackgroundColor;
+
+/**
+ Text color for badges. Default is white.
+ */
+@property(nonatomic, copy, nullable) UIColor *itemBadgeTextColor;
+
+/**
  Color of selected item. Applies color to items' icons and text. If set also sets
  selectedItemTitleColor. Default color is black.
-
- By default, setting this property will also configure the ripple color of all item views.
- If @c rippleColor has been set to a non-nil value, however, then this property will no longer
- affect the color of ripple behavior.
-
- Use @c rippleColor to configure ripple color instead instead of relying on the side effect behavior
- of this property. The side effect behavior of this property may be removed in the future.
-*/
+ */
 @property(nonatomic, strong, readwrite, nonnull)
     UIColor *selectedItemTintColor UI_APPEARANCE_SELECTOR;
 
@@ -149,35 +122,6 @@ typedef NS_ENUM(NSInteger, MDCBottomNavigationBarAlignment) {
  Color of the selected item's title text. Default color is black.
  */
 @property(nonatomic, strong, readwrite, nonnull) UIColor *selectedItemTitleColor;
-
-/**
- If @c YES, a pill-shaped "active indicator" is used to show which item is currently selected. The
- active indicator is centered around the selected icon, and animates in/out when a new item is
- selected.
-
- Note that using the active indicator turns off any ink/ripple behavior, as they should not both be
- used as an indication of selection of a new item.
-
- Defaults to @c NO.
- */
-@property(nonatomic, assign) BOOL showsSelectionIndicator;
-
-/**
- Size of the active indicator.
-
- Only has an impact if @c useActiveIndicator is set to @c YES.
-
- Defaults to 30, 60.
- */
-@property(nonatomic, assign) CGSize selectionIndicatorSize;
-
-/**
-  Background color for the active indicator. Only has an impact if @c useActiveIndicator is set to
-  @c YES.
-
-  Defaults to #C3D9F2.
- */
-@property(nonatomic, strong, nonnull) UIColor *selectionIndicatorColor;
 
 /**
  Color of unselected items. Applies color to items' icons. Text is not displayed in unselected mode.
@@ -230,12 +174,6 @@ typedef NS_ENUM(NSInteger, MDCBottomNavigationBarAlignment) {
  @note: The amount of horizontal space between the bar items will be double this value.
  */
 @property(nonatomic, assign) CGFloat itemsHorizontalPadding;
-
-/**
- Configures the items alignment in vertical layout mode.
-Default is @c MDCNavigationBarItemsVerticalAlignmentTop.
- */
-@property(nonatomic, assign) MDCNavigationBarItemsVerticalAlignment itemsAlignmentInVerticalMode;
 
 /**
  NSLayoutAnchor for the bottom of the bar items.
@@ -298,92 +236,28 @@ traitCollectionDidChange:. The block is called after the call to the superclass.
 @property(nonatomic, assign) CGFloat barHeight;
 
 /**
- Sets the height of the navigation bar when titles are not present.
-
- Defaults to barHeight's value.
- */
-@property(nonatomic, assign) CGFloat barHeightWithoutTitles;
-
-/**
  Returns the navigation bar subview associated with the specific item.
 
  @param item A UITabBarItem
  */
 - (nullable UIView *)viewForItem:(nonnull UITabBarItem *)item;
 
-#pragma mark - Configuring the ripple appearance
+@end
 
-@property(nonatomic, getter=isRippleEnabled) BOOL rippleEnabled;
-
-/**
- The color of the ripple effect shown when the user taps on an item.
-
- When this property is nil, the ripple's color will be inferred from @c selectedItemTintColor. If
- you want a clear ripple, you must set @c rippleColor to UIColor.clearColor.
-*/
-@property(nonatomic, strong, nullable) UIColor *rippleColor API_DEPRECATED(
-    "Follow go/material-ios-touch-response for guidance instead.", ios(12, 12));
-
-#pragma mark - Configuring the default visual appearance for all badges
+/** APIs that are ToBeDeprecated. */
+@interface MDCBottomNavigationBar (ToBeDeprecated)
 
 /**
- The default appearance to be used for all item badges.
+ By setting this property to @c YES, the Ripple component will be used instead of Ink
+ to display visual feedback to the user.
 
- If a given UITabBarItem has set a non-nil badgeColor, then that value will be used for that item
- view's badge instead of the backgroundColor associated with this appearance object.
+ @note This property will eventually be enabled by default, deprecated, and then deleted as part
+ of our migration to Ripple. Learn more at
+ https://github.com/material-components/material-components-ios/tree/develop/components/Ink#migration-guide-ink-to-ripple
 
- Note that the individual itemBadge* properties will be deprecated and already act as proxies for
- modifying the itemBadgeAppearance of each badge directly.
+ Defaults to NO.
  */
-@property(nonatomic, copy, nonnull) MDCBadgeAppearance *itemBadgeAppearance;
-
-/**
- Default background color for badges.
-
- If a given UITabBarItem's `badgeColor` is non-nil, then the item's `badgeColor` is used instead of
- this value.
-
- This property is a proxy for itemBadgeAppearance.backgroundColor, with the exception that assigning
- nil will be treated as [UIColor clearColor].
-
- Default is a red color.
- */
-@property(nonatomic, copy, nullable)
-    UIColor *itemBadgeBackgroundColor API_DEPRECATED_WITH_REPLACEMENT(
-        "itemBadgeAppearance.backgroundColor", ios(12, 12));
-
-/**
- X-offset for Badge position.
-
- Set this property to adjust horizontal spacing between badges and icons, within item views.
-
- The additive inverse of this value is applied for RTL layouts. Set this value based on LTR.
-
- Increasing values shift towards the right, and decreasing values shift towards the left.
-
- Default is 0.
- */
-@property(nonatomic, assign) CGFloat itemBadgeHorizontalOffset;
-
-/**
- Text color for badges.
-
- This property is a proxy for itemBadgeAppearance.textColor.
-
- Default is white.
- */
-@property(nonatomic, copy, nullable) UIColor *itemBadgeTextColor API_DEPRECATED_WITH_REPLACEMENT(
-    "itemBadgeAppearance.textColor", ios(12, 12));
-
-/**
- Text font for badges.
-
- This property is a proxy for itemBadgeAppearance.font.
-
- Default is a small system font.
- */
-@property(nonatomic, copy, nullable) UIFont *itemBadgeTextFont API_DEPRECATED_WITH_REPLACEMENT(
-    "itemBadgeAppearance.font", ios(12, 12));
+@property(nonatomic, assign) BOOL enableRippleBehavior;
 
 @end
 

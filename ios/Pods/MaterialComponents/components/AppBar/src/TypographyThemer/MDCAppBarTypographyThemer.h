@@ -15,12 +15,6 @@
 #import "MaterialAppBar.h"
 #import "MaterialTypographyScheme.h"
 
-API_DEPRECATED_BEGIN(
-    "🕘 Schedule time to migrate. "
-    "Use branded UINavigationController instead: go/material-ios-top-app-bars/gm2-migration. "
-    "This is go/material-ios-migrations#not-scriptable 🕘",
-    ios(11, 12))
-
 /**
  The Material Design typography system's themer for instances of MDCAppBar.
 
@@ -59,5 +53,3 @@ API_DEPRECATED_BEGIN(
                      toAppBar:(nonnull MDCAppBar *)appBar;
 
 @end
-
-API_DEPRECATED_END

@@ -10,10 +10,10 @@ This project sets up the use of Kotlin Multiplatform using a SQLDelight database
 
 To start this project you need :
 
-- Android Studio 4.2.2
-- Gradle Distributions 7.0.1-bin
-- Kotlin Gradle Plugin 1.5.21
-- XCode 12.4
+- Android Studio Ladybug | 2024.2.1 Patch 1
+- Gradle Distributions 8.9-bin
+- Kotlin Gradle Plugin 2.0.20
+- XCode 16.0
 
 
 ### Dependencies for iOS Application
